@@ -1,0 +1,10 @@
+DESIGN_NAME: uart_top
+
+VERILOG_FILES:
+  - dir::rtl/baud_gen.v
+  - dir::rtl/uart_tx.v
+  - dir::rtl/uart_rx.v
+  - dir::rtl/uart_top.v
+
+CLOCK_PORT: clk
+CLOCK_PERIOD: 10 # 10ns = 100MHz

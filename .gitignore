@@ -1,0 +1,19 @@
+/build/
+/artifacts/
+__pycache__/
+.venv/
+*.pyc
+*.vcd
+*.fst
+*.sof
+*.pof
+*.jic
+/fpga/**/db/
+/fpga/**/incremental_db/
+/fpga/**/output_files/
+# Never version session keys, private GPS traces, or local device settings.
+.env
+.env.*
+*.key
+/data/private/
+/config/local.*
