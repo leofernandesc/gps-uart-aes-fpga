@@ -6,13 +6,15 @@ cd "$project_dir"
 mkdir -p build
 check_mode="${1:-all}"
 rtl=(rtl/common/reset_sync.sv rtl/uart/uart_tx.sv rtl/uart/uart_rx.sv rtl/uart/uart_top.sv)
+bridge_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_bridge.sv fpga/de10_lite/de10_lite_uart_top.sv)
+aes_rtl=(rtl/aes/aes_sbox.sv rtl/aes/aes_sub_shift.sv rtl/aes/aes_mix_columns.sv rtl/aes/aes128_next_key.sv rtl/aes/aes128_core.sv)
 
 run_test() {
     local test_name="$1"
     local test_label="$2"
     shift 2
     iverilog -g2012 -Wall -s "$test_name" "$@" \
-        -o "build/$test_label.vvp" "${rtl[@]}" "tb/$test_name.sv" 2>&1 | tee "build/$test_label.compile.log"
+        -o "build/$test_label.vvp" "${rtl[@]}" "${bridge_rtl[@]}" "${aes_rtl[@]}" "tb/$test_name.sv" 2>&1 | tee "build/$test_label.compile.log"
     vvp -n "build/$test_label.vvp" | tee "build/$test_label.log"
 }
 
@@ -33,11 +35,44 @@ lint_uart() {
     verilator --lint-only --Wall --top-module uart_top "${rtl[@]}" 2>&1 | tee build/lint.log
 }
 
+test_bridge() {
+    run_test sync_fifo_tb sync_fifo_depth2 -Psync_fifo_tb.DEPTH=2
+    run_test sync_fifo_tb sync_fifo_depth8
+    run_test sync_fifo_tb sync_fifo_depth1024 -Psync_fifo_tb.DEPTH=1024
+    run_test uart_bridge_tb uart_bridge_fast
+    run_test uart_bridge_tb uart_bridge_50mhz_9600 \
+        -Puart_bridge_tb.CLK_FREQ=50000000 -Puart_bridge_tb.FIFO_DEPTH=1024 -Puart_bridge_tb.STRESS=0
+}
+
+lint_bridge() {
+    verilator --lint-only --Wall --top-module de10_lite_uart_top \
+        "${rtl[@]}" "${bridge_rtl[@]}" 2>&1 | tee build/bridge-lint.log
+}
+
 synth_uart() {
     # Structural check only: not Quartus mapping, timing, or FPGA resource data.
     yosys -q -Q -T -l build/synth.log -p \
         "read_verilog -sv ${rtl[*]}; hierarchy -check -top uart_top; synth -top uart_top; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/uart_top.json"
     echo 'PASS structural synthesis: no check problems or inferred latches (not FPGA mapping)'
+}
+
+test_aes() {
+    (cd reference/aes-cavp && sha256sum -c SHA256SUMS)
+    run_test aes_components_tb aes_components
+    run_test aes128_core_tb aes128_core
+}
+
+lint_aes() {
+    verilator --lint-only --Wall --top-module aes128_analysis_top \
+        rtl/common/reset_sync.sv "${aes_rtl[@]}" fpga/aes_analysis/aes128_analysis_top.sv \
+        2>&1 | tee build/aes/lint.log
+}
+
+synth_aes() {
+    mkdir -p build/aes
+    yosys -q -Q -T -l build/aes/synth.log -p \
+        "read_verilog -sv ${aes_rtl[*]}; hierarchy -check -top aes128_core; proc; opt; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/aes/aes128_core.json"
+    echo 'PASS AES structural elaboration: no check problems or inferred latches (not FPGA mapping)'
 }
 
 test_reference() {
@@ -58,18 +93,25 @@ test_reference() {
 }
 
 case "$check_mode" in
-    test) test_uart ;;
-    lint) lint_uart ;;
-    synth) synth_uart ;;
+    test) test_uart; test_bridge; test_aes ;;
+    lint) mkdir -p build/aes; lint_uart; lint_bridge; lint_aes ;;
+    bridge) test_bridge; lint_bridge ;;
+    aes) test_aes; lint_aes; synth_aes ;;
+    synth) synth_uart; synth_aes ;;
     reference) test_reference ;;
     all)
-        printf 'RUNNING: UART baseline checks\n' >build/check-status.txt
+        printf 'RUNNING: UART, bridge and AES checks\n' >build/check-status.txt
         { date -u '+%Y-%m-%dT%H:%M:%SZ'; iverilog -V; verilator --version; yosys -V; } >build/tool_versions.txt 2>&1
         test_reference
         test_uart
+        test_bridge
+        test_aes
         lint_uart
+        lint_bridge
+        lint_aes
         synth_uart
-        echo 'PASS: all UART baseline checks' | tee build/check-status.txt
+        synth_aes
+        echo 'PASS: all UART, bridge and AES checks' | tee build/check-status.txt
         ;;
     *) echo "Unknown check mode: $check_mode" >&2; exit 2 ;;
 esac

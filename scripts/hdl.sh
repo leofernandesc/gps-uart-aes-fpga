@@ -3,8 +3,8 @@ set -euo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 check_mode="${1:-all}"
-case "$check_mode" in all|test|lint|synth|reference) ;; *)
-    echo "Usage: bash scripts/hdl.sh {all|test|lint|synth|reference}" >&2; exit 2;;
+case "$check_mode" in all|test|lint|synth|reference|bridge|aes) ;; *)
+    echo "Usage: bash scripts/hdl.sh {all|test|lint|synth|reference|bridge|aes}" >&2; exit 2;;
 esac
 
 hdl_runner="${HDL_RUNNER:-auto}"
@@ -19,6 +19,9 @@ if [[ "$hdl_runner" == auto ]]; then
 fi
 
 mkdir -p "$project_dir/build"
+case "$check_mode" in
+    all|test|aes) python3 "$project_dir/scripts/aes_vectors.py" ;;
+esac
 if [[ "$hdl_runner" == native ]]; then
     exec bash "$project_dir/scripts/run_checks.sh" "$check_mode"
 fi

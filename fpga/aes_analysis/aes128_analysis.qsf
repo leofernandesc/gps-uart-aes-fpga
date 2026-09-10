@@ -1,0 +1,32 @@
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M50DAF484C7G
+set_global_assignment -name TOP_LEVEL_ENTITY aes128_analysis_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ../../build/quartus_aes
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+set_global_assignment -name SEED 1
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/common/reset_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/aes/aes_sbox.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/aes/aes_sub_shift.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/aes/aes_mix_columns.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/aes/aes128_next_key.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/aes/aes128_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE aes128_analysis_top.sv
+set_global_assignment -name SDC_FILE aes128_analysis.sdc
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+set_location_assignment PIN_P11 -to clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk
+set_instance_assignment -name VIRTUAL_PIN ON -to arst
+set_instance_assignment -name VIRTUAL_PIN ON -to key_load
+set_instance_assignment -name VIRTUAL_PIN ON -to key_in[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to key_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to key_valid
+set_instance_assignment -name VIRTUAL_PIN ON -to key_done
+set_instance_assignment -name VIRTUAL_PIN ON -to start
+set_instance_assignment -name VIRTUAL_PIN ON -to block_in[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to block_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to busy
+set_instance_assignment -name VIRTUAL_PIN ON -to done
+set_instance_assignment -name VIRTUAL_PIN ON -to ciphertext[*]
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
