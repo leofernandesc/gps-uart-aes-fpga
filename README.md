@@ -125,6 +125,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 
 ## Documentos para continuar
 
+- [Orientações de continuidade, cronograma e revisão de pulls](AGENTS.md)
 - [Contrato e mudanças do UART](docs/uart-baseline.md)
 - [Interface, latência e limites do AES](docs/aes128.md)
 - [Validação AES e recursos pós-fit](docs/validacao-aes-2026-09-09.md)
