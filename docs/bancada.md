@@ -2,9 +2,9 @@
 
 Esta etapa física ainda não foi executada. A ponte sem cifra já foi simulada e
 compilada no Quartus Linux, com `.sof` e relatórios pós-fit disponíveis.
-O usuário confirmou **NEO-M8N-010** em 08/09/2026 e informou marcação VCC=3,3 V.
-O módulo está identificado; ainda será conferida a pinagem da placa de suporte
-(carrier), que não é determinada pelo código impresso no receptor u-blox.
+O módulo utilizado é o **NEO-M8N-010**, com alimentação indicada de 3,3 V.
+Ainda será conferida a pinagem da placa de suporte (carrier), que não é
+determinada pelo código impresso no receptor u-blox.
 
 ## Materiais
 
@@ -69,11 +69,10 @@ do PC. Erro de stop e overflow permanecem indicados nos LEDs até reset e
 invalidam a captura. Ela é suficiente para o primeiro teste de transporte;
 o comparador final do artigo também terá o controle de sessões compartilhado.
 
-## Referência do GPS confirmado
+## GPS utilizado
 
-A nomenclatura u-blox **NEO-M8N-0-10** aparece na
+A documentação oficial do u-blox para o **NEO-M8N-0-10** está na
 [nota oficial UBX-20013367](https://content.u-blox.com/sites/default/files/NEO-8Q-M8Q-M8N-M8P-M8T_PCN_%28UBX-20013367%29.pdf).
-O registro do projeto preserva também a grafia `NEO-M8N-010` informada pelo usuário.
 
 O [datasheet da família NEO-M8](https://content.u-blox.com/sites/default/files/NEO-M8-FW3_DataSheet_UBX-15031086.pdf),
 seções 4.2 e 8, informa VCC de 2,7 a 3,6 V para o M8N e UART padrão 9600/8N1

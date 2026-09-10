@@ -31,7 +31,6 @@ Parâmetros fixos do protótipo:
 | Entrada | Bytes opacos do GPS; não há parser NMEA no FPGA |
 | Saída | Fluxo cifrado capturado pelo PC |
 | Avaliação | Comparação do mesmo sistema com e sem AES-CTR |
-| Escopo excluído | ASIC, rede neural, segunda FPGA e comparação de arquiteturas AES |
 
 AES-CTR será tratado como mecanismo de **confidencialidade**. O protótipo não
 fornece autenticação, integridade, proteção contra replay, anti-spoofing GNSS
@@ -192,7 +191,7 @@ As tarefas podem ser distribuídas por frentes:
 
 | Frente | Responsabilidade |
 | --- | --- |
-| Coordenação/integração | manter escopo, resolver conflitos e aceitar entregas |
+| Coordenação/integração | manter o foco do projeto, resolver conflitos e aceitar entregas |
 | RTL criptográfico | CTR, adaptador por byte, sessões e handshakes |
 | Verificação | testbenches, oráculo independente, vetores e casos-limite |
 | FPGA/Quartus | tops, QSF/SDC, builds baseline/secure e extração de métricas |

@@ -15,8 +15,8 @@ ordem dos bytes, handshakes, prioridade de chave, reset e latência.
 UART v2, FIFO, ponte, seus testbenches e projeto Quartus de bancada mantêm os
 hashes do marco anterior. Makefile e executores foram ampliados para incluir
 AES; os manifestos históricos foram preservados, não atualizados retroativamente.
-O modelo GPS informado foi registrado como NEO-M8N-010; o conector da placa de
-suporte ainda será conferido antes da alimentação.
+O modelo utilizado é o NEO-M8N-010; o conector da placa de suporte ainda será
+conferido antes da alimentação.
 
 ## Verificação funcional
 

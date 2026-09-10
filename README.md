@@ -13,17 +13,16 @@ A placa ainda não está disponível: não houve programação, recepção de GP
 ou medição de bancada. CTR, controle de sessão e software de captura do PC
 continuam pendentes; a ponte atual ainda transmite sem criptografia.
 
-## Configuração e limites do trabalho
+## Configuração do protótipo
 
 | Item | Decisão |
 | --- | --- |
 | Placa | DE10-Lite, clock de 50 MHz |
-| GPS | NEO-M8N-010 informado pelo usuário; VCC marcado como 3,3 V; conferir conector da placa de suporte na bancada |
+| GPS | NEO-M8N-010; VCC de 3,3 V; conferir conector da placa de suporte na bancada |
 | Serial | 9600 baud, 8N1, sem seleção de taxa em execução |
 | Criptografia planejada | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
 | Avaliação | Mesmo sistema com e sem AES, dados reais e replay controlado |
-| Fora do escopo | ASIC, rede neural, segunda FPGA, comparação de baud rates e de várias arquiteturas AES |
 | Datas de trabalho | Submissão em 24/09; contingência e encerramento em 25/09; prazo externo até 30/09/2026 |
 
 AES-CTR fornecerá **confidencialidade**, não autenticação, proteção contra

@@ -134,11 +134,11 @@ Introdução, trabalhos relacionados e metodologia devem avançar durante a
 implementação. FPGA + AES já existem na literatura: a contribuição pretendida é
 a avaliação experimental reprodutível desta integração, não uma cifra nova.
 
-## Controle de escopo e riscos
+## Decisões e riscos
 
 - GPS é o objetivo principal. Uma falha física deve ser explicitada e discutida
   antes de trocar a aplicação por replay/PC; não declarar GPS real sem aquisição.
-- Módulo informado em 08/09: NEO-M8N-010. Conferir conector da placa de suporte,
+- Módulo utilizado: NEO-M8N-010. Conferir conector da placa de suporte,
   níveis lógicos e alimentação antes de energizar; a identificação do receptor
   não determina a ordem dos pinos de uma placa de terceiros.
 - Não acrescentar parser NMEA em RTL: o FPGA transportará bytes opacos.

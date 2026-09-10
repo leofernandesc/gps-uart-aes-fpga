@@ -22,9 +22,8 @@ de enviar a primeira mensagem.
 Fonte: manual da **Terasic**, edição de 05/06/2020, pp. 5, 24–27 e 30–31
 ([PDF hospedado pela Mouser](https://www.mouser.com/datasheet/2/598/DE10-Lite_User_Manual-1100361.pdf)).
 GPIO[0] e GPIO[1] são escolhas deste projeto entre os pinos livres do conector.
-Confirmar a orientação do pino 1 na placa. O receptor foi identificado pelo usuário
-como NEO-M8N-010; a pinagem do conector de sua placa de suporte ainda precisa ser
-conferida fisicamente.
+Confirmar a orientação do pino 1 na placa. O receptor é o NEO-M8N-010; a pinagem
+do conector de sua placa de suporte ainda precisa ser conferida fisicamente.
 
 Os sinais usam I/O de 3,3 V; KEY0 usa o padrão Schmitt Trigger da placa. A RX
 tem pull-up fraco para manter repouso quando desconectada. A força de saída de
