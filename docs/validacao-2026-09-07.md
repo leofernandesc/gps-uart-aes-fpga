@@ -1,5 +1,11 @@
 # Resultado da primeira etapa — 07/09/2026
 
+Registro histórico do commit `5d07790`. A etapa posterior está em
+[validação da ponte e Quartus](validacao-ponte-quartus-2026-09-07.md).
+O manifesto abaixo pertence àquele commit; os executores e o Makefile atuais
+também verificam a ponte e, portanto, têm novos hashes. Os resultados históricos
+e seu manifesto não foram substituídos.
+
 **Resultado:** revisão funcional do UART concluída. `make check` retornou código
 0 com `PASS: all UART baseline checks`. Esta é a baseline RTL v2, não uma
 validação física do sistema GPS + AES.

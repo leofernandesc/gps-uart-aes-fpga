@@ -1,5 +1,10 @@
 # UART revisado — contrato da baseline v2
 
+Este documento registra o marco original do UART isolado. A ponte e a FIFO
+foram acrescentadas depois, em módulos separados, conforme
+[o marco Quartus](validacao-ponte-quartus-2026-09-07.md). O contrato abaixo e as
+fontes do UART v2 permanecem válidos.
+
 ## O que mudou
 
 | UART anterior | UART revisado | Motivo |
