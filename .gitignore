@@ -11,6 +11,9 @@ __pycache__/
 /fpga/**/db/
 /fpga/**/incremental_db/
 /fpga/**/output_files/
+/fpga/**/*.qws
+/fpga/**/*.qdf
+/fpga/**/*.bak
 # Never version session keys, private GPS traces, or local device settings.
 .env
 .env.*
