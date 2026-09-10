@@ -10,13 +10,13 @@ páginas públicas do BTSym.
 
 ## Etapas e critérios
 
-| Data | Entrega | Critério de conclusão | Situação em 09/09 |
+| Data | Entrega | Critério de conclusão | Situação em 10/09 |
 | --- | --- | --- | --- |
 | 07–08 | UART revisado e referência preservada | Testes independentes, reset/erros e checagem estrutural passando | Parte RTL concluída; ver relatório |
 | 08–09 | AES-128 isolado | RTL próprio, vetores NIST e comparação com biblioteca independente | Concluído: regressão e Quartus isolado passando em 09/09 |
-| 09–10 | CTR isolado | Nonce/contador, vetores oficiais e casos-limite passando | Próxima implementação |
-| 11–12 | Adaptador por byte | Máscaras, pausas, backpressure, reset e comprimentos parciais verificados | Pendente |
-| 13 | Integração simulada | Replay NMEA → UART → FIFO → CTR → UART → decifragem no PC | Ponto de controle |
+| 09–10 | CTR isolado | Nonce/contador, vetores oficiais e casos-limite passando | Concluído em 10/09; 36 contextos e 73 máscaras corretas |
+| 11–12 | Adaptador por byte | Máscaras, pausas, backpressure, reset e comprimentos parciais verificados | Antecipado e concluído em 10/09; 60 fluxos conferidos |
+| 13 | Integração simulada | Replay NMEA → UART → FIFO → CTR → UART → decifragem no PC | Próxima implementação; ainda sem integração à UART |
 | 14–15 | Sessões e software do PC | Armamento, nonce, captura, decifragem e comparação byte a byte | Pendente |
 | 16 | Build integrado | Baseline sem AES e build com CTR compilados no Quartus | Pendente |
 | 17–18 | Validação física ou replay | Se a placa chegar: GPS real e demo; caso contrário, replay documentado | Pendente |
@@ -30,7 +30,7 @@ As janelas se sobrepõem porque bancada, escrita e RTL podem avançar em paralel
 não significam execução simultânea por uma única pessoa. O Quartus Linux já
 permite compilar sem a placa. A verificação física depende da chegada da
 DE10-Lite e da conferência dos materiais do laboratório; não é necessário
-aguardar isso para implementar e simular o CTR e suas interfaces.
+aguardar isso para integrar o CTR à UART, simular sessões e preparar o software.
 
 ## Marco antecipado em 07/09: preparação sem placa
 
@@ -60,14 +60,35 @@ Validação final em 09/09: 18 simulações passando, lint e estrutura aprovados
 recovery e removal internos positivos nos três modelos. Ver [relatório](validacao-aes-2026-09-09.md)
 para as fronteiras excluídas, ferramentas e reprodução.
 
+## Marco em 10/09: CTR e adaptador por byte
+
+- Gerador de máscaras com nonce de 96 bits, contador de 32 bits e bloqueio
+  depois do último contador permitido.
+- Adaptador com duas reservas de máscara, transferência por `valid/ready` e
+  descarte do contexto em cancelamento/reset.
+- 36 contextos do gerador, 73 máscaras e 60 fluxos de 1 a 4.097 bytes conferidos
+  com `cryptography`/OpenSSL, incluindo o exemplo oficial NIST.
+- 19.009 bytes efetivamente produzidos pelo RTL recuperados no PC; zero divergências.
+- 140 momentos de cancelamento/reset testados, seguidos de rearmamento.
+- `make check` concluído com código 0: 20 simulações, lint de quatro tops,
+  checagem estrutural e verificação independente no PC.
+
+Evidências e comandos no [relatório CTR](validacao-ctr-2026-09-10.md);
+interface documentada em [CTR](ctr.md). O teste do PC lê arquivos da simulação;
+configuração e captura de portas seriais ainda serão implementadas.
+
+Próximo passo: reter a resposta de leitura da FIFO até o aceite do CTR, conectá-lo
+ao TX e testar o caminho serial com replay. Depois, acrescentar início em `$`,
+limite de N bytes, invalidação por erros e controle de nonce por sessão no PC.
+As etapas de bancada, submissão e contingência mantêm as datas previstas.
+
 ## Plano operacional até 25/09
 
-1. **09–10/09 — CTR:** usar `nonce[95:0] || counter[31:0]`, fixar a ordem dos
-   bytes, comparar com biblioteca independente e cobrir vetores CTR oficiais,
-   contador final e tentativa de ultrapassagem.
-2. **11–12/09 — fluxo por byte:** implementar duas reservas de máscara de 16 bytes,
-   respeitar backpressure e testar pausas, reset, nova chave e comprimentos 1, 15,
-   16, 17 e longos. Nenhuma máscara pode ser consumida sem aceite do próximo estágio.
+1. **09–10/09 — CTR:** concluído em 10/09. Ordem dos bytes, nonce/contador,
+   vetores oficiais, contador final e tentativa de ultrapassagem verificados.
+2. **11–12/09 — fluxo por byte:** antecipado para 10/09. Duas reservas de máscara,
+   backpressure, reset, nova chave e comprimentos parciais/longos verificados.
+   A janela liberada pode ser usada para antecipar a integração serial.
 3. **13–15/09 — sessões e PC:** definir armamento, nonce por sessão, limite de
    bytes, invalidação por erro/reset e formato de controle separado do ciphertext.
    O PC deve configurar, capturar e decifrar por biblioteca externa.
@@ -93,14 +114,15 @@ Referências de implementação:
 [FIPS 197 — AES](https://csrc.nist.gov/pubs/fips/197/final) e
 [SP 800-38A — modos de operação](https://csrc.nist.gov/pubs/sp/800/38/a/final).
 
-## Contrato de sistema a implementar
+## Contrato do sistema
 
 - FIFO síncrona de 1.024 bytes na entrada; high-water mark e overflow explícitos
   já implementados na ponte, a conectar ao futuro controle de sessões.
 - AES-CTR com nonce de 96 bits e contador de 32 bits; codificação dos blocos
-  documentada e testada antes de conectar os bytes da UART.
+  documentada e testada em 10/09; conexão à UART pendente.
 - Duas reservas de máscara de 16 bytes; consumir máscara só quando o byte for
-  efetivamente aceito no próximo estágio. Não esperar 16 bytes de GPS para cifrar.
+  efetivamente aceito no próximo estágio. Adaptador validado em 10/09;
+  não espera 16 bytes de GPS para cifrar.
 - Sessões limitadas a N bytes, configuradas pelo PC antes da captura; aquisição
   começa no próximo `$` após o armamento. Controle não se mistura ao ciphertext.
 - Nonce novo para cada sessão com a mesma chave, inclusive após reset; impedir
@@ -143,6 +165,6 @@ a avaliação experimental reprodutível desta integração, não uma cifra nova
   não determina a ordem dos pinos de uma placa de terceiros.
 - Não acrescentar parser NMEA em RTL: o FPGA transportará bytes opacos.
 - Não acrescentar ASIC, rede neural, segunda FPGA ou uma segunda arquitetura AES.
-- AES isolado validado antes de 11/09. O próximo ponto de controle é 14/09:
-  CTR/sessões simulados ponta a ponta. Se houver atraso, revisar as janelas de
-  bancada com o orientador sem acrescentar funcionalidades.
+- AES isolado validado em 09/09; CTR e adaptador em 10/09. Os próximos pontos
+  de controle são o caminho serial em 13/09 e sessões/software em 14–15/09.
+  Se houver atraso, revisar as janelas de bancada com o orientador.

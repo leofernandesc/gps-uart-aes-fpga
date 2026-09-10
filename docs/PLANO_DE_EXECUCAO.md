@@ -36,7 +36,7 @@ AES-CTR será tratado como mecanismo de **confidencialidade**. O protótipo não
 fornece autenticação, integridade, proteção contra replay, anti-spoofing GNSS
 ou resistência a canais laterais.
 
-## Estado atual — 09/09/2026
+## Estado atual — 10/09/2026
 
 Concluído:
 
@@ -47,11 +47,16 @@ Concluído:
 - núcleo AES-128 iterativo isolado, com onze chaves de rodada armazenadas;
 - 866 vetores AES conferidos por uma biblioteca independente, incluindo 284
   casos públicos do NIST;
-- lint, checagem estrutural e análise isolada de recursos/timing do AES.
+- lint, checagem estrutural e análise isolada de recursos/timing do AES;
+- CTR com controle de nonce/contador, duas reservas de máscara e interface por byte;
+- 60 fluxos CTR e 19.009 bytes conferidos por biblioteca independente no PC;
+- regressão com 20 simulações, lint e estrutura passando em 10/09.
+
+O [cronograma](cronograma.md) registra os marcos e o próximo passo. Resultados
+do CTR em [validação de 10/09](validacao-ctr-2026-09-10.md).
 
 Pendente:
 
-- CTR por byte e controle de nonce/contador;
 - controle de sessões e software de configuração/captura do PC;
 - integração final com a FIFO e a UART;
 - build integrado com e sem criptografia;
@@ -66,8 +71,8 @@ para correção pequena, problema do portal, reenvio e confirmação final.
 
 | Período | Frente | Entrega verificável |
 | --- | --- | --- |
-| 09–10/09 | CTR isolado | RTL do CTR, nonce/contador definidos e vetores oficiais passando |
-| 11–12/09 | Adaptador por byte | Máscaras de 16 bytes, backpressure, pausas, reset e blocos parciais testados |
+| 09–10/09 | CTR isolado | Concluído em 10/09: nonce/contador e vetores conferidos |
+| 11–12/09 | Adaptador por byte | Antecipado para 10/09: máscaras, backpressure, reset e blocos parciais testados |
 | 13/09 | Integração simulada | Replay NMEA atravessa UART, FIFO, CTR e decifragem no PC |
 | 14–15/09 | Sessões e PC | Armamento, nonce por sessão, limite de bytes, captura e comparação byte a byte |
 | 16/09 | Quartus integrado | Baseline sem AES e sistema com CTR compilados com restrições equivalentes |
@@ -84,6 +89,8 @@ progressivamente desde o início. Não deixar toda a redação para os dias 23�
 ## Etapas técnicas e critérios de aceite
 
 ### 1. CTR isolado — 09–10/09
+
+Concluído em 10/09. Interface em [docs/ctr.md](ctr.md).
 
 Usar o AES já validado para gerar a máscara:
 
@@ -103,6 +110,9 @@ Critérios:
 
 ### 2. Adaptador por byte — 11–12/09
 
+Concluído antecipadamente em 10/09. A conexão à FIFO e à UART é a próxima tarefa;
+o software atual do PC verifica arquivos da simulação, sem abrir portas seriais.
+
 O AES opera em blocos de 128 bits, mas a UART entrega um byte por vez. O
 adaptador deve manter uma reserva de máscara e consumir cada byte somente quando
 o estágio seguinte aceitar a transferência.
@@ -113,8 +123,11 @@ Critérios:
   documentado;
 - pausas do TX não causam perda nem avanço indevido da máscara;
 - comprimentos de 1, 15, 16, 17 e sequências longas são decifrados corretamente;
-- reset, troca de chave e rearmamento invalidam o estado antigo;
-- o baseline sem AES usa a mesma fronteira de medição e o mesmo controle.
+- reset, troca de chave e rearmamento invalidam o estado antigo.
+
+Na integração, a resposta síncrona da FIFO deve ser retida até o handshake do
+CTR; a pausa do TX não pode descartar esse byte. A comparação com o baseline
+deve preservar a mesma fronteira de medição e o mesmo controle, conforme a etapa 4.
 
 ### 3. Sessões e software do PC — 13–15/09
 
@@ -222,6 +235,7 @@ Executar na raiz do repositório:
 
 ```bash
 make aes       # AES isolado
+make ctr       # CTR por byte e verificação dos arquivos RTL no PC
 make check     # regressão completa disponível
 make fpga      # ponte para DE10-Lite, sem exigir a placa
 make aes-fpga  # análise isolada do AES, sem gerar SOF

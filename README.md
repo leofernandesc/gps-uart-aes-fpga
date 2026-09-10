@@ -3,15 +3,20 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 09/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX e núcleo
-AES-128 isolado implementados. O AES passou pelos 866 vetores de comparação
-independente, incluindo 284 casos oficiais NIST; ver [contrato do núcleo](docs/aes128.md).
+**Estado em 10/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
+vetores de comparação independente, incluindo 284 casos oficiais NIST;
+ver [contrato do núcleo](docs/aes128.md).
 A ponte já tem `.sof` para a DE10-Lite; o AES tem projeto separado de análise.
 A regressão completa e o fit/timing interno do AES passaram em 09/09;
 ver [resultados e limites deste marco](docs/validacao-aes-2026-09-09.md).
+O CTR passou em 60 fluxos, com 19.009 bytes comparados e recuperados no PC por
+biblioteca independente. A regressão agora inclui 20 simulações; ver
+[validação do CTR](docs/validacao-ctr-2026-09-10.md).
 A placa ainda não está disponível: não houve programação, recepção de GPS real
-ou medição de bancada. CTR, controle de sessão e software de captura do PC
-continuam pendentes; a ponte atual ainda transmite sem criptografia.
+ou medição de bancada. A integração do CTR à ponte, o controle de sessões e o
+software de configuração/captura serial do PC continuam pendentes. O `.sof`
+atual ainda corresponde à ponte sem criptografia.
 
 ## Configuração do protótipo
 
@@ -20,7 +25,7 @@ continuam pendentes; a ponte atual ainda transmite sem criptografia.
 | Placa | DE10-Lite, clock de 50 MHz |
 | GPS | NEO-M8N-010; VCC de 3,3 V; conferir conector da placa de suporte na bancada |
 | Serial | 9600 baud, 8N1, sem seleção de taxa em execução |
-| Criptografia planejada | AES-128-CTR, núcleo RTL próprio e iterativo |
+| Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
 | Avaliação | Mesmo sistema com e sem AES, dados reais e replay controlado |
 | Datas de trabalho | Submissão em 24/09; contingência e encerramento em 25/09; prazo externo até 30/09/2026 |
@@ -37,9 +42,10 @@ No Linux, a partir deste diretório:
 make check
 ```
 
-Executa 18 simulações: quatro testes históricos, doze configurações de UART/FIFO/
-ponte e dois testbenches AES. Inclui lint rigoroso dos três tops e checagem
-estrutural do UART e do AES.
+Executa 20 simulações: quatro testes históricos, doze configurações de UART/FIFO/
+ponte, dois testbenches AES e dois de CTR. Inclui lint rigoroso de quatro tops,
+checagem estrutural do UART, AES e CTR e verificação no PC dos bytes produzidos
+pelo testbench CTR.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -48,8 +54,8 @@ usa a imagem Docker **já instalada** `isaiassh/unic-cass-tools:1.0.7`.
 Não baixa dependências nem usa a rede. O container recebe as fontes somente para
 leitura e pode escrever apenas no diretório de resultados e no seu `/tmp`.
 É necessário ter acesso autorizado ao Docker.
-O gerador dos vetores AES também requer Python 3 e `cryptography` no host
-(já disponíveis neste ambiente). Ele usa uma biblioteca independente do RTL;
+Os geradores dos vetores AES/CTR também requerem Python 3 e `cryptography` no host
+(já disponíveis neste ambiente). Usam uma biblioteca independente do RTL;
 as referências públicas NIST estão incluídas no repositório.
 
 ```bash
@@ -61,6 +67,7 @@ make synth
 make reference
 make bridge  # Apenas os novos testes de FIFO/ponte e lint do top da placa
 make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
+make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 ```
 
 A síntese Yosys é apenas uma verificação estrutural do RTL. **Não é fluxo ASIC**
@@ -108,12 +115,14 @@ rtl/uart/uart_tx.sv          TX com duração completa de cada bit
 rtl/uart/uart_top.sv         interface de bytes e configuração de produção
 rtl/bridge/uart_bridge.sv    ponte sem cifra, flags persistentes de erro
 rtl/aes/                    AES-128 iterativo e transformações de rodada
+rtl/ctr/                    gerador de máscaras e adaptador CTR por byte
 fpga/de10_lite/              top da placa, projeto Quartus, QSF e SDC
 fpga/aes_analysis/           análise isolada do AES, sem pinagem de bancada
 tb/                         fontes seriais e verificadores independentes
 scripts/                    execução reproduzível dos testes e checagens
 reference/uart-v1/           cópia imutável do UART anterior e checksums
 reference/aes-cavp/          vetores públicos oficiais NIST e sua procedência
+reference/ctr-sp800-38a/     exemplo público AES-128-CTR do NIST
 docs/                       contratos, cronograma, evidências e checklist de bancada
 build/                      saídas geradas, ignoradas pelo Git
 ```
@@ -129,13 +138,17 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Contrato e mudanças do UART](docs/uart-baseline.md)
 - [Interface, latência e limites do AES](docs/aes128.md)
 - [Validação AES e recursos pós-fit](docs/validacao-aes-2026-09-09.md)
+- [Interface e funcionamento do CTR](docs/ctr.md)
+- [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)
+- [Plano de execução e colaboração](docs/PLANO_DE_EXECUCAO.md)
 - [Primeira sessão de bancada e materiais](docs/bancada.md)
 
 A apresentação para o orientador permanece em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html`.
 
-Próximo bloco de implementação: CTR por byte, com nonce/contador, consumo de
-máscara sob backpressure e testes independentes; depois, integração UART e
-controle de sessões. Essas etapas também podem avançar sem a placa.
+Próximo bloco: conectar FIFO → CTR → UART TX com retenção de bytes sob
+backpressure, validar replay serial e implementar o controle de sessões.
+O software de configuração/captura e os builds integrados também podem
+avançar sem a placa.

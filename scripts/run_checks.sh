@@ -8,13 +8,14 @@ check_mode="${1:-all}"
 rtl=(rtl/common/reset_sync.sv rtl/uart/uart_tx.sv rtl/uart/uart_rx.sv rtl/uart/uart_top.sv)
 bridge_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_bridge.sv fpga/de10_lite/de10_lite_uart_top.sv)
 aes_rtl=(rtl/aes/aes_sbox.sv rtl/aes/aes_sub_shift.sv rtl/aes/aes_mix_columns.sv rtl/aes/aes128_next_key.sv rtl/aes/aes128_core.sv)
+ctr_rtl=(rtl/ctr/aes128_ctr_mask.sv rtl/ctr/aes128_ctr_stream.sv)
 
 run_test() {
     local test_name="$1"
     local test_label="$2"
     shift 2
     iverilog -g2012 -Wall -s "$test_name" "$@" \
-        -o "build/$test_label.vvp" "${rtl[@]}" "${bridge_rtl[@]}" "${aes_rtl[@]}" "tb/$test_name.sv" 2>&1 | tee "build/$test_label.compile.log"
+        -o "build/$test_label.vvp" "${rtl[@]}" "${bridge_rtl[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" "tb/$test_name.sv" 2>&1 | tee "build/$test_label.compile.log"
     vvp -n "build/$test_label.vvp" | tee "build/$test_label.log"
 }
 
@@ -92,26 +93,47 @@ test_reference() {
     done
 }
 
+test_ctr() {
+    run_test aes128_ctr_mask_tb aes128_ctr_mask
+    run_test aes128_ctr_stream_tb aes128_ctr_stream
+}
+
+lint_ctr() {
+    mkdir -p build/ctr
+    verilator --lint-only --Wall --top-module aes128_ctr_stream \
+        "${aes_rtl[@]}" "${ctr_rtl[@]}" 2>&1 | tee build/ctr/lint.log
+}
+
+synth_ctr() {
+    mkdir -p build/ctr
+    yosys -q -Q -T -l build/ctr/synth.log -p \
+        "read_verilog -sv ${aes_rtl[*]} ${ctr_rtl[*]}; hierarchy -check -top aes128_ctr_stream; proc; opt; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/ctr/aes128_ctr_stream.json"
+    echo 'PASS CTR structural elaboration: no check problems or inferred latches (not FPGA mapping)'
+}
+
 case "$check_mode" in
-    test) test_uart; test_bridge; test_aes ;;
-    lint) mkdir -p build/aes; lint_uart; lint_bridge; lint_aes ;;
+    test) test_uart; test_bridge; test_aes; test_ctr ;;
+    lint) mkdir -p build/aes; lint_uart; lint_bridge; lint_aes; lint_ctr ;;
     bridge) test_bridge; lint_bridge ;;
     aes) test_aes; lint_aes; synth_aes ;;
-    synth) synth_uart; synth_aes ;;
+    ctr) test_ctr; lint_ctr; synth_ctr ;;
+    synth) synth_uart; synth_aes; synth_ctr ;;
     reference) test_reference ;;
     all)
-        printf 'RUNNING: UART, bridge and AES checks\n' >build/check-status.txt
         { date -u '+%Y-%m-%dT%H:%M:%SZ'; iverilog -V; verilator --version; yosys -V; } >build/tool_versions.txt 2>&1
         test_reference
         test_uart
         test_bridge
         test_aes
+        test_ctr
         lint_uart
         lint_bridge
         lint_aes
+        lint_ctr
         synth_uart
         synth_aes
-        echo 'PASS: all UART, bridge and AES checks' | tee build/check-status.txt
+        synth_ctr
+        echo 'PASS: all UART, bridge, AES and CTR HDL checks (PC verification follows)'
         ;;
     *) echo "Unknown check mode: $check_mode" >&2; exit 2 ;;
 esac

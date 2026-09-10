@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes fpga aes-fpga
+.PHONY: check test lint synth reference bridge aes ctr fpga aes-fpga
 
 # HDL_RUNNER=auto (default), native, or docker.
 check:
@@ -25,6 +25,9 @@ fpga:
 
 aes:
 	bash scripts/hdl.sh aes
+
+ctr:
+	bash scripts/hdl.sh ctr
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:
