@@ -1,5 +1,10 @@
 # Primeira sessão de bancada
 
+O primeiro ensaio previsto para 15/09 é a
+[UART isolada com osciloscópio e jumper](../fpga/de10_lite/uart_scope/README.md):
+`make uart-fpga`, padrão 0x55 a cada 100 ms. Esse teste não precisa de USB–UART.
+O roteiro abaixo trata da etapa seguinte, com GPS e captura no PC.
+
 Esta etapa física ainda não foi executada. A ponte sem cifra já foi simulada e
 compilada no Quartus Linux, com `.sof` e relatórios pós-fit disponíveis.
 O módulo utilizado é o **NEO-M8N-010**, com alimentação indicada de 3,3 V.
@@ -12,14 +17,17 @@ determinada pelo código impresso no receptor u-blox.
 | --- | --- | --- |
 | DE10-Lite + cabo USB | FPGA e programação USB-Blaster | Placa enumerada e identificada no Quartus |
 | GPS NEO-M8N-010 + antena correspondente, disponíveis | Fonte real dos dados | Conector do carrier, VCC e tensão da saída UART |
-| Dois adaptadores USB–UART | Saída FPGA e referência crua/configuração | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
+| Dois canais de captura serial: USB–UART ou ponte com microcontrolador validada | Saída FPGA e referência crua; TX disponível para configuração local | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
+| Osciloscópio e pontas | Níveis e duração dos bits; teste UART isolado | Terra em GND, fator da ponta correto e instrumento acessível na bancada |
 | Jumpers e conexões firmes, disponíveis | Sinais e terra comum | Continuidade, identificação dos pinos e ausência de curto |
 | Multímetro; fonte 3,3 V regulada com limite de corrente | Conferência inicial | Um único suprimento para cada dispositivo; não unir fontes |
 | PC com Quartus e suporte MAX 10 | Compilação e programação | Quartus Linux já compila; USB-Blaster e permissões/driver dependem da placa |
 | Analisador lógico/osciloscópio, se disponível | Diagnóstico de sinais/latência | Entradas compatíveis com os níveis da montagem |
 
-USB-Blaster não fornece uma porta serial de dados para o experimento. Os
-adaptadores USB–UART são componentes separados. Não usar RS-232 de tensões
+USB-Blaster não fornece uma porta serial de dados para o experimento. A captura
+pode usar adaptadores USB–UART ou um microcontrolador com duas entradas UART e
+transferência USB validada: preservar bytes binários, ordem e identificação dos
+canais, sem conversão de texto ou perdas. Não usar RS-232 de tensões
 positivas/negativas, UART de 5 V ou alimentação direta de bateria no GPIO/GPS.
 
 ## Ordem de execução
@@ -27,8 +35,9 @@ positivas/negativas, UART de 5 V ou alimentação direta de bateria no GPIO/GPS.
 1. **Sem conectar o GPS:** abrir o Quartus, conferir dispositivo da DE10-Lite e
    detecção do USB-Blaster no Programmer. Guardar versão do Quartus e captura da
    identificação. Não é necessário apagar ou sobrescrever memória não volátil.
-2. Identificar os dois adaptadores e suas portas COM, verificar datasheet/níveis
-   reais de TX/RX e executar loopback de cada adaptador no PC, em 9600 8N1.
+2. Identificar os dois canais de captura e suas portas no PC, verificar os níveis
+   reais de TX/RX e executar loopback de cada canal, em 9600 8N1. Se for usada
+   uma ponte com microcontrolador, verificar também captura simultânea e binária.
 3. Conferir pinagem do carrier NEO-M8N e sua alimentação. Com terra comum e
    conexão adequada, capturar o GPS diretamente no PC antes de envolver a FPGA.
 4. Guardar alguns minutos de bytes crus e confirmar presença de sentenças NMEA.
@@ -41,17 +50,17 @@ positivas/negativas, UART de 5 V ou alimentação direta de bateria no GPIO/GPS.
    criptografia. Overflow e erro de stop precisam ser observáveis.
 
 **Primeiro ponto de validação:** Quartus reconhecendo a DE10-Lite via USB-Blaster.
-Confirmado isso, seguir para os adaptadores e a captura direta. Não energizar um
+Confirmado isso, seguir para os canais seriais e a captura direta. Não energizar um
 carrier sem confirmar seu modelo/pinagem apenas para cumprir o cronograma.
 
 ## Ligações lógicas previstas para o sistema completo
 
 ```text
 GPS TX ────────────┬──> FPGA / GPS RX
-                   └──> adaptador B / RX (referência crua no PC)
+                   └──> canal B / RX (referência crua no PC)
 
-FPGA / UART TX ────────> adaptador A / RX (dados para o PC)
-adaptador B / TX ──────> FPGA / UART RX (configuração local de sessão)
+FPGA / UART TX ────────> canal A / RX (dados para o PC)
+canal B / TX ──────────> FPGA / UART RX (configuração local de sessão)
 terras compatíveis ────> GND comum
 ```
 
@@ -59,8 +68,8 @@ Os números dos pinos do carrier M8 dependem da conferência do conector físico
 do primeiro teste já escolhe GPIO[0]/JP1-1 para entrada e GPIO[1]/JP1-2 para
 saída, conforme o manual da DE10-Lite. Conferir a orientação do conector na
 placa antes de ligar. A entrada de configuração só entrará no build de sessões.
-Não ligar a saída TX de um adaptador ao TX do GPS. Manter TX não utilizado do
-adaptador A e RX do GPS desconectados nesta configuração, salvo necessidade
+Não ligar a saída TX de um canal de captura ao TX do GPS. Manter TX não utilizado
+do canal A e RX do GPS desconectados nesta configuração, salvo necessidade
 explicitamente verificada. Não alimentar o GPS simultaneamente pela placa,
 adaptador e fonte de bancada.
 

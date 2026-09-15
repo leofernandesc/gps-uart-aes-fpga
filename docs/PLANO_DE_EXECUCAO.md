@@ -1,265 +1,214 @@
 # Plano de execução e colaboração
 
-Este documento é o guia de trabalho do projeto do artigo. Ele serve para que
-qualquer colaborador saiba o que precisa fazer, qual resultado deve entregar e
-como verificar se a tarefa está concluída.
+Atualizado em 15/09/2026. O [cronograma](cronograma.md) registra o andamento e
+as evidências; este plano detalha as entregas e como aceitá-las.
+A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
+materiais e datas em quatro telas.
 
-## Objetivo
+## Objetivo e desenho experimental
 
-Implementar e avaliar, em FPGA, uma arquitetura para receber dados de um
-receptor **NEO-M8N-010** via UART, aplicar AES-128-CTR em hardware e enviar o
-fluxo cifrado ao PC:
+Receber dados reais do GPS **NEO-M8N-010**, aplicar AES-128-CTR em hardware e
+comparar o custo da cifra em **MAX 10 e Cyclone IV**, com o mesmo RTL.
 
-```text
-GPS NEO-M8N-010
-       │ TX / UART 9600 8N1
-       ▼
-UART RX → FIFO 1024 bytes → controle de sessão → AES-128-CTR → UART TX → PC
-                                                        │
-                                                        ▼
-                                           decifragem e análise no PC
-```
+| Plataforma | Sem cifra | Com cifra | Clock |
+| --- | --- | --- | --- |
+| DE10-Lite / MAX 10 | UART + FIFO + controle | Mesmo sistema + AES-CTR | 50 MHz |
+| Cyclone IV | UART + FIFO + controle | Mesmo sistema + AES-CTR | Oscilador da placa a confirmar |
 
-Parâmetros fixos do protótipo:
+UART fixa em 9600/8N1, FIFO de 1.024 bytes, AES iterativo próprio e decifragem
+independente no PC. AES-CTR oferece confidencialidade, sem autenticação.
+A [arquitetura detalhada](arquitetura.md) especifica o fluxo e as fronteiras.
 
-| Item | Definição |
-| --- | --- |
-| FPGA | DE10-Lite, MAX 10, clock de 50 MHz |
-| GPS | NEO-M8N-010; VCC marcado como 3,3 V |
-| UART | 9600 baud, 8N1 |
-| Cifra | AES-128-CTR, núcleo iterativo próprio |
-| Entrada | Bytes opacos do GPS; não há parser NMEA no FPGA |
-| Saída | Fluxo cifrado capturado pelo PC |
-| Avaliação | Comparação do mesmo sistema com e sem AES-CTR |
+As duas placas permanecem na `main`. O código de UART/FIFO/AES/CTR é único;
+cada alvo tem wrapper, QSF/SDC e saídas próprias. Usar branches temporárias para
+suporte e integração. Os quatro builds finais ainda serão implementados; o
+teste UART e a ponte atual são preparatórios.
 
-AES-CTR será tratado como mecanismo de **confidencialidade**. O protótipo não
-fornece autenticação, integridade, proteção contra replay, anti-spoofing GNSS
-ou resistência a canais laterais.
+## Estado atual
 
-## Estado atual — 10/09/2026
+- UART v2, FIFO e ponte sem cifra implementados; ponte compilada para MAX 10.
+- AES conferido em 866 vetores e analisado isoladamente no Quartus.
+- CTR por byte conferido em 60 fluxos / 19.009 bytes por biblioteca independente.
+- UART autônoma para osciloscópio implementada, simulada e compilada.
+- Regressão completa: 22 simulações, lint, estrutura e comparação CTR aprovados.
+- Sem evidência física registrada; integração, sessões/PC e quatro builds pendentes.
+- Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
 
-Concluído:
+Relatórios: [AES](validacao-aes-2026-09-09.md),
+[CTR](validacao-ctr-2026-09-10.md) e [revisão de 14/09](revisao-2026-09-14.md).
 
-- UART v2 revisado, com clock de 50 MHz, 9600 baud e 8N1;
-- FIFO síncrona de 1.024 bytes com ocupação, high-water mark e overflow;
-- ponte UART RX → FIFO → UART TX, ainda sem criptografia;
-- projeto Quartus da ponte para a DE10-Lite e `.sof` gerado;
-- núcleo AES-128 iterativo isolado, com onze chaves de rodada armazenadas;
-- 866 vetores AES conferidos por uma biblioteca independente, incluindo 284
-  casos públicos do NIST;
-- lint, checagem estrutural e análise isolada de recursos/timing do AES;
-- CTR com controle de nonce/contador, duas reservas de máscara e interface por byte;
-- 60 fluxos CTR e 19.009 bytes conferidos por biblioteca independente no PC;
-- regressão com 20 simulações, lint e estrutura passando em 10/09.
+## Datas e entregas
 
-O [cronograma](cronograma.md) registra os marcos e o próximo passo. Resultados
-do CTR em [validação de 10/09](validacao-ctr-2026-09-10.md).
+**Submissão em 24/09. Contingência e encerramento em 25/09.**
 
-Pendente:
-
-- controle de sessões e software de configuração/captura do PC;
-- integração final com a FIFO e a UART;
-- build integrado com e sem criptografia;
-- validação física na DE10-Lite e no GPS, caso a placa esteja disponível;
-- experimentos, gráficos, redação, submissão e registro do comprovante.
-
-## Cronograma obrigatório
-
-A execução, a escrita, a submissão e a contingência devem terminar em **25/09**.
-A versão principal deve ser enviada em 24/09; o dia 25/09 é reservado apenas
-para correção pequena, problema do portal, reenvio e confirmação final.
-
-| Período | Frente | Entrega verificável |
+| Data | Frente | Entrega verificável |
 | --- | --- | --- |
-| 09–10/09 | CTR isolado | Concluído em 10/09: nonce/contador e vetores conferidos |
-| 11–12/09 | Adaptador por byte | Antecipado para 10/09: máscaras, backpressure, reset e blocos parciais testados |
-| 13/09 | Integração simulada | Replay NMEA atravessa UART, FIFO, CTR e decifragem no PC |
-| 14–15/09 | Sessões e PC | Armamento, nonce por sessão, limite de bytes, captura e comparação byte a byte |
-| 16/09 | Quartus integrado | Baseline sem AES e sistema com CTR compilados com restrições equivalentes |
-| 17–18/09 | Bancada ou replay | GPS real validado se houver placa; caso contrário, replay controlado documentado |
-| 19–20/09 | Experimentos | Três repetições por build e métricas armazenadas em arquivos rastreáveis |
-| 21–22/09 | Resultados | Tabelas, gráficos e análise de desempenho concluídos |
-| 23/09 | Revisão | Manuscrito completo revisado pelo orientador e comentários incorporados |
-| 24/09 | Submissão | Arquivo final enviado e comprovante salvo |
-| 25/09 | Contingência | Reenvio/correção final e encerramento do projeto |
+| 15/09 | Bancada UART / placa Cyclone IV | TX medido; RX por jumper; placa e clock identificados |
+| 16–17/09 | Integração / PC | Fluxo UART–FIFO–CTR–TX e sessões; replay recuperado corretamente |
+| 18/09 | FPGA / Quartus | Quatro builds, relatórios de recursos e auditoria temporal |
+| 19–20/09 | Experimentos | Três replays por configuração e ensaio GPS contínuo |
+| 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
+| 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
+| 24/09 | Submissão | Arquivos enviados e comprovante salvo |
+| 25/09 | Contingência | Correções de envio/reenvio e confirmação final |
 
-A introdução, os trabalhos relacionados e a metodologia devem ser escritos
-progressivamente desde o início. Não deixar toda a redação para os dias 23–25.
+Introdução, trabalhos relacionados e metodologia avançam junto da implementação.
+A integração prevista inicialmente para 13/09 foi reagendada; não está concluída.
+Definir colaboradores para RTL, PC e bancada em paralelo. Registrar atrasos e
+ajustar as dependências no cronograma sem deslocar entregas necessárias após 25/09.
 
-## Etapas técnicas e critérios de aceite
+## 1. UART isolada e identificação da segunda placa — 15/09
 
-### 1. CTR isolado — 09–10/09
+Usar `make uart-fpga` e o [guia da UART de bancada](../fpga/de10_lite/uart_scope/README.md).
+A FPGA gera 0x55 a cada 100 ms; observar TX no osciloscópio. Um jumper externo
+TX → RX permite verificar recepção nos LEDs.
 
-Concluído em 10/09. Interface em [docs/ctr.md](ctr.md).
+Critérios de aceite:
 
-Usar o AES já validado para gerar a máscara:
+- bit de aproximadamente 104,16 µs e quadro 8N1 de 1,0416 ms;
+- níveis elétricos e ordem dos bits conferidos; captura com escalas;
+- RX mostra 0x55 após reset/jumper, LED 8 aceso e LED 9 apagado;
+- registrar versão, SOF, montagem e resultado; completar com fonte independente
+  para testar RX assíncrono.
 
-```text
-mask = AES-128(key, nonce[95:0] || counter[31:0])
-ciphertext_byte = plaintext_byte XOR mask_byte
-```
+Não é necessário USB–UART para observar o TX desse gerador. Para comparação de
+fluxos no PC, prever dois canais de captura serial: saída da FPGA e referência
+GPS; podem usar USB–UART ou microcontrolador com ponte validada.
 
-Critérios:
+Na Cyclone IV, preencher [dados do alvo](../fpga/cyclone4/README.md), criar
+wrapper/QSF/SDC somente com a identificação confirmada e repetir a verificação
+UART. A compilação de exemplo usada na instalação do pacote não define essa placa.
 
-- ordem dos bytes documentada no RTL e no software;
-- comparação com uma biblioteca independente para comprimentos de 1 a vários
-  blocos;
-- teste de contador inicial, incremento e último contador permitido;
-- bloqueio explícito quando o contador não puder mais ser incrementado;
-- nenhum nonce ou chave privada gravado no repositório.
+## 2. Integração do fluxo por byte — 16–17/09
 
-### 2. Adaptador por byte — 11–12/09
+Conectar UART RX → FIFO → retenção de byte → controle → AES-CTR → UART TX.
 
-Concluído antecipadamente em 10/09. A conexão à FIFO e à UART é a próxima tarefa;
-o software atual do PC verifica arquivos da simulação, sem abrir portas seriais.
+- Reservar espaço antes de solicitar a leitura síncrona da FIFO.
+- Reter `rd_data` e flag válida até o handshake; não perder a resposta de um ciclo.
+- Consumir máscara apenas quando o TX/estágio seguinte aceitar o byte.
+- Garantir reset/abort sem bytes antigos, incluindo um TX já em andamento.
+- Testar comprimentos 1, 15, 16, 17, 255 e superiores à profundidade da FIFO,
+  pausas, overflow, stop inválido e cancelamento.
+- Usar uma fonte/decodificador serial independente; decifrar a saída efetiva do
+  testbench no PC e comparar byte a byte.
 
-O AES opera em blocos de 128 bits, mas a UART entrega um byte por vez. O
-adaptador deve manter uma reserva de máscara e consumir cada byte somente quando
-o estágio seguinte aceitar a transferência.
+Aceite: regressão completa aprovada e replay serial recuperado sem divergências.
+O AES isolado, CTR isolado e ponte separados não comprovam essa integração.
 
-Critérios:
+## 3. Sessões e software de PC — 16–17/09
 
-- entradas e saídas com `valid/ready` ou contrato equivalente claramente
-  documentado;
-- pausas do TX não causam perda nem avanço indevido da máscara;
-- comprimentos de 1, 15, 16, 17 e sequências longas são decifrados corretamente;
-- reset, troca de chave e rearmamento invalidam o estado antigo.
+Definir protocolo local de configuração separado do fluxo cifrado. Cada sessão
+tem chave de teste, nonce, contador inicial e quantidade N de bytes.
 
-Na integração, a resposta síncrona da FIFO deve ser retida até o handshake do
-CTR; a pausa do TX não pode descartar esse byte. A comparação com o baseline
-deve preservar a mesma fronteira de medição e o mesmo controle, conforme a etapa 4.
+- Armar antes da captura e iniciar no próximo `$`; contar exatamente N bytes.
+- Gerar/registrar nonce novo por chave e sessão, inclusive após reset.
+- Bloquear ultrapassagem do contador de 32 bits; invalidar a sessão em framing,
+  overflow, perda ou reset.
+- Separar configuração confiável de bancada de distribuição segura de chaves.
+- Capturar referência, ciphertext e texto recuperado; salvar metadados, hashes,
+  contagens, primeira divergência e flags de erro.
+- Não versionar chaves privadas, sessões reais ou coordenadas pessoais.
 
-### 3. Sessões e software do PC — 13–15/09
+Aceite: rearmamento testado, nenhuma reutilização acidental de contexto e
+comparação do PC aprovada em fluxo vindo da simulação.
 
-Uma sessão deve definir chave de teste, nonce, comprimento esperado e estado de
-execução. O controle não pode ser confundido com os bytes cifrados.
+## 4. Quatro builds comparáveis — 18/09
 
-Critérios:
+Criar `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`; saídas em
+`build/<placa>/<configuracao>/`. Cada projeto seleciona suas fontes e top,
+sem precisar excluir outros módulos do repositório.
 
-- sessão armada antes do início da captura;
-- nonce novo para cada sessão com a mesma chave;
-- erro de stop, overflow ou reset invalida a sessão;
-- o PC salva configuração, captura bruta, ciphertext, texto recuperado e
-  metadados do ensaio;
-- a comparação é byte a byte e registra a primeira divergência, não apenas um
-  valor agregado.
+- Mesmo RTL, FIFO, controle, fronteiras de medida e instrumentação dentro de cada par.
+- Remover o AES por elaboração no baseline; não usar apenas um bypass em execução.
+- Usar dispositivo, clock e I/O corretos de cada placa.
+- Rodar síntese, fit e auditoria de setup/hold/recovery/removal; revisar
+  cobertura temporal e exceções de I/O assíncrono.
+- Registrar versão Quartus, SHA do RTL, seed, clock e condições dos modelos.
+- Extrair LEs, registradores, bits/blocos de memória, Fmax e slacks do pós-fit.
+- Não copiar as exceções de portas virtuais do AES isolado para o sistema completo.
 
-### 4. Build integrado — 16/09
+Aceite: quatro builds rastreáveis e timing no clock de operação de cada placa.
+Se algum falhar, registrar a causa e resolver; não informar sucesso parcial como
+matriz concluída.
 
-Gerar dois builds comparáveis:
+## 5. GPS real e experimentos — 19–20/09
 
-1. `baseline`: UART v2 + FIFO + controle, sem AES elaborado;
-2. `secure`: UART v2 + FIFO + controle + AES-CTR.
+Após conferir módulo, alimentação e montagem:
 
-Os dois devem usar o mesmo dispositivo, clock, restrições, condições de fit e
-instrumentação mínima. O projeto isolado `fpga/aes_analysis/` é apenas uma
-estimativa preliminar; suas exceções de fronteira não devem ser copiadas para o
-build integrado.
+1. Validar GPS diretamente e guardar uma referência.
+2. Testar o baseline integrado na primeira placa.
+3. Executar a sessão com AES e decifrar no PC.
+4. Comparar todos os bytes com a referência independente.
+5. Repetir o protocolo na Cyclone IV.
 
-Critérios:
+Executar três repetições do mesmo replay por configuração, preservando bytes e
+intervalos. Acrescentar sessão contínua do GPS com duração registrada; almejar
+uma hora por configuração quando a bancada permitir. Se houver impedimento
+físico, registrá-lo e revisar o experimento com o orientador; replay sintético
+não é aquisição GPS real.
 
-- ambos os builds compilam sem erro;
-- timing de 50 MHz é atendido ou a violação é registrada e discutida;
-- recursos são extraídos do relatório pós-fit;
-- a versão RTL, seed e versão do Quartus são registradas.
+Registrar perdas, framing, overflow, latência e ocupação máxima da FIFO. Uma
+forma de onda correta é evidência temporal/elétrica; não prova ausência de
+perdas em uma aquisição longa. Um eco visual no terminal também não substitui
+a comparação automática de todos os bytes.
 
-### 5. Bancada ou replay — 17–18/09
+## 6. Resultados e escrita — 21–23/09
 
-Se a DE10-Lite estiver disponível, testar nesta ordem:
+Comparar primeiro o acréscimo `secure − baseline` em cada FPGA; depois,
+discutir diferenças entre plataformas.
 
-1. programar a ponte sem AES e testar uma fonte serial conhecida;
-2. ligar o TX do GPS ao RX da FPGA, com terra comum e níveis compatíveis;
-3. confirmar a recepção dos bytes no PC;
-4. comparar a saída da ponte com uma captura direta do GPS;
-5. programar o build com AES-CTR e repetir a captura;
-6. decifrar no PC e comparar com a entrada original.
+- Latência em ciclos **e** µs, identificando o clock de cada placa.
+- Taxa útil UART separada do throughput AES; 9600/8N1 tem teto nominal de
+  960 bytes/s por direção antes de pausas e overhead.
+- Recursos absolutos e percentuais; não somar LEs e registradores.
+- Fmax estimada separada do clock de operação e de medidas de bancada.
+- Potência opcional, estimada com atividade e condições documentadas; não
+  usar estimativas genéricas para concluir eficiência energética entre famílias.
+- Builds SignalTap separados das medições oficiais de recursos.
 
-Se a placa não estiver disponível, executar o mesmo protocolo com arquivos de
-replay NMEA e declarar explicitamente que não houve aquisição GPS física. Dados
-sintéticos validam o fluxo RTL, mas não substituem a evidência de bancada.
+Aceite: tabelas/figuras rastreáveis, metodologia reproduzível e texto revisado
+pelo orientador em 23/09. Não declarar nova cifra nem garantir segurança além
+da confidencialidade implementada.
 
-### 6. Experimentos e resultados — 19–22/09
+## Colaboração e Git
 
-Para cada build, executar três repetições do mesmo replay, preservando tamanho,
-ordem e pausas. Se houver hardware, acrescentar uma sessão contínua do GPS e
-registrar a duração.
-
-Registrar:
-
-- número de bytes recebidos, transmitidos e recuperados;
-- erros de UART, overflow e divergências;
-- latência do AES e latência do sistema, com a fronteira de medição explícita;
-- throughput do núcleo e taxa efetiva do fluxo serial;
-- ocupação máxima da FIFO;
-- elementos lógicos, registradores, memória e Fmax pós-fit;
-- versão do código, configuração do ensaio e hashes dos arquivos de entrada.
-
-Latência causada por USB, terminal ou sistema operacional deve ser identificada
-separadamente da latência interna da FPGA. Potência é opcional e, se estimada,
-deve ser apresentada como estimativa do Quartus, não como medição física.
-
-## Organização das contribuições
-
-As tarefas podem ser distribuídas por frentes:
-
-| Frente | Responsabilidade |
+| Frente | Entrega |
 | --- | --- |
-| Coordenação/integração | manter o foco do projeto, resolver conflitos e aceitar entregas |
-| RTL criptográfico | CTR, adaptador por byte, sessões e handshakes |
-| Verificação | testbenches, oráculo independente, vetores e casos-limite |
-| FPGA/Quartus | tops, QSF/SDC, builds baseline/secure e extração de métricas |
-| GPS/bancada | conferir carrier, níveis, ligações, captura e logs físicos |
-| PC/análise/artigo | protocolo de captura, decifragem, gráficos e manuscrito |
+| Coordenação | Manter cronograma, dependências e decisões com o orientador |
+| RTL | Integração, retenção de bytes e controle de sessões |
+| Verificação | Oráculo independente, erros, reset e replay |
+| FPGA | Wrappers, QSF/SDC, quatro builds e recursos/timing |
+| Bancada | UART no osciloscópio, placa Cyclone IV e GPS real |
+| PC/artigo | Captura, decifragem, métricas e manuscrito |
 
-Uma pessoa pode assumir mais de uma frente. O importante é que cada tarefa
-tenha um responsável definido no issue ou no pull request.
+Definir responsáveis em issues/PRs. Uma pessoa pode assumir mais de uma frente.
 
-### Fluxo de Git
+Antes de cada entrega, revisar o diff e executar os testes afetados. Para RTL,
+rodar `make check`. Seguir [AGENTS.md](../AGENTS.md) para fetch/pull e revisar
+todo o intervalo recebido antes de continuar. Não fazer force-push nem
+sobrescrever alterações de outro colaborador.
 
-- `main` deve permanecer reproduzível e conter apenas entregas revisadas.
-- Criar branches curtas: `feature/ctr`, `feature/session`, `test/ctr-vectors`,
-  `fpga/integrated-build` ou `docs/results`.
-- Um commit deve representar uma mudança coerente e compilável sempre que
-  possível. Usar mensagens objetivas, por exemplo:
-  `Implement AES-CTR byte adapter`.
-- Antes de abrir pull request, executar `git diff --check` e os testes afetados.
-- Pull requests devem informar: arquivos alterados, comando executado,
-  resultado, limitações e eventual dependência de hardware.
-- Não fazer force-push em `main`, não apagar trabalho de outra pessoa e não
-  versionar chaves, capturas privadas, coordenadas pessoais ou arquivos em
-  `build/`.
+Atualizar cronograma, plano, README e HTML na mesma entrega quando mudarem
+datas ou arquitetura. Preservar relatórios históricos; gerar novos manifestos
+para novas fontes/resultados. `build/` permanece local e ignorado pelo Git.
 
-## Comandos de verificação
-
-Executar na raiz do repositório:
+## Comandos
 
 ```bash
-make aes       # AES isolado
-make ctr       # CTR por byte e verificação dos arquivos RTL no PC
-make check     # regressão completa disponível
-make fpga      # ponte para DE10-Lite, sem exigir a placa
-make aes-fpga  # análise isolada do AES, sem gerar SOF
+make uart          # RX/TX e teste de bancada
+make uart-waves    # VCD dos sinais públicos
+make uart-fpga     # SOF UART autônoma DE10-Lite
+make fpga          # ponte UART + FIFO DE10-Lite
+make aes
+make ctr
+make aes-fpga
+make check
 git diff --check
 ```
 
-Uma tarefa RTL só pode ser marcada como concluída quando o testbench relevante
-passar e o resultado estiver descrito no pull request ou no relatório em `docs/`.
-Uma tarefa de Quartus deve anexar a versão do dispositivo, seed, clock e
-relatório utilizado. Uma tarefa de bancada deve registrar ligações, alimentação,
-baud rate, duração e qualquer erro observado.
+## Encerramento em 25/09
 
-## Definição de concluído em 25/09
-
-O projeto estará encerrado quando:
-
-- o build secure estiver integrado e testado contra o baseline;
-- o caminho CTR estiver conferido por software independente;
-- todas as métricas e arquivos de entrada estiverem identificados por versão;
-- a condição de hardware estiver declarada corretamente — GPS real ou replay;
-- o manuscrito estiver revisado e com figuras/tabelas rastreáveis;
-- a submissão tiver sido realizada até 24/09;
-- qualquer correção ou reenvio tiver sido concluído em 25/09;
-- o comprovante e a versão submetida estiverem preservados.
-
-O prazo externo de 30/09 não deve ser usado como justificativa para deixar uma
-etapa necessária para depois de 25/09.
+Concluir os quatro builds e seus resultados, comparar o fluxo recuperado,
+revisar o manuscrito, submeter em 24/09 e guardar o comprovante. O dia 25/09
+fica para eventual correção/reenvio e confirmação final. Relatar limitações
+de hardware explicitamente, sem transformar planos ou simulação em medições.

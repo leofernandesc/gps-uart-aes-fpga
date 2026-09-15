@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 10/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 15/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -11,23 +11,28 @@ A ponte já tem `.sof` para a DE10-Lite; o AES tem projeto separado de análise.
 A regressão completa e o fit/timing interno do AES passaram em 09/09;
 ver [resultados e limites deste marco](docs/validacao-aes-2026-09-09.md).
 O CTR passou em 60 fluxos, com 19.009 bytes comparados e recuperados no PC por
-biblioteca independente. A regressão agora inclui 20 simulações; ver
+biblioteca independente. A regressão agora inclui 22 simulações; ver
 [validação do CTR](docs/validacao-ctr-2026-09-10.md).
-A placa ainda não está disponível: não houve programação, recepção de GPS real
-ou medição de bancada. A integração do CTR à ponte, o controle de sessões e o
-software de configuração/captura serial do PC continuam pendentes. O `.sof`
-atual ainda corresponde à ponte sem criptografia.
+O teste UART autônomo gera 0x55 a cada 100 ms para observar TX no osciloscópio,
+com RX e LEDs para loopback por jumper. Seu SOF e a auditoria temporal passaram;
+ver [revisão e resultados de 14/09](docs/revisao-2026-09-14.md).
+Ainda não há registro de programação, recepção de GPS real ou medição de
+bancada. A integração CTR/FIFO/UART, o controle de sessões e o software de
+captura serial continuam pendentes. Os SOFs disponíveis são UART de bancada
+e ponte sem cifra. A comparação inclui MAX 10 e Cyclone IV; modelo, clock e
+pinagem da segunda placa serão confirmados em 15/09.
 
 ## Configuração do protótipo
 
 | Item | Decisão |
 | --- | --- |
 | Placa | DE10-Lite, clock de 50 MHz |
+| Segundo alvo | Cyclone IV; placa, dispositivo e oscilador a confirmar |
 | GPS | NEO-M8N-010; VCC de 3,3 V; conferir conector da placa de suporte na bancada |
 | Serial | 9600 baud, 8N1, sem seleção de taxa em execução |
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
-| Avaliação | Mesmo sistema com e sem AES, dados reais e replay controlado |
+| Avaliação | Quatro builds: baseline/secure em cada FPGA, com o mesmo RTL |
 | Datas de trabalho | Submissão em 24/09; contingência e encerramento em 25/09; prazo externo até 30/09/2026 |
 
 AES-CTR fornecerá **confidencialidade**, não autenticação, proteção contra
@@ -42,9 +47,9 @@ No Linux, a partir deste diretório:
 make check
 ```
 
-Executa 20 simulações: quatro testes históricos, doze configurações de UART/FIFO/
-ponte, dois testbenches AES e dois de CTR. Inclui lint rigoroso de quatro tops,
-checagem estrutural do UART, AES e CTR e verificação no PC dos bytes produzidos
+Executa 22 simulações: quatro testes históricos, catorze configurações de UART/
+bancada/FIFO/ponte, dois testbenches AES e dois de CTR. Inclui lint de cinco tops,
+checagem estrutural do UART, gerador de bancada, AES e CTR e verificação no PC dos bytes produzidos
 pelo testbench CTR.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
@@ -65,6 +70,8 @@ make test
 make lint
 make synth
 make reference
+make uart    # Somente UART RX/TX, top e gerador de bancada; sem AES/FIFO
+make uart-waves  # Gera os VCDs da UART isolada e do teste para osciloscópio
 make bridge  # Apenas os novos testes de FIFO/ponte e lint do top da placa
 make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
 make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
@@ -75,6 +82,19 @@ e não substitui síntese, place-and-route e análise temporal do Quartus para a
 DE10-Lite. Não usar suas células genéricas como LUTs/LEs, Fmax ou potência FPGA.
 
 ## Compilar para a DE10-Lite sem a placa
+
+Para o teste de **UART isolada**, sem depender de GPS ou adaptador USB–UART:
+
+```bash
+make uart-fpga
+```
+
+Abrir [uart_scope.qpf](fpga/de10_lite/uart_scope/uart_scope.qpf) no Quartus.
+O resultado é `build/de10_lite/uart_scope/uart_scope.sof`. O top transmite
+0x55 a cada 100 ms. O [roteiro de osciloscópio e jumper](fpga/de10_lite/uart_scope/README.md)
+explica a montagem, as medidas esperadas e o significado dos LEDs.
+
+Para a ponte **UART + FIFO**, que retransmite o que recebe:
 
 ```bash
 make fpga
@@ -117,6 +137,8 @@ rtl/bridge/uart_bridge.sv    ponte sem cifra, flags persistentes de erro
 rtl/aes/                    AES-128 iterativo e transformações de rodada
 rtl/ctr/                    gerador de máscaras e adaptador CTR por byte
 fpga/de10_lite/              top da placa, projeto Quartus, QSF e SDC
+fpga/de10_lite/uart_scope/   UART autônoma para osciloscópio e loopback por jumper
+fpga/cyclone4/              dados necessários para criar o segundo alvo
 fpga/aes_analysis/           análise isolada do AES, sem pinagem de bancada
 tb/                         fontes seriais e verificadores independentes
 scripts/                    execução reproduzível dos testes e checagens
@@ -136,6 +158,9 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 
 - [Orientações de continuidade, cronograma e revisão de pulls](AGENTS.md)
 - [Contrato e mudanças do UART](docs/uart-baseline.md)
+- [Arquitetura, alvos e comparação entre placas](docs/arquitetura.md)
+- [UART isolada: roteiro para a bancada](fpga/de10_lite/uart_scope/README.md)
+- [Revisão de código e validação em 14/09](docs/revisao-2026-09-14.md)
 - [Interface, latência e limites do AES](docs/aes128.md)
 - [Validação AES e recursos pós-fit](docs/validacao-aes-2026-09-09.md)
 - [Interface e funcionamento do CTR](docs/ctr.md)
@@ -145,10 +170,12 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Plano de execução e colaboração](docs/PLANO_DE_EXECUCAO.md)
 - [Primeira sessão de bancada e materiais](docs/bancada.md)
 
-A apresentação para o orientador permanece em
-`/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html`.
+A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
+versionada, com quatro telas e cronograma até 25/09. A cópia local em
+`/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo bloco: conectar FIFO → CTR → UART TX com retenção de bytes sob
+Próxima bancada: UART com osciloscópio na DE10-Lite, em 15/09, e confirmação
+do modelo/clock da Cyclone IV. Próximo bloco RTL: conectar FIFO → CTR → UART TX com retenção de bytes sob
 backpressure, validar replay serial e implementar o controle de sessões.
 O software de configuração/captura e os builds integrados também podem
 avançar sem a placa.

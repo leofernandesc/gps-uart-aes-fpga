@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142c3e">
+  <meta name="description" content="Proposta de pesquisa: aquisição GPS, UART e AES-128-CTR em MAX 10 e Cyclone IV. Planejamento até 25 de setembro de 2026.">
+  <title>GPS Data Transmission with AES-128-CTR on FPGA · BTSym 2026</title>
+  <style>
+    :root { --paper:#f5f6f2; --white:#fff; --ink:#142c3e; --muted:#506371; --teal:#006f65; --mint:#e6f2eb; --line:#d9e1db; --gold:#9a6530; }
+    * { box-sizing:border-box; }
+    html { color-scheme:light; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+    h1,h2,h3,p { margin-top:0; }
+    h1,h2 { font-family:Georgia,"Times New Roman",serif; font-weight:400; letter-spacing:-.035em; }
+    h1 { font-size:clamp(42px,4.4vw,66px); line-height:1.12; margin-bottom:30px; max-width:1210px; }
+    h2 { font-size:clamp(30px,3vw,43px); line-height:1.15; margin-bottom:14px; }
+    h3 { font-size:17px; margin-bottom:9px; }
+    em { font-style:normal; color:var(--teal); }
+    p { line-height:1.55; }
+    a { color:var(--teal); text-underline-offset:3px; }
+    button { font:inherit; cursor:pointer; }
+    a:focus-visible,button:focus-visible { outline:3px solid var(--gold); outline-offset:4px; }
+    button:disabled { opacity:.35; cursor:default; }
+    .wrap { width:min(1280px,calc(100% - 80px)); margin-inline:auto; }
+    .masthead { height:76px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid var(--line); }
+    .brand { color:var(--ink); font-size:18px; font-weight:700; text-decoration:none; }
+    .brand span { margin-left:18px; font-size:11px; color:var(--muted); font-weight:400; text-transform:uppercase; letter-spacing:.12em; }
+    .mast-meta { display:flex; gap:10px; align-items:center; font-size:12px; color:var(--muted); }
+    .tool-button,.nav-button { border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink); padding:9px 13px; font-size:12px; }
+    main { padding-block:30px 105px; }
+    .slide { min-height:calc(100svh - 230px); }
+    .slide + .slide { margin-top:60px; padding-top:30px; border-top:1px solid var(--line); }
+    .js .slide + .slide { margin:0; padding-top:0; border:0; }
+    [hidden] { display:none !important; }
+    .eyebrow { color:var(--teal); text-transform:uppercase; letter-spacing:.12em; font-size:11px; font-weight:650; margin-bottom:18px; }
+    .hero-copy { padding-top:30px; }
+    .authors { border-left:2px solid var(--teal); padding-left:16px; margin:34px 0; font-size:16px; color:var(--muted); }
+    .authors p { margin:3px 0; }
+    .authors strong { display:inline-block; min-width:100px; color:var(--ink); }
+    .lead { font-size:20px; color:var(--muted); max-width:920px; }
+    .intro { color:var(--muted); font-size:15px; margin-bottom:18px; }
+    .architecture { margin:0; padding:14px; border:1px solid var(--line); border-radius:10px; background:var(--white); }
+    .architecture svg { width:100%; height:auto; display:block; font-family:inherit; }
+    .architecture figcaption { color:var(--muted); font-size:12px; text-align:center; margin:6px 0 2px; }
+    .diagram-frame { fill:#eef5f0; stroke:#8caf9b; }
+    .node { fill:#fff; stroke:#becdc4; }
+    .node-main { fill:#142c3e; stroke:#142c3e; }
+    .node-text { fill:#142c3e; font-size:15px; }
+    .node-small { fill:#506371; font-size:12px; }
+    .wire { fill:none; stroke:#006f65; stroke-width:1.6; marker-end:url(#arrow); }
+    .reference-wire { stroke-dasharray:5 4; }
+    .architecture-footer { display:grid; grid-template-columns:1fr 1.1fr; gap:26px; margin-top:17px; align-items:start; }
+    table { width:100%; border-collapse:collapse; font-size:13px; text-align:left; }
+    th { color:var(--teal); font-size:11px; font-weight:650; background:var(--mint); }
+    th,td { padding:10px 13px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.4; }
+    .metrics-note { color:var(--muted); font-size:14px; margin:0; }
+    .metrics-note strong { color:var(--ink); }
+    .materials-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:38px; }
+    .material-name { display:block; font-weight:600; }
+    .material-use { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+    .badge { color:var(--teal); white-space:nowrap; font-size:11px; }
+    .pending { color:var(--gold); }
+    .bench-step { border-left:2px solid #9dbda9; padding-left:17px; margin-bottom:22px; }
+    .bench-step p { font-size:14px; color:var(--muted); margin-bottom:0; }
+    .bench-step small { display:block; margin-top:6px; color:var(--teal); line-height:1.5; }
+    .schedule-table th:first-child { width:100px; }
+    .schedule-table th:nth-child(2) { width:175px; }
+    .schedule-table td { padding-block:10px; }
+    .schedule-table td:first-child { color:var(--teal); font-weight:600; white-space:nowrap; }
+    .schedule-table tr.final-date td { background:var(--mint); }
+    .schedule-note,.sources { font-size:12px; color:var(--muted); margin-top:15px; margin-bottom:0; }
+    .closing-foot { display:flex; justify-content:space-between; align-items:baseline; gap:15px; }
+    .reference-button { background:transparent; border:0; color:var(--teal); font-size:11px; text-decoration:underline; }
+    .deck-controls { display:none; position:fixed; bottom:0; width:100%; background:#f5f6f2f5; border-top:1px solid var(--line); }
+    .js .deck-controls { display:block; }
+    .control-inner { height:67px; display:flex; align-items:center; justify-content:space-between; gap:15px; }
+    .position { display:flex; gap:15px; font-size:12px; }
+    .position span { color:var(--muted); }
+    .slide-dots,.nav-buttons { display:flex; gap:8px; }
+    .slide-dot { width:30px; height:28px; border:0; background:transparent; position:relative; }
+    .slide-dot::after { content:""; position:absolute; left:0; right:0; top:12px; height:3px; background:var(--line); }
+    .slide-dot[aria-current]::after { background:var(--teal); }
+    .next { background:var(--ink); color:#fff; }
+    .progress-track { height:2px; background:var(--line); }
+    .progress-fill { background:var(--teal); height:100%; width:25%; }
+    .only-js { display:none; }
+    .js .only-js { display:inline-flex; }
+    .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+    dialog { width:min(630px,calc(100% - 40px)); border:1px solid var(--line); border-radius:10px; padding:30px; color:var(--ink); background:var(--paper); }
+    dialog::backdrop { background:#142c3e88; }
+    dialog li { margin:12px 0; line-height:1.5; font-size:14px; }
+    .dialog-footer { text-align:right; margin-top:20px; }
+    @media (max-width:760px) {
+      .wrap { width:calc(100% - 32px); }
+      .masthead { height:65px; }
+      .brand span,.mast-meta > span,.fullscreen-button,.position span { display:none !important; }
+      .hero-copy { padding-top:10px; }
+      .authors { font-size:14px; }
+      .authors strong { display:block; }
+      .lead { font-size:17px; }
+      .architecture-footer,.materials-grid { grid-template-columns:1fr; gap:20px; }
+      .architecture { overflow-x:auto; }
+      .architecture svg { min-width:850px; }
+      .architecture figcaption { min-width:400px; text-align:left; }
+      .schedule-table { font-size:12px; }
+      .schedule-table th:nth-child(2),.schedule-table td:nth-child(2) { display:none; }
+      th,td { padding:9px 7px; }
+      .slide-dot { width:20px; }
+      .nav-button { padding:8px; }
+    }
+    @page { size:A4 landscape; margin:11mm 13mm; }
+    @media print {
+      body { background:white; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+      .masthead,.deck-controls,dialog,.sr-only,.only-js { display:none !important; }
+      .wrap { width:100%; }
+      main { padding:0; }
+      .slide,.slide[hidden],.js .slide + .slide { display:block !important; height:185mm; min-height:0; padding-top:3mm; margin:0; border:0; break-after:page; page-break-after:always; }
+      .slide:last-child { break-after:auto; page-break-after:auto; }
+      h1 { font-size:48px; }
+      h2 { font-size:33px; }
+      .architecture svg { min-width:0; }
+      .architecture-footer { grid-template-columns:1fr 1.1fr; }
+      .materials-grid { grid-template-columns:1.2fr 1fr; gap:25px; }
+      .schedule-table { font-size:12px; }
+      th,td,.schedule-table td { padding:8px 10px; }
+      .schedule-table th:nth-child(2),.schedule-table td:nth-child(2) { display:table-cell; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead wrap">
+    <a class="brand" href="#1" aria-label="Voltar à primeira tela">BTSym ’26 <span>Proposta de pesquisa</span></a>
+    <div class="mast-meta"><span>Setembro 2026</span><button class="tool-button fullscreen-button only-js" id="fullscreen" type="button"><span>Tela cheia</span></button><button class="tool-button only-js" id="print" type="button">Salvar PDF</button></div>
+  </header>
+  <noscript><p class="wrap">As quatro telas estão disponíveis abaixo; use a impressão do navegador para salvar em PDF.</p></noscript>
+  <main class="wrap" id="presentation" aria-label="Apresentação da proposta de artigo">
+    <section class="slide" id="1" data-label="Proposta" aria-labelledby="title-1">
+      <div class="hero-copy">
+        <p class="eyebrow">01 / Proposta de artigo</p>
+        <h1 id="title-1">GPS Data Transmission with AES-128-CTR<br><em>on MAX 10 and Cyclone IV FPGAs</em></h1>
+        <div class="authors">
+          <p><strong>Aluno</strong>Leonardo Fernandes Cavalcante</p>
+          <p><strong>Orientador</strong>Dr. Edgard Luciano Oliveira Silva</p>
+        </div>
+        <p class="lead">Avaliar o custo da criptografia em hardware na transmissão de dados GPS, comparando recursos e desempenho em duas plataformas FPGA.</p>
+      </div>
+    </section>
+    <section class="slide" id="2" data-label="Arquitetura" aria-labelledby="title-2">
+      <p class="eyebrow">02 / Arquitetura e comparação</p>
+      <h2 id="title-2">Uma arquitetura, <em>quatro configurações.</em></h2>
+      <p class="intro">UART e FIFO já desenvolvidos; AES-CTR iterativo para cifrar o fluxo por byte. GPS real como carga de trabalho.</p>
+      <figure class="architecture">
+        <svg viewBox="0 0 1170 245" role="img" aria-labelledby="arch-title arch-desc">
+          <title id="arch-title">Arquitetura proposta para transmissão de GPS com e sem AES-CTR</title>
+          <desc id="arch-desc">O GPS envia bytes à UART RX da FPGA. FIFO e controle de sessão entregam os bytes ao caminho direto no baseline, ou ao AES-CTR no build cifrado. A UART TX envia a saída à interface serial e ao PC. O PC configura chave e nonce em canal local separado e captura também a referência original do GPS.</desc>
+          <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#006f65"/></marker></defs>
+          <rect class="diagram-frame" x="150" y="32" width="740" height="163" rx="10"/>
+          <text class="node-small" x="169" y="53">FPGA · mesmo RTL · clock e pinagem próprios de cada placa</text>
+          <rect class="node" x="5" y="88" width="120" height="58" rx="6"/>
+          <text class="node-text" x="65" y="111" text-anchor="middle">GPS M8N</text>
+          <text class="node-small" x="65" y="131" text-anchor="middle">9600 · 8N1</text>
+          <rect class="node" x="175" y="88" width="92" height="58" rx="6"/>
+          <text class="node-text" x="221" y="122" text-anchor="middle">UART RX</text>
+          <rect class="node" x="290" y="88" width="103" height="58" rx="6"/>
+          <text class="node-text" x="341" y="111" text-anchor="middle">FIFO</text>
+          <text class="node-small" x="341" y="131" text-anchor="middle">1024 bytes</text>
+          <rect class="node" x="416" y="88" width="110" height="58" rx="6"/>
+          <text class="node-text" x="471" y="111" text-anchor="middle">Sessão</text>
+          <text class="node-small" x="471" y="131" text-anchor="middle">limite + erros</text>
+          <rect class="node" x="569" y="64" width="170" height="40" rx="6"/>
+          <text class="node-text" x="654" y="89" text-anchor="middle">Caminho direto</text>
+          <rect class="node-main" x="569" y="127" width="170" height="42" rx="6"/>
+          <text x="654" y="153" text-anchor="middle" fill="#fff" font-size="15">AES-128-CTR</text>
+          <rect class="node" x="787" y="88" width="88" height="58" rx="6"/>
+          <text class="node-text" x="831" y="122" text-anchor="middle">UART TX</text>
+          <rect class="node" x="912" y="88" width="104" height="58" rx="6"/>
+          <text class="node-text" x="964" y="111" text-anchor="middle">Interface</text>
+          <text class="node-small" x="964" y="131" text-anchor="middle">serial / USB</text>
+          <rect class="node" x="1042" y="88" width="121" height="58" rx="6"/>
+          <text class="node-text" x="1102" y="111" text-anchor="middle">PC</text>
+          <text class="node-small" x="1102" y="131" text-anchor="middle">decifra e compara</text>
+          <path class="wire" d="M125 117 H175 M267 117 H290 M393 117 H416 M526 117 H546 V84 H569 M546 117 V148 H569 M739 84 H765 V117 H787 M739 148 H765 V117 M875 117 H912 M1016 117 H1042"/>
+          <text class="node-small" x="654" y="185" text-anchor="middle">seleção na compilação</text>
+          <path class="wire reference-wire" d="M65 146 V226 H1102 V146"/>
+          <text class="node-small" x="295" y="218">Captura serial independente da referência GPS → comparação byte a byte</text>
+          <path class="wire reference-wire" d="M1102 88 V14 H471 V88"/>
+          <path class="wire reference-wire" d="M554 14 V148 H569"/>
+          <text class="node-small" x="710" y="9">PC → configuração local: chave, nonce e tamanho da sessão</text>
+        </svg>
+        <figcaption>O caminho de dados integrado e o controle de sessão são a próxima etapa de implementação.</figcaption>
+      </figure>
+      <div class="architecture-footer">
+        <table aria-label="Quatro configurações experimentais"><thead><tr><th>Plataforma</th><th>Baseline</th><th>Com cifra</th></tr></thead><tbody><tr><td>DE10-Lite · MAX 10 · 50 MHz</td><td>Sem AES</td><td>AES-CTR</td></tr><tr><td>Cyclone IV · modelo/clock a confirmar</td><td>Sem AES</td><td>AES-CTR</td></tr></tbody></table>
+        <p class="metrics-note"><strong>Comparação:</strong> acréscimo de lógica, registradores e memória; Fmax, latência em ciclos e µs, taxa útil e perdas. Dentro de cada placa, manter clock, FIFO e controle iguais.<br><strong>Escolha do CTR:</strong> usa a mesma operação AES nos dois sentidos e permite tratar o fluxo por byte. Oferece confidencialidade, sem autenticação.</p>
+      </div>
+    </section>
+    <section class="slide" id="3" data-label="Materiais e testes" aria-labelledby="title-3">
+      <p class="eyebrow">03 / Materiais e bancada</p>
+      <h2 id="title-3">Da forma de onda à <em>comparação dos dados.</em></h2>
+      <div class="materials-grid">
+        <table aria-label="Materiais do projeto">
+          <thead><tr><th>Material / função</th><th>Situação</th></tr></thead>
+          <tbody>
+            <tr><td><span class="material-name">DE10-Lite</span><span class="material-use">Primeiro teste UART e implementação MAX 10</span></td><td><span class="badge pending">Bancada em 15/09</span></td></tr>
+            <tr><td><span class="material-name">Placa Cyclone IV</span><span class="material-use">Segundo alvo para os dois builds</span></td><td><span class="badge pending">Modelo em 15/09</span></td></tr>
+            <tr><td><span class="material-name">GPS NEO-M8N-010 + antena</span><span class="material-use">Aquisição real das sentenças GPS</span></td><td><span class="badge">Disponível</span></td></tr>
+            <tr><td><span class="material-name">Osciloscópio + pontas</span><span class="material-use">Níveis elétricos, duração dos bits e quadros</span></td><td><span class="badge pending">Uso na bancada</span></td></tr>
+            <tr><td><span class="material-name">Interface serial para o PC</span><span class="material-use">Saída da FPGA e referência GPS; USB–UART ou ponte com microcontrolador validada, I/O 3,3 V</span></td><td><span class="badge pending">Definir captura</span></td></tr>
+            <tr><td><span class="material-name">PC, cabos e conexões</span><span class="material-use">Quartus instalado; USB-Blaster, jumper e GND comum</span></td><td><span class="badge">Disponível</span></td></tr>
+          </tbody>
+        </table>
+        <div>
+          <article class="bench-step"><h3>1. UART isolada</h3><p>A FPGA gera <code>0x55</code> a cada 100 ms. Medir TX diretamente no osciloscópio: 104,16 µs por bit e 1,0416 ms por quadro.</p><small>Para esse teste, FPGA + osciloscópio são suficientes.</small></article>
+          <article class="bench-step"><h3>2. Recepção por jumper</h3><p>Ligar TX → RX. Os LEDs mostram <code>0x55</code>, recepção válida e erro persistente. Depois, usar uma fonte serial independente para conferir o RX.</p></article>
+          <article class="bench-step"><h3>3. Experimento com GPS</h3><p>Capturar a referência e a saída da FPGA, decifrar no PC e comparar todos os bytes. Repetir em cada configuração e medir perdas, latência e taxa útil.</p></article>
+        </div>
+      </div>
+      <p class="sources">USB-Blaster programa a FPGA. A interface serial transporta os dados ao PC. O osciloscópio fornece a evidência elétrica e temporal.</p>
+    </section>
+    <section class="slide" id="4" data-label="Cronograma" aria-labelledby="title-4">
+      <p class="eyebrow">04 / Planejamento · atualizado em 15/09/2026</p>
+      <h2 id="title-4">Submissão e contingência até <em>25/09.</em></h2>
+      <table class="schedule-table" aria-label="Cronograma de setembro de 2026">
+        <thead><tr><th>Data</th><th>Etapa</th><th>Entrega e critério</th></tr></thead>
+        <tbody>
+          <tr><td>07–14/09</td><td>Preparação</td><td>UART, FIFO, AES e CTR isolados; revisão do RTL e preparação do teste UART para osciloscópio.</td></tr>
+          <tr><td>15/09</td><td>Primeira bancada</td><td>TX no osciloscópio, RX por jumper; confirmar modelo, clock e pinagem da Cyclone IV.</td></tr>
+          <tr><td>16–17/09</td><td>Integração e PC</td><td>FIFO → CTR → TX; sessões, captura e decifragem. Replay serial recuperado sem divergências.</td></tr>
+          <tr><td>18/09</td><td>Quatro builds</td><td>Com e sem AES em cada placa; compilar, auditar timing e registrar recursos e clocks.</td></tr>
+          <tr><td>19–20/09</td><td>Experimentos</td><td>Três replays por configuração e captura GPS contínua; salvar bytes, formas de onda e métricas.</td></tr>
+          <tr><td>21–22/09</td><td>Resultados e artigo</td><td>Fechar tabelas e gráficos; discutir custo do AES, latência e limites do fluxo serial.</td></tr>
+          <tr><td>23/09</td><td>Revisão</td><td>Manuscrito completo com o orientador; incorporar correções e congelar a versão.</td></tr>
+          <tr><td>24/09</td><td>Submissão</td><td>Enviar os arquivos finais e salvar o comprovante.</td></tr>
+          <tr class="final-date"><td>25/09</td><td>Contingência</td><td>Resolver eventual problema de envio, confirmar a submissão e encerrar a execução.</td></tr>
+        </tbody>
+      </table>
+      <p class="schedule-note">Introdução e metodologia avançam junto da implementação. A etapa de bancada só é concluída com medições registradas; o segundo alvo depende da identificação da placa.</p>
+      <div class="closing-foot"><p class="sources">Planejamento interno. Andamento e evidências: <code>docs/cronograma.md</code>.</p><button class="reference-button only-js" id="open-references" type="button">Referências técnicas ↗</button></div>
+    </section>
+  </main>
+  <nav class="deck-controls" aria-label="Navegação da apresentação"><div class="control-inner wrap">
+    <div class="position"><strong id="slide-count">01 / 04</strong><span id="slide-label">Proposta</span></div>
+    <div class="slide-dots" aria-label="Selecionar tela">
+      <button class="slide-dot" data-go="0" aria-label="Tela 1: proposta" aria-current="step" type="button"></button>
+      <button class="slide-dot" data-go="1" aria-label="Tela 2: arquitetura" type="button"></button>
+      <button class="slide-dot" data-go="2" aria-label="Tela 3: materiais e testes" type="button"></button>
+      <button class="slide-dot" data-go="3" aria-label="Tela 4: cronograma" type="button"></button>
+    </div>
+    <div class="nav-buttons"><button class="nav-button prev" id="previous" type="button" disabled>Anterior</button><button class="nav-button next" id="next" type="button">Próxima</button></div>
+  </div><div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress"></div></div></nav>
+  <p class="sr-only" id="announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+  <dialog id="references" aria-labelledby="references-title">
+    <p class="eyebrow">Fontes da proposta</p><h2 id="references-title">Referências técnicas</h2>
+    <ol>
+      <li><a href="https://csrc.nist.gov/pubs/fips/197/final" target="_blank" rel="noopener noreferrer">NIST FIPS 197 — AES</a></li>
+      <li><a href="https://csrc.nist.gov/pubs/sp/800/38/a/final" target="_blank" rel="noopener noreferrer">NIST SP 800-38A — modo CTR</a></li>
+      <li><a href="https://www.mouser.com/datasheet/2/598/DE10-Lite_User_Manual-1100361.pdf" target="_blank" rel="noopener noreferrer">Terasic — manual da DE10-Lite</a></li>
+      <li><a href="https://www.u-blox.com/sites/default/files/NEO-M8-FW3_DataSheet_UBX-15031086.pdf" target="_blank" rel="noopener noreferrer">u-blox — datasheet NEO-M8</a></li>
+      <li><a href="https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/" target="_blank" rel="noopener noreferrer">BTSym’26 — chamada de trabalhos</a></li>
+    </ol><div class="dialog-footer"><button class="nav-button next" id="close-references" type="button">Voltar à apresentação</button></div>
+  </dialog>
+  <script>
+    (() => {
+      'use strict';
+      const slides = [...document.querySelectorAll('.slide')];
+      const dots = [...document.querySelectorAll('[data-go]')];
+      const previous = document.getElementById('previous');
+      const next = document.getElementById('next');
+      const count = document.getElementById('slide-count');
+      const label = document.getElementById('slide-label');
+      const progress = document.getElementById('progress');
+      const announcement = document.getElementById('announcement');
+      const references = document.getElementById('references');
+      const fullscreen = document.getElementById('fullscreen');
+      let current = 0;
+
+      function hashIndex() {
+        const hash = window.location.hash.slice(1);
+        return /^[1-4]$/.test(hash) ? Number(hash) - 1 : 0;
+      }
+
+      function show(index, updateUrl = true) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => { slide.hidden = i !== current; });
+        dots.forEach((dot, i) => {
+          if (i === current) dot.setAttribute('aria-current', 'step');
+          else dot.removeAttribute('aria-current');
+        });
+        previous.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        count.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        label.textContent = slides[current].dataset.label;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        announcement.textContent = `Tela ${current + 1} de ${slides.length}: ${slides[current].dataset.label}`;
+        if (updateUrl) {
+          try { history.replaceState(null, '', `#${current + 1}`); }
+          catch { if (window.location.hash !== `#${current + 1}`) window.location.hash = String(current + 1); }
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+
+      async function toggleFullscreen() {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else await document.documentElement.requestFullscreen();
+        } catch {
+          announcement.textContent = 'A tela cheia não está disponível neste navegador. Use a opção de tela cheia do próprio navegador.';
+        }
+      }
+
+      document.documentElement.classList.add('js');
+      previous.addEventListener('click', () => show(current - 1));
+      next.addEventListener('click', () => show(current + 1));
+      dots.forEach(dot => dot.addEventListener('click', () => show(Number(dot.dataset.go))));
+      document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); show(0); });
+      window.addEventListener('hashchange', () => show(hashIndex(), false));
+      document.getElementById('print').addEventListener('click', () => window.print());
+      document.getElementById('open-references').addEventListener('click', () => references.showModal());
+      document.getElementById('close-references').addEventListener('click', () => references.close());
+      references.addEventListener('click', event => { if (event.target === references) { const bounds = references.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) references.close(); } });
+      fullscreen.addEventListener('click', toggleFullscreen);
+      if (!document.fullscreenEnabled) fullscreen.hidden = true;
+      document.addEventListener('fullscreenchange', () => { fullscreen.querySelector('span').textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
+
+      document.addEventListener('keydown', event => {
+        if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || references.open) return;
+        const target = event.target;
+        if (target instanceof Element && target.closest('a, button, input, textarea, select, summary, [contenteditable="true"]')) {
+          if (event.key === ' ' || event.key === 'Enter' || target.matches('input, textarea, select, [contenteditable="true"]')) return;
+        }
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); show(current + 1); }
+        else if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); show(current - 1); }
+        else if (event.key === 'Home') { event.preventDefault(); show(0); }
+        else if (event.key === 'End') { event.preventDefault(); show(slides.length - 1); }
+        else if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
+      });
+
+      show(hashIndex(), false);
+    })();
+  </script>
+</body>
+</html>
