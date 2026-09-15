@@ -151,36 +151,27 @@
       <h2 id="title-2">Uma arquitetura, <em>quatro configurações.</em></h2>
       <p class="intro">UART e FIFO já desenvolvidos; AES-CTR iterativo para cifrar o fluxo por byte. GPS real como carga de trabalho.</p>
       <figure class="architecture">
-        <svg viewBox="0 0 1170 245" role="img" aria-labelledby="arch-title arch-desc">
+        <svg viewBox="0 0 1100 180" role="img" aria-labelledby="arch-title arch-desc">
           <title id="arch-title">Arquitetura proposta para transmissão de GPS com e sem AES-CTR</title>
-          <desc id="arch-desc">O GPS envia bytes à UART RX da FPGA. A FIFO entrega os bytes ao caminho direto no baseline, ou ao AES-CTR no build cifrado. A UART TX envia a saída à interface serial e ao PC. O PC também captura a referência original do GPS para comparação.</desc>
+          <desc id="arch-desc">O GPS envia dados à UART RX, que passa pela FIFO. O fluxo segue pelo caminho sem AES ou pelo AES-128-CTR, depois pela UART TX, pelo conversor USB-UART e chega ao PC.</desc>
           <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#006f65"/></marker></defs>
-          <rect class="diagram-frame" x="130" y="28" width="675" height="145" rx="10"/>
-          <text class="node-small" x="149" y="49">FPGA · mesmo RTL · clock e pinagem próprios de cada placa</text>
-          <rect class="node" x="5" y="75" width="110" height="56" rx="6"/>
-          <text class="node-text" x="60" y="98" text-anchor="middle">GPS M8N</text>
-          <text class="node-small" x="60" y="118" text-anchor="middle">9600 · 8N1</text>
-          <rect class="node" x="145" y="75" width="95" height="56" rx="6"/>
-          <text class="node-text" x="192" y="109" text-anchor="middle">UART RX</text>
-          <rect class="node" x="265" y="75" width="100" height="56" rx="6"/>
-          <text class="node-text" x="315" y="98" text-anchor="middle">FIFO</text>
-          <text class="node-small" x="315" y="118" text-anchor="middle">1024 bytes</text>
-          <rect class="node" x="425" y="51" width="150" height="40" rx="6"/>
-          <text class="node-text" x="500" y="76" text-anchor="middle">Passagem direta</text>
-          <rect class="node-main" x="425" y="113" width="150" height="40" rx="6"/>
-          <text x="500" y="138" text-anchor="middle" fill="#fff" font-size="15">AES-128-CTR</text>
-          <rect class="node" x="620" y="75" width="90" height="56" rx="6"/>
-          <text class="node-text" x="665" y="109" text-anchor="middle">UART TX</text>
-          <rect class="node" x="745" y="75" width="105" height="56" rx="6"/>
-          <text class="node-text" x="797" y="98" text-anchor="middle">Serial / USB</text>
-          <text class="node-small" x="797" y="118" text-anchor="middle">interface</text>
-          <rect class="node" x="885" y="75" width="120" height="56" rx="6"/>
-          <text class="node-text" x="945" y="98" text-anchor="middle">PC</text>
-          <text class="node-small" x="945" y="118" text-anchor="middle">decifra e compara</text>
-          <path class="wire" d="M115 103 H145 M240 103 H265 M365 103 H395 V71 H425 M395 103 V133 H425 M575 71 H600 V103 H620 M575 133 H600 V103 M710 103 H745 M850 103 H885"/>
-          <text class="node-small" x="500" y="169" text-anchor="middle">dois builds: baseline e secure</text>
-          <path class="wire reference-wire" d="M60 131 V207 H945 V131"/>
-          <text class="node-small" x="300" y="201">Captura independente da referência GPS → comparação byte a byte</text>
+          <rect class="node" x="10" y="65" width="110" height="50" rx="6"/>
+          <text class="node-text" x="65" y="95" text-anchor="middle">GPS</text>
+          <rect class="node" x="150" y="65" width="100" height="50" rx="6"/>
+          <text class="node-text" x="200" y="95" text-anchor="middle">UART RX</text>
+          <rect class="node" x="290" y="65" width="105" height="50" rx="6"/>
+          <text class="node-text" x="342" y="95" text-anchor="middle">FIFO</text>
+          <rect class="node" x="435" y="40" width="150" height="40" rx="6"/>
+          <text class="node-text" x="510" y="65" text-anchor="middle">Sem AES</text>
+          <rect class="node-main" x="435" y="100" width="150" height="40" rx="6"/>
+          <text x="510" y="125" text-anchor="middle" fill="#fff" font-size="15">AES-128-CTR</text>
+          <rect class="node" x="625" y="65" width="90" height="50" rx="6"/>
+          <text class="node-text" x="670" y="95" text-anchor="middle">UART TX</text>
+          <rect class="node" x="755" y="65" width="110" height="50" rx="6"/>
+          <text class="node-text" x="810" y="95" text-anchor="middle">USB–UART</text>
+          <rect class="node" x="905" y="65" width="110" height="50" rx="6"/>
+          <text class="node-text" x="960" y="95" text-anchor="middle">PC</text>
+          <path class="wire" d="M120 90 H150 M250 90 H290 M395 90 H415 V60 H435 M415 90 V120 H435 M585 60 H605 V90 H625 M585 120 H605 V90 M715 90 H755 M865 90 H905"/>
         </svg>
         <figcaption>O caminho de dados integrado ainda será conectado e validado.</figcaption>
       </figure>
