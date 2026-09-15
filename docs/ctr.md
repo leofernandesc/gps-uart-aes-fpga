@@ -87,16 +87,17 @@ A futura conexão com `sync_fifo` precisa guardar sua resposta de leitura, que
 é um pulso `rd_valid`, até o aceite do CTR. Ligar esse pulso diretamente a
 `in_valid` sem retenção poderia perder um byte durante uma pausa.
 
-## Responsabilidades do controle de sessão
+## Parâmetros de execução
 
 O CTR isolado não determina comprimento da aquisição, início em `$`, formato
-dos comandos ou histórico de nonces. Essas funções pertencem à próxima etapa
-de integração e ao software de configuração do PC.
+dos comandos ou histórico de nonces. Essas decisões pertencem ao procedimento
+de captura e ao software do PC; não constituem um bloco adicional no datapath.
 
-O controlador deverá encerrar a sessão após N bytes e invalidá-la em caso de
-framing error, overflow ou reset. Para cada chave, o PC deverá garantir um nonce
-novo em cada sessão, inclusive após reinicialização. Os testes usam somente
-chaves e nonces públicos; eles não fornecem um provisionamento para uso real.
+O PC define N para cada ensaio, registra o contexto usado e compara somente os
+bytes esperados. Framing error, overflow ou reset invalidam a captura. Para cada
+chave, o PC deverá garantir um nonce novo em cada captura, inclusive após
+reinicialização. Os testes usam somente chaves e nonces públicos; eles não
+fornecem um provisionamento para uso real.
 
 AES-CTR oferece confidencialidade. Autenticação e detecção de alterações no
 ciphertext não são fornecidas por esse modo.

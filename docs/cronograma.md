@@ -14,6 +14,11 @@ físico, de aquisição GPS ou dos quatro builds integrados.
 Documentação consolidada em 15/09; as simulações e compilações desta entrega
 foram executadas na noite de 14/09, conforme o relatório de revisão.
 
+Decisão arquitetural em 15/09: retirar o bloco de sessão do datapath. O fluxo
+principal passa a ser `GPS → UART RX → FIFO → passagem direta ou AES-CTR → UART
+TX → PC`; chave, nonce e tamanho da captura ficam registrados como parâmetros
+do experimento no PC.
+
 A integração prevista originalmente para 13/09 continua pendente. A sequência
 foi ajustada para incluir o teste UART em 15/09 e a comparação Cyclone IV,
 mantendo o prazo final. Integração e software ocupam 16–17/09; as frentes de
@@ -25,7 +30,7 @@ bancada e artigo devem avançar em paralelo.
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus; bancada pendente |
 | 15/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Pendente — Leonardo / bancada |
 | 15/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo |
-| 16–17/09 | Integração e PC | FIFO → CTR → TX; controle de sessão e decifragem de replay sem divergências | Pendente — frentes RTL e PC |
+| 16–17/09 | Integração e PC | FIFO → CTR → TX; captura no PC e decifragem de replay sem divergências | Pendente — frentes RTL e PC |
 | 18/09 | Quatro builds | Baseline/secure em cada placa, com recursos e timing rastreáveis | Pendente — frente FPGA |
 | 19–20/09 | Experimentos | Três replays por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
 | 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Pendente — artigo |
@@ -38,7 +43,7 @@ externo. Confirmar modalidade e template no portal antes do envio. O planejament
 interno termina em 25/09 independentemente dessa folga.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
 
-## Próxima sessão: 15/09
+## Próxima bancada: 15/09
 
 1. Abrir `fpga/de10_lite/uart_scope/uart_scope.qpf` ou executar `make uart-fpga`.
 2. Programar o SOF da UART de bancada; resetar com KEY0; medir TX diretamente.
@@ -121,23 +126,23 @@ Esses resultados não representam programação de placa ou captura GPS.
 - FIFO de 1.024 bytes, resposta de leitura retida até aceite do próximo estágio.
 - AES-CTR com nonce de 96 bits, contador de 32 bits e duas reservas de máscara;
   consumir máscara só no handshake. Não esperar 16 bytes de GPS para cifrar.
-- Sessões limitadas a N bytes, armadas antes da captura e iniciadas no próximo
-  `$`; canal de configuração separado do fluxo cifrado.
-- Nonce novo por chave/sessão, inclusive após reset, e bloqueio de wrap. O PC
-  manterá registro persistente; chave/nonce de simulação não são configuração
-  para capturas reais.
-- Framing, overflow ou reset invalidam a sessão; rearmar com novo contexto.
+- Cada ensaio terá seu tamanho N definido pela captura no PC. O início e o fim
+  do replay são metadados do experimento, não um bloco adicional no datapath.
+- Usar nonce novo a cada captura com a mesma chave, inclusive após reset, e
+  bloquear wrap. O PC manterá registro persistente; chave/nonce de simulação
+  não são configuração para capturas reais.
+- Framing, overflow ou reset invalidam a captura; recomeçar com novo contexto.
 - Captura da referência GPS independente; PC decifra e compara cada byte,
   salva primeira divergência, contagens e hashes.
 
-O comparador é **UART + FIFO + controle** versus **o mesmo sistema + AES-CTR**
+O comparador é **UART + FIFO + interfaces de fluxo** versus **o mesmo sistema + AES-CTR**
 em cada FPGA. A UART para osciloscópio e a ponte atual são preparatórias.
 A [arquitetura](arquitetura.md) detalha os alvos e a comparação entre clocks.
 
 ## Experimentos, escrita e dependências
 
 Planejar três repetições do mesmo replay por configuração, preservando bytes
-e intervalos. Acrescentar sessão GPS contínua com duração registrada; almejar
+e intervalos. Acrescentar captura GPS contínua com duração registrada; almejar
 uma hora por configuração quando a bancada permitir. Guardar configuração,
 recursos pós-fit, Fmax, slacks, latência em ciclos e µs, taxa útil, erros/perdas e
 ocupação da FIFO. Latência USB/SO não é latência interna da FPGA.

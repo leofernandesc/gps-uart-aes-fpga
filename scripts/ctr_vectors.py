@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Independent CTR test fixtures and verification of actual RTL output.
 
-All keys/nonces here are public deterministic test data. Production session
+All keys/nonces here are public deterministic test data. Production capture
 provisioning and persistent nonce allocation belong to the later PC software.
 No RTL source or internal signal is used to calculate expected results.
 """

@@ -55,12 +55,12 @@ versionado quando ela existir.
 - A `main` reúne as placas; branches de suporte são temporárias. Compartilhe
   o RTL e mantenha QSF, SDC, wrappers e saídas próprios para cada alvo.
 - `make uart-fpga` é o teste autônomo de UART; `make fpga` é a ponte com FIFO.
-  Nenhum dos dois representa o sistema integrado com controle de sessões.
+  Nenhum dos dois representa o sistema integrado com AES-CTR.
 - A Cyclone IV depende de placa, part number, oscilador e pinagem confirmados.
   O dispositivo usado para verificar a instalação do Quartus não identifica
   a placa do experimento. Não criar SOF de bancada com valores hipotéticos.
 - O comparativo possui quatro builds: baseline/secure em MAX 10 e Cyclone IV.
-  Preserve clock, FIFO, controle e instrumentação dentro de cada par; explique
+  Preserve clock, FIFO, interfaces e instrumentação dentro de cada par; explique
   as diferenças de clock ao comparar latência entre placas.
 
 ## Procedimento obrigatório ao atualizar o repositório

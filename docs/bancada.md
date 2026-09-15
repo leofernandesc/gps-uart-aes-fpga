@@ -1,4 +1,4 @@
-# Primeira sessão de bancada
+# Primeira bancada
 
 O primeiro ensaio previsto para 15/09 é a
 [UART isolada com osciloscópio e jumper](../fpga/de10_lite/uart_scope/README.md):
@@ -17,7 +17,7 @@ determinada pelo código impresso no receptor u-blox.
 | --- | --- | --- |
 | DE10-Lite + cabo USB | FPGA e programação USB-Blaster | Placa enumerada e identificada no Quartus |
 | GPS NEO-M8N-010 + antena correspondente, disponíveis | Fonte real dos dados | Conector do carrier, VCC e tensão da saída UART |
-| Dois canais de captura serial: USB–UART ou ponte com microcontrolador validada | Saída FPGA e referência crua; TX disponível para configuração local | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
+| Dois canais de captura serial: USB–UART ou ponte com microcontrolador validada | Saída FPGA e referência crua | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
 | Osciloscópio e pontas | Níveis e duração dos bits; teste UART isolado | Terra em GND, fator da ponta correto e instrumento acessível na bancada |
 | Jumpers e conexões firmes, disponíveis | Sinais e terra comum | Continuidade, identificação dos pinos e ausência de curto |
 | Multímetro; fonte 3,3 V regulada com limite de corrente | Conferência inicial | Um único suprimento para cada dispositivo; não unir fontes |
@@ -60,14 +60,13 @@ GPS TX ────────────┬──> FPGA / GPS RX
                    └──> canal B / RX (referência crua no PC)
 
 FPGA / UART TX ────────> canal A / RX (dados para o PC)
-canal B / TX ──────────> FPGA / UART RX (configuração local de sessão)
 terras compatíveis ────> GND comum
 ```
 
 Os números dos pinos do carrier M8 dependem da conferência do conector físico. O QSF
 do primeiro teste já escolhe GPIO[0]/JP1-1 para entrada e GPIO[1]/JP1-2 para
 saída, conforme o manual da DE10-Lite. Conferir a orientação do conector na
-placa antes de ligar. A entrada de configuração só entrará no build de sessões.
+placa antes de ligar.
 Não ligar a saída TX de um canal de captura ao TX do GPS. Manter TX não utilizado
 do canal A e RX do GPS desconectados nesta configuração, salvo necessidade
 explicitamente verificada. Não alimentar o GPS simultaneamente pela placa,
@@ -76,7 +75,7 @@ adaptador e fonte de bancada.
 A ponte atual retransmite continuamente os bytes válidos, sem AES ou comandos
 do PC. Erro de stop e overflow permanecem indicados nos LEDs até reset e
 invalidam a captura. Ela é suficiente para o primeiro teste de transporte;
-o comparador final do artigo também terá o controle de sessões compartilhado.
+o comparador final do artigo acrescentará o caminho AES-CTR ao mesmo transporte.
 
 ## GPS utilizado
 

@@ -41,14 +41,12 @@ O roteiro e os limites do ensaio estão no [guia de bancada UART](../fpga/de10_l
 ## Sistema GPS planejado
 
 ```text
-GPS TX ──┬── UART RX → FIFO → controle de sessão → estágio selecionado → UART TX
-         │                                             │                 │
-         │                              baseline: passagem direta         │
-         │                              secure: AES-128-CTR                │
-         │                                                               ▼
-         └── captura da referência ─────────────────────────────── PC / comparação
-
-PC / configuração ── canal local separado → chave, nonce, contador, tamanho
+GPS TX ──┬── UART RX → FIFO → estágio selecionado → UART TX → PC / comparação
+         │                              │
+         │                 baseline: passagem direta
+         │                 secure: AES-128-CTR
+         │
+         └── captura da referência ─────────────────────────────── PC
 ```
 
 A FIFO entrega dados com um pulso `rd_valid`; o CTR usa `valid/ready`. Na
@@ -56,12 +54,12 @@ integração, um registrador de byte com flag válida deve reter cada resposta d
 FIFO até o aceite do próximo estágio. Reservar espaço antes de pedir a leitura
 e só avançar a máscara no handshake. Essa ligação ainda não foi implementada.
 
-O controle limita a sessão a N bytes, arma a aquisição no próximo `$`, conta
-bytes e invalida a captura em framing, overflow ou reset. A configuração do PC
-via porta de controle separada não se mistura ao ciphertext. O PC deve
-registrar nonce novo por chave/sessão, inclusive após reset, e comparar o fluxo
-recuperado à referência. Não há autenticação com CTR; alegações do artigo são
-de confidencialidade e comportamento do transporte.
+O tamanho do replay, a chave, o nonce e o contador são parâmetros registrados
+no PC para cada experimento; não formam um bloco adicional no datapath. O PC
+decifra o fluxo, registra erros e compara o resultado com a referência original.
+Usar nonce novo em cada captura e bloquear o wrap do contador. Não há
+autenticação com CTR; as alegações do artigo serão de confidencialidade e
+comportamento do transporte.
 
 ## Matriz experimental
 
@@ -70,8 +68,8 @@ de confidencialidade e comportamento do transporte.
 | DE10-Lite / MAX 10 10M50DAF484C7G | Pendente | Pendente | 50 MHz |
 | Cyclone IV | Pendente da placa e integração | Pendente da placa e integração | Oscilador a confirmar |
 
-Dentro de cada placa, ambos os builds terão a mesma FIFO, controle de sessão,
-interfaces, instrumentação, clock e restrições. O AES estará ausente por
+Dentro de cada placa, ambos os builds terão a mesma FIFO, interfaces,
+instrumentação, clock e restrições. O AES estará ausente por
 elaboração no baseline, não apenas desativado por um switch. A ponte atual e
 o gerador para osciloscópio são testes preparatórios, não esse comparador final.
 
@@ -113,7 +111,7 @@ sustenta indefinidamente entrada com taxa média maior que a saída.
 - Quartus: fit e timing do alvo completo, SHA, versão, seed e restrições.
 - Bancada UART: captura do osciloscópio, montagem e resultado após reset.
 - Experimento GPS: entrada capturada e saída recuperada, hashes, contagens,
-  primeira divergência e condições da sessão. Osciloscópio sozinho não prova
+  primeira divergência e parâmetros do ensaio. Osciloscópio sozinho não prova
   ausência de perdas em um fluxo longo.
 
 SignalTap pode ajudar no diagnóstico; seus builds devem ficar separados das

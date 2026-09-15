@@ -17,8 +17,8 @@ O teste UART autônomo gera 0x55 a cada 100 ms para observar TX no osciloscópio
 com RX e LEDs para loopback por jumper. Seu SOF e a auditoria temporal passaram;
 ver [revisão e resultados de 14/09](docs/revisao-2026-09-14.md).
 Ainda não há registro de programação, recepção de GPS real ou medição de
-bancada. A integração CTR/FIFO/UART, o controle de sessões e o software de
-captura serial continuam pendentes. Os SOFs disponíveis são UART de bancada
+bancada. A integração CTR/FIFO/UART e o software de captura serial continuam
+pendentes. Os SOFs disponíveis são UART de bancada
 e ponte sem cifra. A comparação inclui MAX 10 e Cyclone IV; modelo, clock e
 pinagem da segunda placa serão confirmados em 15/09.
 
@@ -111,8 +111,8 @@ MAX 10 10M50DAF484C7G, 50 MHz, 9600 baud, 8N1.
 
 Ver [pinagem e uso da ponte](fpga/de10_lite/README.md) e
 [resultados deste marco](docs/validacao-ponte-quartus-2026-09-07.md).
-As métricas atuais incluem FIFO e LEDs de diagnóstico, mas ainda não o controle
-de sessão que será comum aos dois builds do artigo.
+As métricas atuais incluem FIFO e LEDs de diagnóstico, mas ainda não o AES-CTR
+integrado que será comparado nos dois builds do artigo.
 
 Para o AES isolado:
 
@@ -168,7 +168,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)
 - [Plano de execução e colaboração](docs/PLANO_DE_EXECUCAO.md)
-- [Primeira sessão de bancada e materiais](docs/bancada.md)
+- [Primeira bancada e materiais](docs/bancada.md)
 
 A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada, com quatro telas e cronograma até 25/09. A cópia local em
@@ -176,6 +176,6 @@ versionada, com quatro telas e cronograma até 25/09. A cópia local em
 
 Próxima bancada: UART com osciloscópio na DE10-Lite, em 15/09, e confirmação
 do modelo/clock da Cyclone IV. Próximo bloco RTL: conectar FIFO → CTR → UART TX com retenção de bytes sob
-backpressure, validar replay serial e implementar o controle de sessões.
+backpressure, validar replay serial e preparar a captura no PC.
 O software de configuração/captura e os builds integrados também podem
 avançar sem a placa.

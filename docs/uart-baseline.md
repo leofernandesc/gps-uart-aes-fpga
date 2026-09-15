@@ -13,7 +13,7 @@ fontes do UART v2 permanecem válidos.
 | Start do TX termina no próximo tick | Start, oito dados e stop duram um bit completo cada | Garantir temporização independentemente do instante do pedido |
 | RX consulta o pino externo diretamente | Dois registradores em série antes da lógica RX | Reduzir o risco de propagação de metastabilidade |
 | RX amostra nos ticks globais | Confirma start no meio do bit e amostra dados/stop a cada período | Alinhar a recepção ao quadro externo |
-| Stop inválido é descartado silenciosamente | Pulso `rx_framing_error`; quadro não entregue | Tornar corrupção observável pelo futuro controle de sessão |
+| Stop inválido é descartado silenciosamente | Pulso `rx_framing_error`; quadro não entregue | Tornar corrupção observável durante a captura |
 | Reset externo direto na lógica | Asserção assíncrona e liberação em dois clocks no top | Controlar a saída de reset no domínio de 50 MHz |
 | Contador global de 32 bits | Contadores dimensionados para o divisor | Evitar largura desnecessária |
 | Teste integrado alinhado ao DUT | Fonte e decodificador seriais independentes | Verificar o contrato externo, não reproduzir a mesma hipótese |
@@ -62,9 +62,9 @@ ela estiver cheia. **FIFO e contador de perdas ainda não existem neste marco.**
   de bytes zero. O RX aguarda repouso válido para rearmar.
 - Um reset interrompe o TX e força a linha alta sem gerar `tx_done` para o byte
   incompleto. O quadro parcial no receptor externo deve ser descartado.
-- Isso não é um protocolo de recuperação de pacotes. Na futura sessão CTR,
+- Isso não é um protocolo de recuperação de pacotes. Na captura com CTR,
   framing/overflow/reset invalidarão a aquisição e exigirão reinicialização
-  explícita da sessão com nonce novo.
+  explícita do contexto com nonce novo.
 
 ## Constantes e integração futura
 

@@ -12,8 +12,8 @@ comparar o custo da cifra em **MAX 10 e Cyclone IV**, com o mesmo RTL.
 
 | Plataforma | Sem cifra | Com cifra | Clock |
 | --- | --- | --- | --- |
-| DE10-Lite / MAX 10 | UART + FIFO + controle | Mesmo sistema + AES-CTR | 50 MHz |
-| Cyclone IV | UART + FIFO + controle | Mesmo sistema + AES-CTR | Oscilador da placa a confirmar |
+| DE10-Lite / MAX 10 | UART + FIFO | Mesmo sistema + AES-CTR | 50 MHz |
+| Cyclone IV | UART + FIFO | Mesmo sistema + AES-CTR | Oscilador da placa a confirmar |
 
 UART fixa em 9600/8N1, FIFO de 1.024 bytes, AES iterativo próprio e decifragem
 independente no PC. AES-CTR oferece confidencialidade, sem autenticação.
@@ -31,7 +31,7 @@ teste UART e a ponte atual são preparatórios.
 - CTR por byte conferido em 60 fluxos / 19.009 bytes por biblioteca independente.
 - UART autônoma para osciloscópio implementada, simulada e compilada.
 - Regressão completa: 22 simulações, lint, estrutura e comparação CTR aprovados.
-- Sem evidência física registrada; integração, sessões/PC e quatro builds pendentes.
+- Sem evidência física registrada; integração, captura no PC e quatro builds pendentes.
 - Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
@@ -44,7 +44,7 @@ Relatórios: [AES](validacao-aes-2026-09-09.md),
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
 | 15/09 | Bancada UART / placa Cyclone IV | TX medido; RX por jumper; placa e clock identificados |
-| 16–17/09 | Integração / PC | Fluxo UART–FIFO–CTR–TX e sessões; replay recuperado corretamente |
+| 16–17/09 | Integração / PC | Fluxo UART–FIFO–CTR–TX e captura; replay recuperado corretamente |
 | 18/09 | FPGA / Quartus | Quatro builds, relatórios de recursos e auditoria temporal |
 | 19–20/09 | Experimentos | Três replays por configuração e ensaio GPS contínuo |
 | 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
@@ -81,7 +81,7 @@ UART. A compilação de exemplo usada na instalação do pacote não define essa
 
 ## 2. Integração do fluxo por byte — 16–17/09
 
-Conectar UART RX → FIFO → retenção de byte → controle → AES-CTR → UART TX.
+Conectar UART RX → FIFO → retenção de byte → estágio selecionado → UART TX.
 
 - Reservar espaço antes de solicitar a leitura síncrona da FIFO.
 - Reter `rd_data` e flag válida até o handshake; não perder a resposta de um ciclo.
@@ -95,22 +95,22 @@ Conectar UART RX → FIFO → retenção de byte → controle → AES-CTR → UA
 Aceite: regressão completa aprovada e replay serial recuperado sem divergências.
 O AES isolado, CTR isolado e ponte separados não comprovam essa integração.
 
-## 3. Sessões e software de PC — 16–17/09
+## 3. Captura e software de PC — 16–17/09
 
-Definir protocolo local de configuração separado do fluxo cifrado. Cada sessão
-tem chave de teste, nonce, contador inicial e quantidade N de bytes.
+Definir o procedimento de captura separado do fluxo cifrado. Cada ensaio terá
+chave de teste, nonce, contador inicial e quantidade N de bytes registradas no PC.
 
-- Armar antes da captura e iniciar no próximo `$`; contar exatamente N bytes.
-- Gerar/registrar nonce novo por chave e sessão, inclusive após reset.
-- Bloquear ultrapassagem do contador de 32 bits; invalidar a sessão em framing,
+- Iniciar a captura antes do replay e contar exatamente N bytes no PC.
+- Gerar/registrar nonce novo por captura, inclusive após reset.
+- Bloquear ultrapassagem do contador de 32 bits; invalidar a captura em framing,
   overflow, perda ou reset.
-- Separar configuração confiável de bancada de distribuição segura de chaves.
+- Manter os parâmetros de bancada separados dos dados cifrados.
 - Capturar referência, ciphertext e texto recuperado; salvar metadados, hashes,
   contagens, primeira divergência e flags de erro.
-- Não versionar chaves privadas, sessões reais ou coordenadas pessoais.
+- Não versionar chaves privadas, capturas reais ou coordenadas pessoais.
 
-Aceite: rearmamento testado, nenhuma reutilização acidental de contexto e
-comparação do PC aprovada em fluxo vindo da simulação.
+Aceite: nenhuma reutilização acidental de contexto e comparação do PC aprovada
+em fluxo vindo da simulação.
 
 ## 4. Quatro builds comparáveis — 18/09
 
@@ -118,7 +118,7 @@ Criar `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`; saídas em
 `build/<placa>/<configuracao>/`. Cada projeto seleciona suas fontes e top,
 sem precisar excluir outros módulos do repositório.
 
-- Mesmo RTL, FIFO, controle, fronteiras de medida e instrumentação dentro de cada par.
+- Mesmo RTL, FIFO, interfaces, fronteiras de medida e instrumentação dentro de cada par.
 - Remover o AES por elaboração no baseline; não usar apenas um bypass em execução.
 - Usar dispositivo, clock e I/O corretos de cada placa.
 - Rodar síntese, fit e auditoria de setup/hold/recovery/removal; revisar
@@ -137,12 +137,12 @@ Após conferir módulo, alimentação e montagem:
 
 1. Validar GPS diretamente e guardar uma referência.
 2. Testar o baseline integrado na primeira placa.
-3. Executar a sessão com AES e decifrar no PC.
+3. Executar a captura com AES e decifrar no PC.
 4. Comparar todos os bytes com a referência independente.
 5. Repetir o protocolo na Cyclone IV.
 
 Executar três repetições do mesmo replay por configuração, preservando bytes e
-intervalos. Acrescentar sessão contínua do GPS com duração registrada; almejar
+intervalos. Acrescentar captura contínua do GPS com duração registrada; almejar
 uma hora por configuração quando a bancada permitir. Se houver impedimento
 físico, registrá-lo e revisar o experimento com o orientador; replay sintético
 não é aquisição GPS real.
@@ -175,7 +175,7 @@ da confidencialidade implementada.
 | Frente | Entrega |
 | --- | --- |
 | Coordenação | Manter cronograma, dependências e decisões com o orientador |
-| RTL | Integração, retenção de bytes e controle de sessões |
+| RTL | Integração, retenção de bytes e controle de fluxo |
 | Verificação | Oráculo independente, erros, reset e replay |
 | FPGA | Wrappers, QSF/SDC, quatro builds e recursos/timing |
 | Bancada | UART no osciloscópio, placa Cyclone IV e GPS real |

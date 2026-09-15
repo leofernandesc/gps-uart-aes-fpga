@@ -153,46 +153,40 @@
       <figure class="architecture">
         <svg viewBox="0 0 1170 245" role="img" aria-labelledby="arch-title arch-desc">
           <title id="arch-title">Arquitetura proposta para transmissão de GPS com e sem AES-CTR</title>
-          <desc id="arch-desc">O GPS envia bytes à UART RX da FPGA. FIFO e controle de sessão entregam os bytes ao caminho direto no baseline, ou ao AES-CTR no build cifrado. A UART TX envia a saída à interface serial e ao PC. O PC configura chave e nonce em canal local separado e captura também a referência original do GPS.</desc>
+          <desc id="arch-desc">O GPS envia bytes à UART RX da FPGA. A FIFO entrega os bytes ao caminho direto no baseline, ou ao AES-CTR no build cifrado. A UART TX envia a saída à interface serial e ao PC. O PC também captura a referência original do GPS para comparação.</desc>
           <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#006f65"/></marker></defs>
-          <rect class="diagram-frame" x="150" y="32" width="740" height="163" rx="10"/>
-          <text class="node-small" x="169" y="53">FPGA · mesmo RTL · clock e pinagem próprios de cada placa</text>
-          <rect class="node" x="5" y="88" width="120" height="58" rx="6"/>
-          <text class="node-text" x="65" y="111" text-anchor="middle">GPS M8N</text>
-          <text class="node-small" x="65" y="131" text-anchor="middle">9600 · 8N1</text>
-          <rect class="node" x="175" y="88" width="92" height="58" rx="6"/>
-          <text class="node-text" x="221" y="122" text-anchor="middle">UART RX</text>
-          <rect class="node" x="290" y="88" width="103" height="58" rx="6"/>
-          <text class="node-text" x="341" y="111" text-anchor="middle">FIFO</text>
-          <text class="node-small" x="341" y="131" text-anchor="middle">1024 bytes</text>
-          <rect class="node" x="416" y="88" width="110" height="58" rx="6"/>
-          <text class="node-text" x="471" y="111" text-anchor="middle">Sessão</text>
-          <text class="node-small" x="471" y="131" text-anchor="middle">limite + erros</text>
-          <rect class="node" x="569" y="64" width="170" height="40" rx="6"/>
-          <text class="node-text" x="654" y="89" text-anchor="middle">Caminho direto</text>
-          <rect class="node-main" x="569" y="127" width="170" height="42" rx="6"/>
-          <text x="654" y="153" text-anchor="middle" fill="#fff" font-size="15">AES-128-CTR</text>
-          <rect class="node" x="787" y="88" width="88" height="58" rx="6"/>
-          <text class="node-text" x="831" y="122" text-anchor="middle">UART TX</text>
-          <rect class="node" x="912" y="88" width="104" height="58" rx="6"/>
-          <text class="node-text" x="964" y="111" text-anchor="middle">Interface</text>
-          <text class="node-small" x="964" y="131" text-anchor="middle">serial / USB</text>
-          <rect class="node" x="1042" y="88" width="121" height="58" rx="6"/>
-          <text class="node-text" x="1102" y="111" text-anchor="middle">PC</text>
-          <text class="node-small" x="1102" y="131" text-anchor="middle">decifra e compara</text>
-          <path class="wire" d="M125 117 H175 M267 117 H290 M393 117 H416 M526 117 H546 V84 H569 M546 117 V148 H569 M739 84 H765 V117 H787 M739 148 H765 V117 M875 117 H912 M1016 117 H1042"/>
-          <text class="node-small" x="654" y="185" text-anchor="middle">seleção na compilação</text>
-          <path class="wire reference-wire" d="M65 146 V226 H1102 V146"/>
-          <text class="node-small" x="295" y="218">Captura serial independente da referência GPS → comparação byte a byte</text>
-          <path class="wire reference-wire" d="M1102 88 V14 H471 V88"/>
-          <path class="wire reference-wire" d="M554 14 V148 H569"/>
-          <text class="node-small" x="710" y="9">PC → configuração local: chave, nonce e tamanho da sessão</text>
+          <rect class="diagram-frame" x="130" y="28" width="675" height="145" rx="10"/>
+          <text class="node-small" x="149" y="49">FPGA · mesmo RTL · clock e pinagem próprios de cada placa</text>
+          <rect class="node" x="5" y="75" width="110" height="56" rx="6"/>
+          <text class="node-text" x="60" y="98" text-anchor="middle">GPS M8N</text>
+          <text class="node-small" x="60" y="118" text-anchor="middle">9600 · 8N1</text>
+          <rect class="node" x="145" y="75" width="95" height="56" rx="6"/>
+          <text class="node-text" x="192" y="109" text-anchor="middle">UART RX</text>
+          <rect class="node" x="265" y="75" width="100" height="56" rx="6"/>
+          <text class="node-text" x="315" y="98" text-anchor="middle">FIFO</text>
+          <text class="node-small" x="315" y="118" text-anchor="middle">1024 bytes</text>
+          <rect class="node" x="425" y="51" width="150" height="40" rx="6"/>
+          <text class="node-text" x="500" y="76" text-anchor="middle">Passagem direta</text>
+          <rect class="node-main" x="425" y="113" width="150" height="40" rx="6"/>
+          <text x="500" y="138" text-anchor="middle" fill="#fff" font-size="15">AES-128-CTR</text>
+          <rect class="node" x="620" y="75" width="90" height="56" rx="6"/>
+          <text class="node-text" x="665" y="109" text-anchor="middle">UART TX</text>
+          <rect class="node" x="745" y="75" width="105" height="56" rx="6"/>
+          <text class="node-text" x="797" y="98" text-anchor="middle">Serial / USB</text>
+          <text class="node-small" x="797" y="118" text-anchor="middle">interface</text>
+          <rect class="node" x="885" y="75" width="120" height="56" rx="6"/>
+          <text class="node-text" x="945" y="98" text-anchor="middle">PC</text>
+          <text class="node-small" x="945" y="118" text-anchor="middle">decifra e compara</text>
+          <path class="wire" d="M115 103 H145 M240 103 H265 M365 103 H395 V71 H425 M395 103 V133 H425 M575 71 H600 V103 H620 M575 133 H600 V103 M710 103 H745 M850 103 H885"/>
+          <text class="node-small" x="500" y="169" text-anchor="middle">dois builds: baseline e secure</text>
+          <path class="wire reference-wire" d="M60 131 V207 H945 V131"/>
+          <text class="node-small" x="300" y="201">Captura independente da referência GPS → comparação byte a byte</text>
         </svg>
-        <figcaption>O caminho de dados integrado e o controle de sessão são a próxima etapa de implementação.</figcaption>
+        <figcaption>O caminho de dados integrado ainda será conectado e validado.</figcaption>
       </figure>
       <div class="architecture-footer">
         <table aria-label="Quatro configurações experimentais"><thead><tr><th>Plataforma</th><th>Baseline</th><th>Com cifra</th></tr></thead><tbody><tr><td>DE10-Lite · MAX 10 · 50 MHz</td><td>Sem AES</td><td>AES-CTR</td></tr><tr><td>Cyclone IV · modelo/clock a confirmar</td><td>Sem AES</td><td>AES-CTR</td></tr></tbody></table>
-        <p class="metrics-note"><strong>Comparação:</strong> acréscimo de lógica, registradores e memória; Fmax, latência em ciclos e µs, taxa útil e perdas. Dentro de cada placa, manter clock, FIFO e controle iguais.<br><strong>Escolha do CTR:</strong> usa a mesma operação AES nos dois sentidos e permite tratar o fluxo por byte. Oferece confidencialidade, sem autenticação.</p>
+        <p class="metrics-note"><strong>Comparação:</strong> acréscimo de lógica, registradores e memória; Fmax, latência em ciclos e µs, taxa útil e perdas. Dentro de cada placa, manter clock, FIFO e interfaces iguais.<br><strong>Escolha do CTR:</strong> usa a mesma operação AES nos dois sentidos e permite tratar o fluxo por byte. Chave, nonce e tamanho da captura são definidos para cada experimento. Oferece confidencialidade, sem autenticação.</p>
       </div>
     </section>
     <section class="slide" id="3" data-label="Materiais e testes" aria-labelledby="title-3">
@@ -226,7 +220,7 @@
         <tbody>
           <tr><td>07–14/09</td><td>Preparação</td><td>UART, FIFO, AES e CTR isolados; revisão do RTL e preparação do teste UART para osciloscópio.</td></tr>
           <tr><td>15/09</td><td>Primeira bancada</td><td>TX no osciloscópio, RX por jumper; confirmar modelo, clock e pinagem da Cyclone IV.</td></tr>
-          <tr><td>16–17/09</td><td>Integração e PC</td><td>FIFO → CTR → TX; sessões, captura e decifragem. Replay serial recuperado sem divergências.</td></tr>
+          <tr><td>16–17/09</td><td>Integração e PC</td><td>FIFO → CTR → TX; captura e decifragem. Replay serial recuperado sem divergências.</td></tr>
           <tr><td>18/09</td><td>Quatro builds</td><td>Com e sem AES em cada placa; compilar, auditar timing e registrar recursos e clocks.</td></tr>
           <tr><td>19–20/09</td><td>Experimentos</td><td>Três replays por configuração e captura GPS contínua; salvar bytes, formas de onda e métricas.</td></tr>
           <tr><td>21–22/09</td><td>Resultados e artigo</td><td>Fechar tabelas e gráficos; discutir custo do AES, latência e limites do fluxo serial.</td></tr>
