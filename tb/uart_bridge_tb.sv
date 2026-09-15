@@ -7,7 +7,6 @@ module uart_bridge_tb #(
     parameter integer STRESS = 1
 );
     localparam integer LEVEL_WIDTH = $clog2(FIFO_DEPTH + 1);
-    localparam integer CPB = CLK_FREQ / 9600;
     localparam realtime BIT_NS = (1.0 * CLK_FREQ / 9600) * 20.0;
     reg clk = 0;
     always #10 clk = ~clk;
@@ -15,7 +14,7 @@ module uart_bridge_tb #(
     wire rst, tx, tx_busy, rx_event, tx_event, overflow_sticky, framing_sticky;
     wire [LEVEL_WIDTH-1:0] fifo_level, fifo_high_water;
     reset_sync reset_inst (.clk(clk), .arst(arst), .rst(rst));
-    uart_bridge #(.CLKS_PER_BIT(CPB), .FIFO_DEPTH(FIFO_DEPTH)) dut (.*);
+    uart_bridge #(.CLK_FREQ(CLK_FREQ), .BAUD_RATE(9600), .FIFO_DEPTH(FIFO_DEPTH)) dut (.*);
 
     reg [7:0] expected [0:8191];
     integer queued = 0, decoded = 0, completed = 0, received = 0;

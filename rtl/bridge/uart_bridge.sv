@@ -6,7 +6,9 @@
 // Errors latch until reset and invalidate the capture; new input is dropped
 // on overflow, preserving the order and contents of bytes already queued.
 module uart_bridge #(
-    parameter integer CLKS_PER_BIT = 5208,
+    parameter integer CLK_FREQ = 50_000_000,
+    parameter integer BAUD_RATE = 9600,
+    parameter integer CLKS_PER_BIT = CLK_FREQ / BAUD_RATE,
     parameter integer FIFO_DEPTH = 1024,
     parameter integer LEVEL_WIDTH = $clog2(FIFO_DEPTH + 1)
 ) (

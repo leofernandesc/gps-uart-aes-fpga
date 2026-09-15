@@ -40,6 +40,12 @@ module uart_top_tb #(
     end
 
     initial begin
+        if ($test$plusargs("vcd")) begin
+            $dumpfile("build/uart_top.vcd");
+            // Public signals keep production-frequency waveforms manageable.
+            $dumpvars(0, rst, rx, tx, tx_start, tx_data, tx_busy, tx_done,
+                      tx_ready, rx_data, rx_done, rx_framing_error);
+        end
         #37;
         if (tx_ready !== 0 || tx !== 1) $fatal(1, "Top not reset");
         rst = 0;

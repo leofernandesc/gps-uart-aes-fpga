@@ -1,10 +1,17 @@
 package require ::quartus::project
 package require ::quartus::sta
-project_open uart_bridge
+if {[llength $quartus(args)] == 0} {
+    set project uart_bridge
+    set out ../../build/quartus
+} elseif {[llength $quartus(args)] == 2} {
+    lassign $quartus(args) project out
+} else {
+    error "Expected project and output directory"
+}
+project_open $project
 create_timing_netlist
 read_sdc
 update_timing_netlist
-set out ../../build/quartus
 report_clocks -file $out/clocks.rpt
 check_timing -file $out/check_timing.rpt
 report_ucp -file $out/unconstrained.rpt

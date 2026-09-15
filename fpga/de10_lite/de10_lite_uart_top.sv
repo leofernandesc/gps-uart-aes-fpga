@@ -15,7 +15,7 @@ module de10_lite_uart_top (
     reg rx_toggle, tx_toggle;
 
     reset_sync reset_inst (.clk(MAX10_CLK1_50), .arst(!KEY0_N), .rst(rst));
-    uart_bridge bridge_inst (
+    uart_bridge #(.CLK_FREQ(50_000_000), .BAUD_RATE(9600)) bridge_inst (
         .clk(MAX10_CLK1_50), .rst(rst), .rx(GPS_RX), .tx_enable(1'b1),
         .tx(UART_TX), .tx_busy(tx_busy), .rx_event(rx_event), .tx_event(tx_event),
         .overflow_sticky(overflow_sticky), .framing_sticky(framing_sticky),

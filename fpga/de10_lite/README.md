@@ -1,5 +1,9 @@
 # Primeiro teste na DE10-Lite — ponte sem cifra
 
+Para testar **somente UART com osciloscópio**, usar
+[uart_scope/README.md](uart_scope/README.md) e `make uart-fpga`.
+O projeto descrito abaixo inclui a FIFO e espera dados na entrada para transmitir.
+
 Abrir `uart_bridge.qpf` no Quartus ou executar `make fpga` na raiz do projeto.
 O resultado é `build/quartus/uart_bridge.sof`. Compilar não exige placa;
 programar e validar o sinal externo exigem a montagem real.

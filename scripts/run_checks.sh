@@ -9,14 +9,26 @@ rtl=(rtl/common/reset_sync.sv rtl/uart/uart_tx.sv rtl/uart/uart_rx.sv rtl/uart/u
 bridge_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_bridge.sv fpga/de10_lite/de10_lite_uart_top.sv)
 aes_rtl=(rtl/aes/aes_sbox.sv rtl/aes/aes_sub_shift.sv rtl/aes/aes_mix_columns.sv rtl/aes/aes128_next_key.sv rtl/aes/aes128_core.sv)
 ctr_rtl=(rtl/ctr/aes128_ctr_mask.sv rtl/ctr/aes128_ctr_stream.sv)
+scope_rtl=(rtl/uart/uart_scope.sv fpga/de10_lite/uart_scope/de10_lite_uart_scope_top.sv)
 
 run_test() {
     local test_name="$1"
     local test_label="$2"
     shift 2
+    local test_sources=()
+    local simulator_args=()
+    case "$test_name" in
+        uart_scope_tb) test_sources=("${rtl[@]}" "${scope_rtl[@]}") ;;
+        uart_rx_tb|uart_tx_tb|uart_top_tb|uart_v1_regression_tb) test_sources=("${rtl[@]}") ;;
+        sync_fifo_tb|uart_bridge_tb) test_sources=("${rtl[@]}" "${bridge_rtl[@]}") ;;
+        aes_components_tb|aes128_core_tb) test_sources=("${aes_rtl[@]}") ;;
+        aes128_ctr_mask_tb|aes128_ctr_stream_tb) test_sources=("${aes_rtl[@]}" "${ctr_rtl[@]}") ;;
+        *) echo "Missing source list for test: $test_name" >&2; exit 2 ;;
+    esac
+    if [[ "$check_mode" == uart-waves ]]; then simulator_args=(+vcd); fi
     iverilog -g2012 -Wall -s "$test_name" "$@" \
-        -o "build/$test_label.vvp" "${rtl[@]}" "${bridge_rtl[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" "tb/$test_name.sv" 2>&1 | tee "build/$test_label.compile.log"
-    vvp -n "build/$test_label.vvp" | tee "build/$test_label.log"
+        -o "build/$test_label.vvp" "${test_sources[@]}" "tb/$test_name.sv" 2>&1 | tee "build/$test_label.compile.log"
+    vvp -n "build/$test_label.vvp" "${simulator_args[@]}" | tee "build/$test_label.log"
 }
 
 test_uart() {
@@ -30,10 +42,14 @@ test_uart() {
     sed 's/\<uart_tx\>/uart_tx_v1/g' reference/uart-v1/rtl/uart_tx.v >build/uart_tx_v1.v
     # Only the legacy modules have no timescale declaration.
     run_test uart_v1_regression_tb uart_v1_regression -Wno-timescale build/uart_tx_v1.v reference/uart-v1/rtl/baud_gen.v
+    run_test uart_scope_tb uart_scope_fast
+    run_test uart_scope_tb uart_scope_50mhz_9600 -Puart_scope_tb.CLK_FREQ=50000000
 }
 
 lint_uart() {
     verilator --lint-only --Wall --top-module uart_top "${rtl[@]}" 2>&1 | tee build/lint.log
+    verilator --lint-only --Wall --top-module de10_lite_uart_scope_top \
+        "${rtl[@]}" "${scope_rtl[@]}" 2>&1 | tee build/uart-scope-lint.log
 }
 
 test_bridge() {
@@ -55,6 +71,9 @@ synth_uart() {
     yosys -q -Q -T -l build/synth.log -p \
         "read_verilog -sv ${rtl[*]}; hierarchy -check -top uart_top; synth -top uart_top; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/uart_top.json"
     echo 'PASS structural synthesis: no check problems or inferred latches (not FPGA mapping)'
+    yosys -q -Q -T -l build/uart-scope-synth.log -p \
+        "read_verilog -sv ${rtl[*]} ${scope_rtl[*]}; hierarchy -check -top de10_lite_uart_scope_top; synth -top de10_lite_uart_scope_top; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/uart_scope.json"
+    echo 'PASS UART scope structure: no check problems or inferred latches'
 }
 
 test_aes() {
@@ -112,6 +131,12 @@ synth_ctr() {
 }
 
 case "$check_mode" in
+    uart) test_uart; lint_uart; synth_uart ;;
+    uart-waves)
+        run_test uart_top_tb uart_top_waves -Puart_top_tb.CLK_FREQ=50000000 -Puart_top_tb.NUM_BYTES=4
+        run_test uart_scope_tb uart_scope_waves -Puart_scope_tb.CLK_FREQ=50000000
+        echo 'PASS UART waveforms: build/uart_top.vcd and build/uart_scope.vcd (public signals)'
+        ;;
     test) test_uart; test_bridge; test_aes; test_ctr ;;
     lint) mkdir -p build/aes; lint_uart; lint_bridge; lint_aes; lint_ctr ;;
     bridge) test_bridge; lint_bridge ;;

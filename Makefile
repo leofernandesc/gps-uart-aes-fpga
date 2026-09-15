@@ -1,4 +1,7 @@
-.PHONY: check test lint synth reference bridge aes ctr fpga aes-fpga
+.PHONY: check test lint synth reference bridge aes ctr fpga aes-fpga uart uart-waves uart-fpga
+
+BOARD ?= de10_lite
+DESIGN ?= bridge
 
 # HDL_RUNNER=auto (default), native, or docker.
 check:
@@ -21,7 +24,18 @@ bridge:
 
 # Quartus build and timing analysis; does not connect to/program a board.
 fpga:
-	bash scripts/quartus_build.sh
+	bash scripts/quartus_build.sh "$(BOARD)" "$(DESIGN)"
+
+# UART RX/TX and autonomous bench only; no AES/FIFO simulation.
+uart:
+	bash scripts/hdl.sh uart
+
+uart-waves:
+	bash scripts/hdl.sh uart-waves
+
+# Autonomous 0x55 transmitter + RX diagnostics, for oscilloscope/jumper tests.
+uart-fpga:
+	bash scripts/quartus_build.sh "$(BOARD)" uart_scope
 
 aes:
 	bash scripts/hdl.sh aes

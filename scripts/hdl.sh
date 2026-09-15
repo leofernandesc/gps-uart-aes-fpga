@@ -3,8 +3,8 @@ set -euo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 check_mode="${1:-all}"
-case "$check_mode" in all|test|lint|synth|reference|bridge|aes|ctr) ;; *)
-    echo "Usage: bash scripts/hdl.sh {all|test|lint|synth|reference|bridge|aes|ctr}" >&2; exit 2;;
+case "$check_mode" in all|test|lint|synth|reference|bridge|aes|ctr|uart|uart-waves) ;; *)
+    echo "Usage: bash scripts/hdl.sh {all|test|lint|synth|reference|bridge|aes|ctr|uart|uart-waves}" >&2; exit 2;;
 esac
 
 hdl_runner="${HDL_RUNNER:-auto}"
