@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 15/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 16/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -17,6 +17,8 @@ branches temporárias servem para desenvolver e revisar alterações.
 | `make uart-fpga` | `de10_lite_uart_scope_top` → `uart_scope` → reset, RX, TX | `build/de10_lite/uart_scope/uart_scope.sof` |
 | `make fpga` | `de10_lite_uart_top` → ponte → RX, FIFO, TX | `build/quartus/uart_bridge.sof` |
 | `make aes-fpga` | AES e reset, com portas virtuais | `build/quartus_aes/`, somente análise |
+| `make integration` | `uart_ctr_bridge`, com e sem AES | Simulação serial, lint, estrutura e comparação no PC |
+| `make pc` | Gravador/comparador Linux | Testes de software com porta virtual |
 | `make check` | Regressão de todos os blocos existentes | Logs em `build/` |
 
 No Quartus, quem seleciona o circuito é o projeto/revisão, a lista de fontes
@@ -38,7 +40,7 @@ Esse top não ecoa a entrada. A transmissão periódica é independente de RX.
 LED 8 registra recepção; LED 9 retém framing ou byte diferente de 0x55.
 O roteiro e os limites do ensaio estão no [guia de bancada UART](../fpga/de10_lite/uart_scope/README.md).
 
-## Sistema GPS planejado
+## Caminho integrado; aquisição GPS ainda pendente
 
 ```text
 GPS TX ──┬── UART RX → FIFO → estágio selecionado → UART TX → PC / comparação
@@ -50,9 +52,10 @@ GPS TX ──┬── UART RX → FIFO → estágio selecionado → UART TX →
 ```
 
 A FIFO entrega dados com um pulso `rd_valid`; o CTR usa `valid/ready`. Na
-integração, um registrador de byte com flag válida deve reter cada resposta da
-FIFO até o aceite do próximo estágio. Reservar espaço antes de pedir a leitura
-e só avançar a máscara no handshake. Essa ligação ainda não foi implementada.
+integração, `uart_ctr_bridge` usa um registrador de byte com flag válida para
+reter cada resposta até o aceite do próximo estágio. Reserva espaço antes de
+pedir a leitura e só avança a máscara no aceite do TX. Os dois modos passaram
+na simulação serial e na comparação independente; ver [contrato](integracao-uart-ctr.md).
 
 O tamanho do replay, a chave, o nonce e o contador são parâmetros registrados
 no PC para cada experimento; não formam um bloco adicional no datapath. O PC
@@ -61,12 +64,18 @@ Usar nonce novo em cada captura e bloquear o wrap do contador. Não há
 autenticação com CTR; as alegações do artigo serão de confidencialidade e
 comportamento do transporte.
 
+A interface RTL `cfg_*` inicializa o contexto, sem protocolo serial adicional.
+Ainda é necessário implementá-la no wrapper e controlar o início da aquisição;
+registrar parâmetros no PC não os transfere automaticamente à FPGA. O
+[software PC](captura-pc.md) grava e compara arquivos; provisionamento e
+registro persistente de nonces ainda estão pendentes.
+
 ## Matriz experimental
 
 | Placa | Baseline integrado | Secure integrado | Clock |
 | --- | --- | --- | --- |
 | DE10-Lite / MAX 10 10M50DAF484C7G | Pendente | Pendente | 50 MHz |
-| Cyclone IV | Pendente da placa e integração | Pendente da placa e integração | Oscilador a confirmar |
+| Cyclone IV | Pendente do cadastro da placa/build | Pendente do cadastro da placa/build | Oscilador a confirmar |
 
 Dentro de cada placa, ambos os builds terão a mesma FIFO, interfaces,
 instrumentação, clock e restrições. O AES estará ausente por

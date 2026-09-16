@@ -3,8 +3,8 @@ set -euo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 check_mode="${1:-all}"
-case "$check_mode" in all|test|lint|synth|reference|bridge|aes|ctr|uart|uart-waves) ;; *)
-    echo "Usage: bash scripts/hdl.sh {all|test|lint|synth|reference|bridge|aes|ctr|uart|uart-waves}" >&2; exit 2;;
+case "$check_mode" in all|test|lint|synth|reference|bridge|aes|ctr|integration|uart|uart-waves) ;; *)
+    echo "Usage: bash scripts/hdl.sh {all|test|lint|synth|reference|bridge|aes|ctr|integration|uart|uart-waves}" >&2; exit 2;;
 esac
 
 hdl_runner="${HDL_RUNNER:-auto}"
@@ -35,6 +35,9 @@ esac
 case "$check_mode" in
     all|test|ctr) python3 "$project_dir/scripts/ctr_vectors.py" ;;
 esac
+case "$check_mode" in
+    all|test|integration) python3 "$project_dir/scripts/integration_vectors.py" ;;
+esac
 if [[ "$hdl_runner" == native ]]; then
     bash "$project_dir/scripts/run_checks.sh" "$check_mode"
 else
@@ -55,6 +58,12 @@ fi
 case "$check_mode" in
     all|test|ctr) python3 "$project_dir/scripts/ctr_vectors.py" --verify ;;
 esac
+case "$check_mode" in
+    all|test|integration)
+        python3 "$project_dir/scripts/integration_vectors.py" --verify
+        python3 -m unittest discover -s "$project_dir/tb" -p test_capture.py -v 2>&1 | tee "$project_dir/build/integration/pc-tests.log"
+        ;;
+esac
 if [[ "$check_mode" == all ]]; then
-    echo 'PASS: UART, bridge, AES, CTR and independent PC verification' | tee "$project_dir/build/check-status.txt"
+    echo 'PASS: UART, bridge, AES, CTR, integrated serial path and independent PC verification' | tee "$project_dir/build/check-status.txt"
 fi

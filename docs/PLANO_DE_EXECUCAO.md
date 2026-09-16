@@ -1,6 +1,6 @@
 # Plano de execução e colaboração
 
-Atualizado em 15/09/2026. O [cronograma](cronograma.md) registra o andamento e
+Atualizado em 16/09/2026. O [cronograma](cronograma.md) registra o andamento e
 as evidências; este plano detalha as entregas e como aceitá-las.
 A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
 materiais e datas em quatro telas.
@@ -30,12 +30,15 @@ teste UART e a ponte atual são preparatórios.
 - AES conferido em 866 vetores e analisado isoladamente no Quartus.
 - CTR por byte conferido em 60 fluxos / 19.009 bytes por biblioteca independente.
 - UART autônoma para osciloscópio implementada, simulada e compilada.
-- Regressão completa: 22 simulações, lint, estrutura e comparação CTR aprovados.
-- Sem evidência física registrada; integração, captura no PC e quatro builds pendentes.
+- Integração baseline/secure validada: 4.982 bytes de TX conferidos no PC.
+- Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
+- Regressão completa: 26 simulações, sete configurações de lint, estrutura e oito testes PC.
+- Sem evidência física; provisionamento de contexto, registro de nonces e quatro builds pendentes.
 - Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
-[CTR](validacao-ctr-2026-09-10.md) e [revisão de 14/09](revisao-2026-09-14.md).
+[CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
+e [integração de 16/09](validacao-integracao-2026-09-16.md).
 
 ## Datas e entregas
 
@@ -43,8 +46,10 @@ Relatórios: [AES](validacao-aes-2026-09-09.md),
 
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
-| 15/09 | Bancada UART / placa Cyclone IV | TX medido; RX por jumper; placa e clock identificados |
-| 16–17/09 | Integração / PC | Fluxo UART–FIFO–CTR–TX e captura; replay recuperado corretamente |
+| 16–18/09 | Bancada UART | TX medido e RX por jumper, condicionado ao acesso à DE10-Lite |
+| 16–17/09 | Identificação Cyclone IV | Modelo, clock e pinagem confirmados antes de criar o alvo |
+| 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
+| 17/09 | Contexto / preparação FPGA | Provisionamento, registro de nonces e início alinhado da aquisição |
 | 18/09 | FPGA / Quartus | Quatro builds, relatórios de recursos e auditoria temporal |
 | 19–20/09 | Experimentos | Três replays por configuração e ensaio GPS contínuo |
 | 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
@@ -53,11 +58,12 @@ Relatórios: [AES](validacao-aes-2026-09-09.md),
 | 25/09 | Contingência | Correções de envio/reenvio e confirmação final |
 
 Introdução, trabalhos relacionados e metodologia avançam junto da implementação.
-A integração prevista inicialmente para 13/09 foi reagendada; não está concluída.
+A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
+A bancada prevista para 15/09 foi reagendada por indisponibilidade da placa.
 Definir colaboradores para RTL, PC e bancada em paralelo. Registrar atrasos e
 ajustar as dependências no cronograma sem deslocar entregas necessárias após 25/09.
 
-## 1. UART isolada e identificação da segunda placa — 15/09
+## 1. UART isolada e identificação da segunda placa — 16–18/09
 
 Usar `make uart-fpga` e o [guia da UART de bancada](../fpga/de10_lite/uart_scope/README.md).
 A FPGA gera 0x55 a cada 100 ms; observar TX no osciloscópio. Um jumper externo
@@ -81,7 +87,9 @@ UART. A compilação de exemplo usada na instalação do pacote não define essa
 
 ## 2. Integração do fluxo por byte — 16–17/09
 
-Conectar UART RX → FIFO → retenção de byte → estágio selecionado → UART TX.
+Concluída em simulação em 16/09 no `uart_ctr_bridge`; ver
+[contrato e evidências](integracao-uart-ctr.md). O caminho implementado é
+UART RX → FIFO → retenção de byte → estágio selecionado → UART TX.
 
 - Reservar espaço antes de solicitar a leitura síncrona da FIFO.
 - Reter `rd_data` e flag válida até o handshake; não perder a resposta de um ciclo.
@@ -96,6 +104,12 @@ Aceite: regressão completa aprovada e replay serial recuperado sem divergência
 O AES isolado, CTR isolado e ponte separados não comprovam essa integração.
 
 ## 3. Captura e software de PC — 16–17/09
+
+Gravador binário e comparador implementados; uso em [captura PC](captura-pc.md).
+Oito testes de software e comparação da saída serial simulada aprovados.
+Pendências para concluir a etapa: geração/registro persistente de nonces,
+carregamento de `cfg_*` no wrapper e início alinhado do GPS/replay. A validação
+do adaptador físico depende de bancada; PTY não representa esse dispositivo.
 
 Definir o procedimento de captura separado do fluxo cifrado. Cada ensaio terá
 chave de teste, nonce, contador inicial e quantidade N de bytes registradas no PC.
@@ -201,6 +215,8 @@ make uart-fpga     # SOF UART autônoma DE10-Lite
 make fpga          # ponte UART + FIFO DE10-Lite
 make aes
 make ctr
+make integration
+make pc
 make aes-fpga
 make check
 git diff --check

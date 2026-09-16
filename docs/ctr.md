@@ -83,9 +83,10 @@ O último byte pode ser aceito na mesma borda em que a próxima máscara ocupa a
 reserva atual. Se ela ainda não estiver pronta, o adaptador aplica backpressure
 até a conclusão do AES. A interface não promete um byte por ciclo indefinidamente.
 
-A futura conexão com `sync_fifo` precisa guardar sua resposta de leitura, que
-é um pulso `rd_valid`, até o aceite do CTR. Ligar esse pulso diretamente a
-`in_valid` sem retenção poderia perder um byte durante uma pausa.
+A conexão implementada em `uart_ctr_bridge` guarda a resposta de leitura da
+`sync_fifo`, que é um pulso `rd_valid`, até o aceite do CTR/TX. Ligar esse pulso
+diretamente a `in_valid` sem retenção poderia perder um byte durante uma pausa.
+Ver [integração e cancelamento](integracao-uart-ctr.md).
 
 ## Parâmetros de execução
 

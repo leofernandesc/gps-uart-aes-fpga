@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr fpga aes-fpga uart uart-waves uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration pc fpga aes-fpga uart uart-waves uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -42,6 +42,12 @@ aes:
 
 ctr:
 	bash scripts/hdl.sh ctr
+
+integration:
+	bash scripts/hdl.sh integration
+
+pc:
+	python3 -m unittest discover -s tb -p test_capture.py -v
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:

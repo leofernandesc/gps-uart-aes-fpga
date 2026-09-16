@@ -4,33 +4,37 @@ Objetivo: adquirir GPS NEO-M8N-010 por UART e medir o custo do AES-128-CTR em
 DE10-Lite/MAX 10 e Cyclone IV, com um build sem cifra e outro com cifra por
 placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
 
-## Situação em 15/09/2026
+## Situação em 16/09/2026
 
-UART, FIFO, AES e CTR estão implementados e testados isoladamente. A UART de
-bancada agora transmite 0x55 sozinha e permite conferir RX por jumper externo.
-O build desse teste na DE10-Lite passou no Quartus. Não há registro de teste
-físico, de aquisição GPS ou dos quatro builds integrados.
+UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
+secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
+O gravador/comparador binário passou em testes com porta virtual Linux.
+Ainda faltam provisionamento do contexto, registro persistente de nonces,
+builds completos e validação física. A UART autônoma e a ponte antigas mantêm
+seus SOFs; não há registro de aquisição GPS nem dos quatro builds integrados.
 
-Documentação consolidada em 15/09; as simulações e compilações desta entrega
-foram executadas na noite de 14/09, conforme o relatório de revisão.
+A documentação anterior foi consolidada em 15/09; suas simulações e compilações
+UART foram executadas na noite de 14/09, conforme o relatório de revisão.
 
 Decisão arquitetural em 15/09: retirar o bloco de sessão do datapath. O fluxo
 principal passa a ser `GPS → UART RX → FIFO → passagem direta ou AES-CTR → UART
 TX → PC`; chave, nonce e tamanho da captura ficam registrados como parâmetros
 do experimento no PC.
 
-A integração prevista originalmente para 13/09 continua pendente. A sequência
-foi ajustada para incluir o teste UART em 15/09 e a comparação Cyclone IV,
-mantendo o prazo final. Integração e software ocupam 16–17/09; as frentes de
-bancada e artigo devem avançar em paralelo.
+A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
+A bancada e a identificação da Cyclone IV, previstas para 15/09, não ocorreram;
+a DE10-Lite ainda não está disponível. A janela foi ajustada abaixo, condicionada
+ao acesso ao hardware. Software e preparação dos builds avançam sem a placa;
+bancada e artigo devem seguir em paralelo, mantendo o encerramento em 25/09.
 
 | Data | Entrega | Critério de conclusão | Situação |
 | --- | --- | --- | --- |
 | 07–10/09 | UART, FIFO, AES e CTR isolados | Testes e evidências dos marcos abaixo | Concluído em RTL; ponte e AES analisados no Quartus |
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus; bancada pendente |
-| 15/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Pendente — Leonardo / bancada |
-| 15/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo |
-| 16–17/09 | Integração e PC | FIFO → CTR → TX; captura no PC e decifragem de replay sem divergências | Pendente — frentes RTL e PC |
+| 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Pendente — Leonardo / acesso à placa; reagendado de 15/09 |
+| 16–17/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo; reagendado de 15/09 |
+| 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
+| 17/09 | Contexto e preparação dos builds | Provisionar chave/nonce no wrapper, registrar nonces e preservar início da captura | Pendente — frentes RTL e PC |
 | 18/09 | Quatro builds | Baseline/secure em cada placa, com recursos e timing rastreáveis | Pendente — frente FPGA |
 | 19–20/09 | Experimentos | Três replays por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
 | 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Pendente — artigo |
@@ -43,7 +47,7 @@ externo. Confirmar modalidade e template no portal antes do envio. O planejament
 interno termina em 25/09 independentemente dessa folga.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
 
-## Próxima bancada: 15/09
+## Próxima bancada: ao receber a DE10-Lite
 
 1. Abrir `fpga/de10_lite/uart_scope/uart_scope.qpf` ou executar `make uart-fpga`.
 2. Programar o SOF da UART de bancada; resetar com KEY0; medir TX diretamente.
@@ -121,7 +125,30 @@ configuração e captura de portas seriais ainda serão implementadas.
 Evidências consolidadas em [revisão e validação](revisao-2026-09-14.md).
 Esses resultados não representam programação de placa ou captura GPS.
 
-## Contrato para concluir a integração
+## Marco em 16/09: integração serial e software de captura
+
+- `uart_ctr_bridge`: seleção baseline/secure por elaboração, leitura da FIFO
+  com reserva/retenção de byte e consumo de máscara no aceite do TX.
+- Framing/overflow interrompem a aquisição; abort/reset descartam dados
+  pendentes. O último quadro termina antes de parar por esgotamento do contador.
+- Quatro simulações integradas: nove fluxos por modo no teste acelerado e
+  quatro por modo em 50 MHz/9600 com FIFO de 1.024 bytes. São 4.982 bytes
+  decodificados do fio TX, conferidos e recuperados no PC sem divergências.
+- Cancelamento em 32 situações por modo acelerado, falhas e recuperação
+  byte a byte com contexto novo. Baseline sem módulos AES confirmado pelo Yosys.
+- Gravador binário Linux e comparador com contagens, hashes e primeira
+  divergência; oito testes PC, incluindo porta virtual, timeout e arquivos privados.
+- Regressão completa: 26 simulações, sete configurações de lint, estrutura e
+  conferência independente; evidências no [relatório](validacao-integracao-2026-09-16.md).
+- GitHub conferido antes do trabalho: nenhuma contribuição nova em relação
+  a `bb0f15f`; não foi necessário pull. Histórico anterior preservado.
+
+O [contrato RTL](integracao-uart-ctr.md) e o [guia PC](captura-pc.md) delimitam
+o que está pronto. A interface `cfg_*` ainda precisa de um wrapper que receba
+os parâmetros; um JSON no PC não configura sozinho a FPGA. Registro persistente
+de nonces, início alinhado, builds completos e validação física seguem pendentes.
+
+## Contrato da integração e pendências de bancada
 
 - FIFO de 1.024 bytes, resposta de leitura retida até aceite do próximo estágio.
 - AES-CTR com nonce de 96 bits, contador de 32 bits e duas reservas de máscara;

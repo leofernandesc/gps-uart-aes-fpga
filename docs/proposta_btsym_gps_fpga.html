@@ -149,7 +149,7 @@
     <section class="slide" id="2" data-label="Arquitetura" aria-labelledby="title-2">
       <p class="eyebrow">02 / Arquitetura e comparação</p>
       <h2 id="title-2">Uma arquitetura, <em>quatro configurações.</em></h2>
-      <p class="intro">UART e FIFO já desenvolvidos; AES-CTR iterativo para cifrar o fluxo por byte. GPS real como carga de trabalho.</p>
+      <p class="intro">UART, FIFO e AES-CTR integrados para tratar o fluxo por byte. GPS real como carga de trabalho dos experimentos.</p>
       <figure class="architecture">
         <svg viewBox="0 0 1100 180" role="img" aria-labelledby="arch-title arch-desc">
           <title id="arch-title">Arquitetura proposta para transmissão de GPS com e sem AES-CTR</title>
@@ -173,7 +173,7 @@
           <text class="node-text" x="960" y="95" text-anchor="middle">PC</text>
           <path class="wire" d="M120 90 H150 M250 90 H290 M395 90 H415 V60 H435 M415 90 V120 H435 M585 60 H605 V90 H625 M585 120 H605 V90 M715 90 H755 M865 90 H905"/>
         </svg>
-        <figcaption>O caminho de dados integrado ainda será conectado e validado.</figcaption>
+        <figcaption>Integração validada em simulação; builds completos e bancada pendentes.</figcaption>
       </figure>
       <div class="architecture-footer">
         <table aria-label="Quatro configurações experimentais"><thead><tr><th>Plataforma</th><th>Baseline</th><th>Com cifra</th></tr></thead><tbody><tr><td>DE10-Lite · MAX 10 · 50 MHz</td><td>Sem AES</td><td>AES-CTR</td></tr><tr><td>Cyclone IV · modelo/clock a confirmar</td><td>Sem AES</td><td>AES-CTR</td></tr></tbody></table>
@@ -187,8 +187,8 @@
         <table aria-label="Materiais do projeto">
           <thead><tr><th>Material / função</th><th>Situação</th></tr></thead>
           <tbody>
-            <tr><td><span class="material-name">DE10-Lite</span><span class="material-use">Primeiro teste UART e implementação MAX 10</span></td><td><span class="badge pending">Bancada em 15/09</span></td></tr>
-            <tr><td><span class="material-name">Placa Cyclone IV</span><span class="material-use">Segundo alvo para os dois builds</span></td><td><span class="badge pending">Modelo em 15/09</span></td></tr>
+            <tr><td><span class="material-name">DE10-Lite</span><span class="material-use">Primeiro teste UART e implementação MAX 10</span></td><td><span class="badge pending">Aguardando placa</span></td></tr>
+            <tr><td><span class="material-name">Placa Cyclone IV</span><span class="material-use">Segundo alvo para os dois builds</span></td><td><span class="badge pending">Modelo a confirmar</span></td></tr>
             <tr><td><span class="material-name">GPS NEO-M8N-010 + antena</span><span class="material-use">Aquisição real das sentenças GPS</span></td><td><span class="badge">Disponível</span></td></tr>
             <tr><td><span class="material-name">Osciloscópio + pontas</span><span class="material-use">Níveis elétricos, duração dos bits e quadros</span></td><td><span class="badge pending">Uso na bancada</span></td></tr>
             <tr><td><span class="material-name">Interface serial para o PC</span><span class="material-use">Saída da FPGA e referência GPS; USB–UART ou ponte com microcontrolador validada, I/O 3,3 V</span></td><td><span class="badge pending">Definir captura</span></td></tr>
@@ -204,14 +204,14 @@
       <p class="sources">USB-Blaster programa a FPGA. A interface serial transporta os dados ao PC. O osciloscópio fornece a evidência elétrica e temporal.</p>
     </section>
     <section class="slide" id="4" data-label="Cronograma" aria-labelledby="title-4">
-      <p class="eyebrow">04 / Planejamento · atualizado em 15/09/2026</p>
+      <p class="eyebrow">04 / Planejamento · atualizado em 16/09/2026</p>
       <h2 id="title-4">Submissão e contingência até <em>25/09.</em></h2>
       <table class="schedule-table" aria-label="Cronograma de setembro de 2026">
         <thead><tr><th>Data</th><th>Etapa</th><th>Entrega e critério</th></tr></thead>
         <tbody>
           <tr><td>07–14/09</td><td>Preparação</td><td>UART, FIFO, AES e CTR isolados; revisão do RTL e preparação do teste UART para osciloscópio.</td></tr>
-          <tr><td>15/09</td><td>Primeira bancada</td><td>TX no osciloscópio, RX por jumper; confirmar modelo, clock e pinagem da Cyclone IV.</td></tr>
-          <tr><td>16–17/09</td><td>Integração e PC</td><td>FIFO → CTR → TX; captura e decifragem. Replay serial recuperado sem divergências.</td></tr>
+          <tr><td>16–18/09</td><td>Primeira bancada</td><td>Ao receber a placa: TX no osciloscópio e RX por jumper. Identificar a Cyclone IV até 17/09.</td></tr>
+          <tr><td>16–17/09</td><td>Integração e PC</td><td>Fluxo serial validado em simulação. Concluir provisionamento de chave/nonce e preparação dos builds.</td></tr>
           <tr><td>18/09</td><td>Quatro builds</td><td>Com e sem AES em cada placa; compilar, auditar timing e registrar recursos e clocks.</td></tr>
           <tr><td>19–20/09</td><td>Experimentos</td><td>Três replays por configuração e captura GPS contínua; salvar bytes, formas de onda e métricas.</td></tr>
           <tr><td>21–22/09</td><td>Resultados e artigo</td><td>Fechar tabelas e gráficos; discutir custo do AES, latência e limites do fluxo serial.</td></tr>
