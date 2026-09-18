@@ -92,7 +92,7 @@ nível alto, start, oito bits e stop identificáveis.
 | Período do bit | ~104,16 µs | `104,22 µs` | `0,938 ms / 9` intervalos |
 | Duração do quadro | ~1,0416 ms | `~1,042 ms` | dez períodos derivados do bit |
 | Nível baixo/alto | compatível com I/O 3,3 V | `ΔY = 3,58 V` | cursores verticais; Vmin/Vmax não separados |
-| Intervalo entre starts | ~100 ms | — | captura de repetição |
+| Intervalo entre starts | ~100 ms | `0,1 s` | captura de repetição |
 | Decodificação | `0x55`, 9600/8N1 | **Passou** | quadro observado no instrumento |
 
 Configuração registrada: ponta ×10, canal em alta impedância, base de tempo de
