@@ -1,6 +1,6 @@
 # Plano de execução e colaboração
 
-Atualizado em 16/09/2026. O [cronograma](cronograma.md) registra o andamento e
+Atualizado em 18/09/2026. O [cronograma](cronograma.md) registra o andamento e
 as evidências; este plano detalha as entregas e como aceitá-las.
 A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
 materiais e datas em quatro telas.
@@ -33,12 +33,14 @@ teste UART e a ponte atual são preparatórios.
 - Integração baseline/secure validada: 4.982 bytes de TX conferidos no PC.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
 - Regressão completa: 26 simulações, sete configurações de lint, estrutura e oito testes PC.
-- Sem evidência física; provisionamento de contexto, registro de nonces e quatro builds pendentes.
+- DE10-Lite detectada e `uart_scope` programada; TX/loopback ainda sem evidência registrada.
+- Sem GPS físico; provisionamento de contexto, registro de nonces e quatro builds pendentes.
 - Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
 [CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
-e [integração de 16/09](validacao-integracao-2026-09-16.md).
+e [integração de 16/09](validacao-integracao-2026-09-16.md),
+[bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md).
 
 ## Datas e entregas
 
@@ -46,7 +48,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md).
 
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
-| 16–18/09 | Bancada UART | TX medido e RX por jumper, condicionado ao acesso à DE10-Lite |
+| 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper ainda pendentes |
 | 16–17/09 | Identificação Cyclone IV | Modelo, clock e pinagem confirmados antes de criar o alvo |
 | 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
 | 17/09 | Contexto / preparação FPGA | Provisionamento, registro de nonces e início alinhado da aquisição |
@@ -59,13 +61,18 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md).
 
 Introdução, trabalhos relacionados e metodologia avançam junto da implementação.
 A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
-A bancada prevista para 15/09 foi reagendada por indisponibilidade da placa.
+A bancada prevista para 15/09 foi reagendada para 18/09; a placa já foi
+identificada e programada, mas TX/loopback ainda aguardam medição.
 Definir colaboradores para RTL, PC e bancada em paralelo. Registrar atrasos e
 ajustar as dependências no cronograma sem deslocar entregas necessárias após 25/09.
 
 ## 1. UART isolada e identificação da segunda placa — 16–18/09
 
-Usar `make uart-fpga` e o [guia da UART de bancada](../fpga/de10_lite/uart_scope/README.md).
+`make uart-fpga` e a programação JTAG da UART autônoma foram concluídos em
+18/09. `jtagconfig` encontrou a placa correta e `quartus_pgm` confirmou o SOF.
+O [relatório de bancada](bancada-de10-lite-2026-09-18.md) contém a evidência e
+as etapas que ainda dependem do osciloscópio/jumper. Usar também o
+[guia da UART](../fpga/de10_lite/uart_scope/README.md).
 A FPGA gera 0x55 a cada 100 ms; observar TX no osciloscópio. Um jumper externo
 TX → RX permite verificar recepção nos LEDs.
 

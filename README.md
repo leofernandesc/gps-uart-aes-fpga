@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 16/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 18/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -25,6 +25,11 @@ Ainda faltam provisionamento de contexto, registro persistente de nonces e
 builds completos. Os SOFs disponíveis continuam sendo UART de bancada e ponte
 sem cifra. A comparação inclui MAX 10 e Cyclone IV; modelo, clock e pinagem da
 segunda placa permanecem pendentes de confirmação.
+
+Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
+foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
+medição do TX no osciloscópio e o loopback TX→RX ainda precisam ser registrados;
+ver [relatório da bancada](docs/bancada-de10-lite-2026-09-18.md).
 
 ## Configuração do protótipo
 
@@ -183,8 +188,8 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada, com quatro telas e cronograma até 25/09. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo sem placa: implementar provisionamento do contexto no wrapper,
-registro persistente de nonces no PC e os builds baseline/secure da DE10-Lite,
-com auditoria temporal. O cadastro da Cyclone IV depende de identificação.
-Ao receber a DE10-Lite, executar primeiro a UART com osciloscópio e jumper;
-depois validar a captura física. Simulação e PTY não concluem esses ensaios.
+Próximo passo da bancada: medir o TX e executar o loopback descritos no
+[relatório da DE10-Lite](docs/bancada-de10-lite-2026-09-18.md). Em paralelo,
+implementar o provisionamento do contexto no wrapper, registrar nonces e gerar
+os builds baseline/secure integrados. Simulação, fit e programação não
+substituem a medição física nem a captura GPS.

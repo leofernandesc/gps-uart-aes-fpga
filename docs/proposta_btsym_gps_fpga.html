@@ -187,7 +187,7 @@
         <table aria-label="Materiais do projeto">
           <thead><tr><th>Material / função</th><th>Situação</th></tr></thead>
           <tbody>
-            <tr><td><span class="material-name">DE10-Lite</span><span class="material-use">Primeiro teste UART e implementação MAX 10</span></td><td><span class="badge pending">Aguardando placa</span></td></tr>
+            <tr><td><span class="material-name">DE10-Lite</span><span class="material-use">Primeiro teste UART e implementação MAX 10</span></td><td><span class="badge">Disponível · SOF programado</span></td></tr>
             <tr><td><span class="material-name">Placa Cyclone IV</span><span class="material-use">Segundo alvo para os dois builds</span></td><td><span class="badge pending">Modelo a confirmar</span></td></tr>
             <tr><td><span class="material-name">GPS NEO-M8N-010 + antena</span><span class="material-use">Aquisição real das sentenças GPS</span></td><td><span class="badge">Disponível</span></td></tr>
             <tr><td><span class="material-name">Osciloscópio + pontas</span><span class="material-use">Níveis elétricos, duração dos bits e quadros</span></td><td><span class="badge pending">Uso na bancada</span></td></tr>
@@ -204,13 +204,13 @@
       <p class="sources">USB-Blaster programa a FPGA. A interface serial transporta os dados ao PC. O osciloscópio fornece a evidência elétrica e temporal.</p>
     </section>
     <section class="slide" id="4" data-label="Cronograma" aria-labelledby="title-4">
-      <p class="eyebrow">04 / Planejamento · atualizado em 16/09/2026</p>
+      <p class="eyebrow">04 / Planejamento · atualizado em 18/09/2026</p>
       <h2 id="title-4">Submissão e contingência até <em>25/09.</em></h2>
       <table class="schedule-table" aria-label="Cronograma de setembro de 2026">
         <thead><tr><th>Data</th><th>Etapa</th><th>Entrega e critério</th></tr></thead>
         <tbody>
           <tr><td>07–14/09</td><td>Preparação</td><td>UART, FIFO, AES e CTR isolados; revisão do RTL e preparação do teste UART para osciloscópio.</td></tr>
-          <tr><td>16–18/09</td><td>Primeira bancada</td><td>Ao receber a placa: TX no osciloscópio e RX por jumper. Identificar a Cyclone IV até 17/09.</td></tr>
+          <tr><td>16–18/09</td><td>Primeira bancada</td><td>Placa identificada e SOF programado. Medir TX no osciloscópio e validar RX por jumper.</td></tr>
           <tr><td>16–17/09</td><td>Integração e PC</td><td>Fluxo serial validado em simulação. Concluir provisionamento de chave/nonce e preparação dos builds.</td></tr>
           <tr><td>18/09</td><td>Quatro builds</td><td>Com e sem AES em cada placa; compilar, auditar timing e registrar recursos e clocks.</td></tr>
           <tr><td>19–20/09</td><td>Experimentos</td><td>Três replays por configuração e captura GPS contínua; salvar bytes, formas de onda e métricas.</td></tr>

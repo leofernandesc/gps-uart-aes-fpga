@@ -4,14 +4,16 @@ Objetivo: adquirir GPS NEO-M8N-010 por UART e medir o custo do AES-128-CTR em
 DE10-Lite/MAX 10 e Cyclone IV, com um build sem cifra e outro com cifra por
 placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
 
-## Situação em 16/09/2026
+## Situação em 18/09/2026
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
 O gravador/comparador binário passou em testes com porta virtual Linux.
 Ainda faltam provisionamento do contexto, registro persistente de nonces,
-builds completos e validação física. A UART autônoma e a ponte antigas mantêm
-seus SOFs; não há registro de aquisição GPS nem dos quatro builds integrados.
+builds completos e validação do caminho de dados em bancada. Em 18/09, a
+DE10-Lite foi identificada, o SOF `uart_scope` foi recompilado e programado.
+TX no osciloscópio e loopback permanecem em andamento; não há registro de
+aquisição GPS nem dos quatro builds integrados.
 
 A documentação anterior foi consolidada em 15/09; suas simulações e compilações
 UART foram executadas na noite de 14/09, conforme o relatório de revisão.
@@ -22,16 +24,16 @@ TX → PC`; chave, nonce e tamanho da captura ficam registrados como parâmetros
 do experimento no PC.
 
 A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
-A bancada e a identificação da Cyclone IV, previstas para 15/09, não ocorreram;
-a DE10-Lite ainda não está disponível. A janela foi ajustada abaixo, condicionada
-ao acesso ao hardware. Software e preparação dos builds avançam sem a placa;
-bancada e artigo devem seguir em paralelo, mantendo o encerramento em 25/09.
+A bancada prevista para 15/09 foi reagendada: a DE10-Lite foi disponibilizada
+em 18/09, identificada e programada. A medição do TX e o loopback ainda estão
+pendentes. Software, preparação dos builds e artigo seguem em paralelo,
+mantendo o encerramento em 25/09.
 
 | Data | Entrega | Critério de conclusão | Situação |
 | --- | --- | --- | --- |
 | 07–10/09 | UART, FIFO, AES e CTR isolados | Testes e evidências dos marcos abaixo | Concluído em RTL; ponte e AES analisados no Quartus |
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus; bancada pendente |
-| 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Pendente — Leonardo / acesso à placa; reagendado de 15/09 |
+| 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Em andamento — SOF programado; medições pendentes |
 | 16–17/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo; reagendado de 15/09 |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
 | 17/09 | Contexto e preparação dos builds | Provisionar chave/nonce no wrapper, registrar nonces e preservar início da captura | Pendente — frentes RTL e PC |
@@ -47,13 +49,31 @@ externo. Confirmar modalidade e template no portal antes do envio. O planejament
 interno termina em 25/09 independentemente dessa folga.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
 
-## Próxima bancada: ao receber a DE10-Lite
+## Marco em 18/09: DE10-Lite conectada e programada
 
-1. Abrir `fpga/de10_lite/uart_scope/uart_scope.qpf` ou executar `make uart-fpga`.
-2. Programar o SOF da UART de bancada; resetar com KEY0; medir TX diretamente.
-3. Colocar o jumper TX → RX e registrar LEDs/forma de onda.
-4. Guardar SHA/SOF, captura e condições no relatório de bancada.
-5. Informar o modelo e clock da Cyclone IV para elaborar seu projeto próprio.
+- `jtagconfig` encontrou `USB-Blaster [1-3]` e o dispositivo `10M50DA(.|ES)/10M50DC`,
+  com JTAG ID `0x031050DD`.
+- `make uart-fpga` recompilou o top autônomo para `10M50DAF484C7G` com Quartus
+  Prime 25.1std.0 Build 1129. O fit terminou sem erros; o relatório indicou
+  213 elementos lógicos, 95 registradores e 14 pinos.
+- O timing foi auditado nos três cantos, sem violações: pior setup `12,824 ns`,
+  hold `0,148 ns`, recovery `16,773 ns`, removal `0,427 ns`.
+- O SOF SHA-256 `3aa552c5004c35cb42602608ec8c2ab387418a98789f9bb0d080f543c7e6ec5f`
+  foi programado por JTAG; o Quartus confirmou configuração bem-sucedida de
+  `10M50DAF484@1`.
+- A forma de onda do TX e o loopback TX→RX ainda não foram observados/registrados.
+  Portanto, a UART física continua `Em andamento`, não `Concluída`.
+
+O procedimento e a tabela para preencher os valores medidos estão no
+[relatório da bancada](bancada-de10-lite-2026-09-18.md). A fonte é o commit
+`a7127b0`; o manifesto preserva hashes do SOF, fontes e relatórios desta etapa.
+
+## Bancada em andamento: UART autônoma
+
+1. Com o SOF já programado, resetar com KEY0 e medir TX diretamente.
+2. Colocar o jumper TX → RX e registrar LEDs/forma de onda.
+3. Guardar SHA/SOF, captura e condições no relatório de bancada.
+4. Informar o modelo e clock da Cyclone IV para elaborar seu projeto próprio.
 
 O [roteiro UART](../fpga/de10_lite/uart_scope/README.md) descreve a montagem;
 o [cadastro Cyclone IV](../fpga/cyclone4/README.md) lista os dados ainda necessários.
