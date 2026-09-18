@@ -11,8 +11,9 @@ secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/960
 O gravador/comparador binário passou em testes com porta virtual Linux.
 Em 18/09, a DE10-Lite foi identificada, o SOF `uart_scope` foi recompilado e
 programado, e TX no osciloscópio e loopback TX→RX foram concluídos. Os tops
-integrados `baseline` e `secure` agora estão separados em projetos Quartus;
-seus builds ainda precisam ser executados. Não há registro de aquisição GPS.
+integrados `baseline` e `secure` estão separados em projetos Quartus e seus
+builds foram concluídos, com recursos e timing registrados. Não há registro de
+aquisição GPS.
 
 A documentação anterior foi consolidada em 15/09; suas simulações e compilações
 UART foram executadas na noite de 14/09, conforme o relatório de revisão.
@@ -24,9 +25,8 @@ do experimento no PC.
 
 A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
 A bancada prevista para 15/09 foi reagendada: a DE10-Lite foi disponibilizada
-em 18/09, identificada e programada. A medição do TX e o loopback ainda estão
-pendentes. Software, preparação dos builds e artigo seguem em paralelo,
-mantendo o encerramento em 25/09.
+em 18/09, identificada, programada e validada no TX/loopback. Software, os
+builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 
 | Data | Entrega | Critério de conclusão | Situação |
 | --- | --- | --- | --- |
