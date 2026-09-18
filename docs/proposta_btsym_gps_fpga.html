@@ -54,8 +54,15 @@
     table { width:100%; border-collapse:collapse; font-size:13px; text-align:left; }
     th { color:var(--teal); font-size:11px; font-weight:650; background:var(--mint); }
     th,td { padding:10px 13px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.4; }
-    .metrics-note { color:var(--muted); font-size:14px; margin:0; }
-    .metrics-note strong { color:var(--ink); }
+    .architecture-footer { display:block; }
+    .status-mark { display:inline-flex; align-items:center; justify-content:center; width:23px; height:23px; margin-right:5px; border-radius:50%; font-size:16px; line-height:1; font-weight:700; vertical-align:-5px; }
+    .status-mark.check { color:#fff; background:var(--teal); }
+    .status-mark.cross { color:var(--gold); border:1px solid var(--gold); background:#fffaf4; }
+    .status-pending { color:var(--gold); }
+    .architecture-table th:nth-child(2) { width:43%; }
+    .architecture-table th:nth-child(3) { width:27%; }
+    .architecture-note { color:var(--muted); font-size:14px; margin:13px 0 0; }
+    .architecture-note strong { color:var(--ink); }
     .materials-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:38px; }
     .material-name { display:block; font-weight:600; }
     .material-use { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
@@ -66,8 +73,11 @@
     .bench-step small { display:block; margin-top:6px; color:var(--teal); line-height:1.5; }
     .schedule-table th:first-child { width:100px; }
     .schedule-table th:nth-child(2) { width:175px; }
+    .schedule-table th:nth-child(3) { width:120px; }
     .schedule-table td { padding-block:10px; }
     .schedule-table td:first-child { color:var(--teal); font-weight:600; white-space:nowrap; }
+    .schedule-status { text-align:center; white-space:nowrap; }
+    .schedule-status .status-mark { margin-right:3px; }
     .schedule-table tr.final-date td { background:var(--mint); }
     .schedule-note,.sources { font-size:12px; color:var(--muted); margin-top:15px; margin-bottom:0; }
     .closing-foot { display:flex; justify-content:space-between; align-items:baseline; gap:15px; }
@@ -148,8 +158,8 @@
     </section>
     <section class="slide" id="2" data-label="Arquitetura" aria-labelledby="title-2">
       <p class="eyebrow">02 / Arquitetura e comparação</p>
-      <h2 id="title-2">Uma arquitetura, <em>quatro configurações planejadas.</em></h2>
-      <p class="intro">UART, FIFO e AES-CTR integrados para tratar o fluxo por byte. A integração RTL foi validada e os dois builds da DE10-Lite já foram compilados.</p>
+      <h2 id="title-2">Uma arquitetura, <em>quatro configurações.</em></h2>
+      <p class="intro">O mesmo fluxo é usado nas quatro configurações: o baseline retransmite os bytes recebidos e o secure acrescenta o AES-128-CTR.</p>
       <figure class="architecture">
         <svg viewBox="0 0 1100 180" role="img" aria-labelledby="arch-title arch-desc">
           <title id="arch-title">Arquitetura proposta para transmissão de GPS com e sem AES-CTR</title>
@@ -173,11 +183,11 @@
           <text class="node-text" x="960" y="95" text-anchor="middle">PC</text>
           <path class="wire" d="M120 90 H150 M250 90 H290 M395 90 H415 V60 H435 M415 90 V120 H435 M585 60 H605 V90 H625 M585 120 H605 V90 M715 90 H755 M865 90 H905"/>
         </svg>
-        <figcaption>Integração RTL validada; baseline e secure da DE10-Lite já têm SOF. A bancada integrada e a Cyclone IV seguem pendentes.</figcaption>
+        <figcaption>Fluxo comum às quatro configurações experimentais.</figcaption>
       </figure>
       <div class="architecture-footer">
-        <table aria-label="Quatro configurações experimentais"><thead><tr><th>Plataforma</th><th>Baseline</th><th>Com cifra</th></tr></thead><tbody><tr><td>DE10-Lite · MAX 10 · 50 MHz</td><td><span class="badge">Build concluído</span></td><td><span class="badge">Build concluído</span></td></tr><tr><td>Cyclone IV · modelo/clock a confirmar</td><td><span class="badge pending">Pendente</span></td><td><span class="badge pending">Pendente</span></td></tr></tbody></table>
-        <p class="metrics-note"><strong>Andamento em 18/09:</strong> baseline: 342 LE, 215 FF e Fmax de 132,61 MHz; secure: 6.984 LE, 2.196 FF e Fmax de 82,19 MHz. Os dois projetos atendem ao clock de 50 MHz.<br><strong>Comparação:</strong> acréscimo de lógica, registradores e memória; Fmax, latência em ciclos e µs, taxa útil e perdas. Dentro de cada placa, manter clock, FIFO e interfaces iguais.<br><strong>Escolha do CTR:</strong> usa a mesma operação AES nos dois sentidos e permite tratar o fluxo por byte. Oferece confidencialidade, sem autenticação.</p>
+        <table class="architecture-table" aria-label="Configurações arquiteturais"><thead><tr><th>Configuração</th><th>Fluxo</th><th>Finalidade</th></tr></thead><tbody><tr><td>Baseline</td><td><code>UART RX → FIFO → UART TX</code></td><td>Referência sem cifra</td></tr><tr><td>Secure</td><td><code>UART RX → FIFO → AES-128-CTR → UART TX</code></td><td>Confidencialidade do fluxo</td></tr></tbody></table>
+        <p class="architecture-note"><strong>Comparação:</strong> baseline e secure usam a mesma UART, FIFO e interface. A única diferença arquitetural é a inclusão do AES-128-CTR no caminho secure.</p>
       </div>
     </section>
     <section class="slide" id="3" data-label="Materiais e testes" aria-labelledby="title-3">
@@ -207,20 +217,20 @@
       <p class="eyebrow">04 / Planejamento · atualizado em 18/09/2026</p>
       <h2 id="title-4">Submissão e contingência até <em>25/09.</em></h2>
       <table class="schedule-table" aria-label="Cronograma de setembro de 2026">
-        <thead><tr><th>Data</th><th>Etapa</th><th>Entrega e critério</th></tr></thead>
+        <thead><tr><th>Data</th><th>Etapa</th><th>Situação</th><th>Observação / entrega</th></tr></thead>
         <tbody>
-          <tr><td>07–14/09</td><td>Base RTL</td><td>UART, FIFO, AES e CTR integrados; simulações, lint e comparador serial validados.</td></tr>
-          <tr><td>15–17/09</td><td>Integração e PC</td><td>Fluxo serial validado em simulação; wrappers baseline/secure e contexto de bring-up preparados.</td></tr>
-          <tr><td>18/09</td><td>DE10-Lite</td><td>Dois builds Quartus concluídos, recursos/timing registrados; UART autônoma validada no osciloscópio e em loopback.</td></tr>
-          <tr><td>19–20/09</td><td>Validação integrada</td><td>Programar baseline/secure, testar com fonte UART independente e iniciar o ensaio GPS se o módulo estiver disponível.</td></tr>
-          <tr><td>19–20/09</td><td>Cyclone IV</td><td>Confirmar modelo, clock e pinagem; criar os builds somente após identificar a placa.</td></tr>
-          <tr><td>21–22/09</td><td>Resultados e artigo</td><td>Fechar tabelas e gráficos; discutir custo do AES, latência e limites do fluxo serial.</td></tr>
-          <tr><td>23/09</td><td>Revisão</td><td>Manuscrito completo com o orientador; incorporar correções e congelar a versão.</td></tr>
-          <tr><td>24/09</td><td>Submissão</td><td>Enviar os arquivos finais e salvar o comprovante.</td></tr>
-          <tr class="final-date"><td>25/09</td><td>Contingência</td><td>Resolver eventual problema de envio, confirmar a submissão e encerrar a execução.</td></tr>
+          <tr><td>07–14/09</td><td>Base RTL</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>UART, FIFO, AES e CTR integrados; simulações, lint e comparador serial validados.</td></tr>
+          <tr><td>15–17/09</td><td>Integração e PC</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Fluxo serial validado em simulação; wrappers baseline/secure e contexto de bring-up preparados.</td></tr>
+          <tr><td>18/09</td><td>DE10-Lite</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Dois builds Quartus concluídos, recursos/timing registrados; UART autônoma validada no osciloscópio e em loopback.</td></tr>
+          <tr><td>19–20/09</td><td>Validação integrada</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Programar baseline/secure, testar com fonte UART independente e iniciar o ensaio GPS se o módulo estiver disponível.</td></tr>
+          <tr><td>19–20/09</td><td>Cyclone IV</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Confirmar modelo, clock e pinagem; criar os builds somente após identificar a placa.</td></tr>
+          <tr><td>21–22/09</td><td>Resultados e artigo</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Fechar tabelas e gráficos; discutir custo do AES, latência e limites do fluxo serial.</td></tr>
+          <tr><td>23/09</td><td>Revisão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Manuscrito completo com o orientador; incorporar correções e congelar a versão.</td></tr>
+          <tr><td>24/09</td><td>Submissão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Enviar os arquivos finais e salvar o comprovante.</td></tr>
+          <tr class="final-date"><td>25/09</td><td>Contingência</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Resolver eventual problema de envio, confirmar a submissão e encerrar a execução.</td></tr>
         </tbody>
       </table>
-      <p class="schedule-note">Concluído até 18/09: integração RTL, simulação serial, UART física na DE10-Lite e os dois builds MAX 10. Próximo passo: validar os tops integrados com uma fonte UART; GPS e Cyclone IV dependem da disponibilidade do hardware.</p>
+      <p class="schedule-note"><span class="status-mark check" aria-label="Concluído">✓</span> Concluído <span class="status-mark cross" aria-label="Pendente">✕</span> Pendente. Até 18/09: integração RTL, simulação serial, UART física na DE10-Lite e os dois builds MAX 10. Próximo passo: validar os tops integrados com uma fonte UART; GPS e Cyclone IV dependem da disponibilidade do hardware.</p>
       <div class="closing-foot"><p class="sources">Planejamento interno. Andamento e evidências: <code>docs/cronograma.md</code>.</p><button class="reference-button only-js" id="open-references" type="button">Referências técnicas ↗</button></div>
     </section>
   </main>
