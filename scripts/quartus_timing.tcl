@@ -25,6 +25,12 @@ set report [open $out/check_timing.rpt r]
 set contents [read $report]
 close $report
 set checked 0
+set expected_output_delays 0
+foreach_in_collection port [get_ports *] {
+    if {[get_port_info -is_output_port $port]} {
+        incr expected_output_delays
+    }
+}
 foreach line [split $contents "\n"] {
     if {[regexp {^;\s+([a-z_]+)\s+;\s+([0-9]+)\s+;} $line -> check count]} {
         incr checked
@@ -32,7 +38,10 @@ foreach line [split $contents "\n"] {
         switch -- $check {
             virtual_clock { set expected 1 }
             no_input_delay { set expected 2 }
-            no_output_delay { set expected 11 }
+            # All top-level outputs in these bench targets are intentionally
+            # asynchronous to the external measurement equipment. Keep the
+            # audit independent of the width of the board LED bus.
+            no_output_delay { set expected $expected_output_delays }
         }
         if {$count != $expected} {
             puts "AUDIT unexpected check_timing result: $check=$count (expected $expected)"

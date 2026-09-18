@@ -24,11 +24,16 @@ case "$board/$design" in
         target_dir="$project_dir/fpga/de10_lite/secure"
         output_dir="$project_dir/build/de10_lite/secure"
         ;;
+    de10_nano/uart_scope)
+        quartus_project=uart_scope
+        target_dir="$project_dir/fpga/de10_nano/uart_scope"
+        output_dir="$project_dir/build/de10_nano/uart_scope"
+        ;;
     cyclone4/*)
         echo 'Cyclone IV: confirm board, exact device, oscillator, clock pin and I/O levels before creating a hardware target. See fpga/cyclone4/README.md.' >&2
         exit 2 ;;
     *)
-        echo "Unavailable target: $board/$design. Available: de10_lite/{bridge,uart_scope,baseline,secure}." >&2
+        echo "Unavailable target: $board/$design. Available: de10_lite/{bridge,uart_scope,baseline,secure}, de10_nano/uart_scope." >&2
         exit 2 ;;
 esac
 quartus_shell="${QUARTUS_SH:-}"

@@ -1,0 +1,45 @@
+# Terasic DE10-Nano User Manual, clock/GPIO assignments from Tables 3-5 and 3-10.
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CSEBA6U23I7
+set_global_assignment -name TOP_LEVEL_ENTITY de10_nano_uart_scope_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ../../../build/de10_nano/uart_scope
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+set_global_assignment -name SEED 1
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/reset_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_scope.sv
+set_global_assignment -name SYSTEMVERILOG_FILE de10_nano_uart_scope_top.sv
+set_global_assignment -name SDC_FILE uart_scope.sdc
+
+# FPGA clock: 50 MHz oscillator.
+set_location_assignment PIN_V11 -to FPGA_CLK1_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FPGA_CLK1_50
+
+# Debounced FPGA push-button; active low when pressed.
+set_location_assignment PIN_AH17 -to KEY0_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY0_N
+
+# JP1 GPIO0 header: pin 1 = GPIO_0[0] / RX, pin 2 = GPIO_0[1] / TX.
+set_location_assignment PIN_V12 -to UART_RX
+set_location_assignment PIN_E8 -to UART_TX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_TX
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to UART_TX
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to UART_RX
+
+# Eight FPGA user LEDs.
+set_location_assignment PIN_W15 -to LED[0]
+set_location_assignment PIN_AA24 -to LED[1]
+set_location_assignment PIN_V16 -to LED[2]
+set_location_assignment PIN_V15 -to LED[3]
+set_location_assignment PIN_AF26 -to LED[4]
+set_location_assignment PIN_AE26 -to LED[5]
+set_location_assignment PIN_Y16 -to LED[6]
+set_location_assignment PIN_AA23 -to LED[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LED[*]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to LED[*]
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"

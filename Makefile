@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration pc fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration pc fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -43,6 +43,9 @@ uart-waves:
 # Autonomous 0x55 transmitter + RX diagnostics, for oscilloscope/jumper tests.
 uart-fpga:
 	bash scripts/quartus_build.sh "$(BOARD)" uart_scope
+
+de10-nano-uart-fpga:
+	bash scripts/quartus_build.sh de10_nano uart_scope
 
 aes:
 	bash scripts/hdl.sh aes

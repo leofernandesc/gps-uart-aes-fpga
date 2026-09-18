@@ -94,6 +94,22 @@ Os relatórios de recursos e timing e o [plano de testes](plano-de-testes.md)
 foram atualizados. O próximo passo é programar o baseline na DE10-Lite e
 realizar o ensaio físico com uma fonte UART; o GPS continua pendente.
 
+## Ensaio auxiliar — DE10-Nano
+
+Em 18/09 foi disponibilizada uma DE10-Nano para repetir a medição da UART
+isolada na FPGA Cyclone V. O alvo `fpga/de10_nano/uart_scope/` foi preparado
+com o mesmo RTL, clock de 50 MHz, 9600 baud, 8N1 e estímulo `0x55` da
+DE10-Lite. A compilação no dispositivo `5CSEBA6U23I7` foi concluída com
+sucesso e o `.sof` foi gerado. A programação via JTAG e a medição no
+osciloscópio ainda estão pendentes; portanto, este marco está **Pronto para
+bancada** e não representa validação física.
+
+O ensaio é auxiliar: serve para comparar período do bit, duração do quadro,
+intervalo entre quadros e níveis/arestas observados no osciloscópio. Ele não
+substitui os quatro builds do artigo nem constitui validação do GPS/AES-CTR.
+Os números e o procedimento estão registrados em
+[bancada da DE10-Nano](bancada-de10-nano-uart-2026-09-18.md).
+
 ## Marco antecipado em 07/09: preparação sem placa
 
 - UART v2 revalidado, preservando suas fontes.
