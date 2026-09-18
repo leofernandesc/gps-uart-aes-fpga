@@ -16,7 +16,8 @@ module uart_scope #(
     output wire       tx,
     output wire [7:0] last_rx_data,
     output reg        rx_seen,
-    output reg        error_sticky
+    output reg        error_sticky,
+    output wire       reset_active
 );
     localparam integer CLKS_PER_BIT = CLK_FREQ / BAUD_RATE;
     localparam integer TIMER_WIDTH = (PERIOD_CYCLES > 1) ? $clog2(PERIOD_CYCLES) : 1;
@@ -33,6 +34,7 @@ module uart_scope #(
 `endif
 
     reset_sync reset_inst (.clk(clk), .arst(arst), .rst(rst));
+    assign reset_active = rst;
     uart_tx #(.CLKS_PER_BIT(CLKS_PER_BIT)) tx_inst (
         .clk(clk), .rst(rst), .tx_start(tx_start), .tx_data(TEST_BYTE),
         .tx(tx), .tx_busy(tx_busy), .tx_done(unused_tx_done)

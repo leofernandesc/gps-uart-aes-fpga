@@ -18,8 +18,9 @@ Um arquivo SOF antigo pode permanecer no disco após uma compilação que falhou
 
 O gerador interno envia **0x55 a cada 100 ms**, independentemente de RX.
 O sinal sai em **9600 baud, 8N1**, LSB primeiro, usando o clock de 50 MHz.
-Há UART RX/TX, reset sincronizado, temporizador de estímulo e LEDs. Não há FIFO,
-AES, GPS ou retransmissão automática nesse projeto.
+Há UART RX/TX, reset sincronizado, temporizador de estímulo, um heartbeat no
+`LEDR[0]` e LEDs de diagnóstico. Não há FIFO, AES, GPS ou retransmissão
+automática nesse projeto.
 
 ```text
 temporizador + byte 0x55 → UART TX → pino TX → osciloscópio
@@ -71,23 +72,29 @@ Pinagem conferida no [manual Terasic da DE10-Lite, pp. 24–27 e 30–31](https:
 ## Teste 2: RX por jumper externo
 
 1. Ligar JP1 pino 2 (TX) ao pino 1 (RX) e resetar com KEY0.
-2. Depois de um quadro, LEDs 0, 2, 4 e 6 devem ficar acesos (`0x55`).
-3. LED 8 acende após receber um quadro válido. LED 9 deve ficar apagado.
+2. O `LEDR[0]` deve alternar continuamente, mesmo sem jumper, confirmando
+   clock, configuração e ligação dos LEDs.
+3. Depois de um quadro válido, `LEDR[7:1]` mostra os bits 7:1 de `0x55`,
+   portanto os LEDs 2, 4 e 6 ficam ativos.
+4. LED 8 acende após receber um quadro válido. LED 9 deve ficar apagado.
 
 | LEDs | Significado neste projeto |
 | --- | --- |
-| 7:0 | Último byte recebido |
+| 0 | Heartbeat do clock; não faz parte do byte recebido |
+| 7:1 | Bits 7:1 do último byte recebido |
 | 8 | Pelo menos um quadro com stop válido recebido desde o reset |
 | 9 | Erro persistente: stop inválido **ou** byte diferente de 0x55 |
 
 LED 8 sozinho não é aprovação: um byte diferente de 0x55 acende também LED 9.
-Sem jumper/fonte, LED 8 apagado é esperado. O teste não possui timeout de RX;
+Sem jumper/fonte, LED 8 apagado é esperado, mas o heartbeat do LED 0 continua.
+O teste não possui timeout de RX;
 desconectar o jumper depois de um acerto não apaga o LED 8. Resetar a cada ensaio.
 
 O jumper verifica o caminho pelos pinos, mas RX e TX compartilham o mesmo
 clock. Complementar com fonte UART independente (GPS, gerador digital ou
 microcontrolador) para testar a recepção assíncrona. Nesse caso, LEDs 7:0
-mostram o byte da fonte; LED 9 também acende para bytes diferentes do padrão.
+mostram os bits 7:1 do byte da fonte, com o LED 0 reservado ao heartbeat;
+LED 9 também acende para bytes diferentes do padrão.
 RX não é ecoado para TX neste projeto.
 
 ## Registro mínimo
