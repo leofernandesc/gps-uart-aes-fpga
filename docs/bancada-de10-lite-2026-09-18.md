@@ -9,7 +9,7 @@
 | Quartus da UART autônoma | **Concluído** | `make uart-fpga`; 0 erros, 2 avisos de I/O |
 | Timing do projeto | **Concluído** | Três cantos auditados, nenhum caminho violado |
 | SOF programado | **Concluído** | `quartus_pgm`: configuração de `10M50DAF484@1` bem-sucedida |
-| TX medido no osciloscópio | **Pendente** | Executar Teste 1 abaixo |
+| TX medido no osciloscópio | **Concluído** | Quadro `0x55` observado; bit derivado de `104,22 µs` |
 | RX por loopback TX → RX | **Concluído** | LEDs confirmaram `0x55` após troca do jumper |
 | GPS real | **Pendente** | Depende da integração baseline/secure e da captura serial |
 
@@ -89,11 +89,16 @@ nível alto, start, oito bits e stop identificáveis.
 
 | Medida | Esperado | Medido | Evidência |
 | --- | ---: | ---: | --- |
-| Período do bit | ~104,16 µs | — | captura do osciloscópio |
-| Duração do quadro | ~1,0416 ms | — | captura do osciloscópio |
-| Nível baixo/alto | compatível com I/O 3,3 V | — | captura do osciloscópio |
+| Período do bit | ~104,16 µs | `104,22 µs` | `0,938 ms / 9` intervalos |
+| Duração do quadro | ~1,0416 ms | `~1,042 ms` | dez períodos derivados do bit |
+| Nível baixo/alto | compatível com I/O 3,3 V | `ΔY = 3,58 V` | cursores verticais; Vmin/Vmax não separados |
 | Intervalo entre starts | ~100 ms | — | captura de repetição |
-| Decodificação | `0x55`, 9600/8N1 | — | decodificador/instrumento |
+| Decodificação | `0x55`, 9600/8N1 | **Passou** | quadro observado no instrumento |
+
+Configuração registrada: ponta ×10, canal em alta impedância, base de tempo de
+`200 µs/div` e profundidade de 10k. O cursor horizontal de `0,938 ms` foi
+posicionado do início do start até o início do stop; por isso mede nove bits,
+não os dez bits completos do quadro.
 
 ## Teste 2 — loopback TX → RX
 
