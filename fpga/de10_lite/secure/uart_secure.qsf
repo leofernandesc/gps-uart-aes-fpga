@@ -1,0 +1,52 @@
+# DE10-Lite secure build: UART + FIFO + AES-128-CTR.
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M50DAF484C7G
+set_global_assignment -name TOP_LEVEL_ENTITY de10_lite_uart_secure_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ../../../build/de10_lite/secure
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+set_global_assignment -name SEED 1
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/reset_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/sync_fifo.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes_sbox.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes_sub_shift.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes_mix_columns.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes128_next_key.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes128_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/ctr/aes128_ctr_mask.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/ctr/aes128_ctr_stream.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/bridge/uart_ctr_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../common/de10_lite_uart_ctr_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE de10_lite_uart_secure_top.sv
+set_global_assignment -name SDC_FILE uart_secure.sdc
+
+set_location_assignment PIN_P11 -to MAX10_CLK1_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to MAX10_CLK1_50
+set_location_assignment PIN_B8 -to KEY0_N
+set_instance_assignment -name IO_STANDARD "3.3 V SCHMITT TRIGGER" -to KEY0_N
+# JP1 physical pin 1 = GPIO[0] (RX), pin 2 = GPIO[1] (TX).
+set_location_assignment PIN_V10 -to UART_RX
+set_location_assignment PIN_W10 -to UART_TX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_TX
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to UART_TX
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to UART_RX
+
+set_location_assignment PIN_A8 -to LEDR[0]
+set_location_assignment PIN_A9 -to LEDR[1]
+set_location_assignment PIN_A10 -to LEDR[2]
+set_location_assignment PIN_B10 -to LEDR[3]
+set_location_assignment PIN_D13 -to LEDR[4]
+set_location_assignment PIN_C13 -to LEDR[5]
+set_location_assignment PIN_E14 -to LEDR[6]
+set_location_assignment PIN_D14 -to LEDR[7]
+set_location_assignment PIN_A11 -to LEDR[8]
+set_location_assignment PIN_B11 -to LEDR[9]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LEDR[*]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to LEDR[*]
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"

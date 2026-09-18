@@ -10,6 +10,9 @@ bridge_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_bridge.sv fpga/de10_lite/de1
 aes_rtl=(rtl/aes/aes_sbox.sv rtl/aes/aes_sub_shift.sv rtl/aes/aes_mix_columns.sv rtl/aes/aes128_next_key.sv rtl/aes/aes128_core.sv)
 ctr_rtl=(rtl/ctr/aes128_ctr_mask.sv rtl/ctr/aes128_ctr_stream.sv)
 integration_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_ctr_bridge.sv)
+de10_ctr_common=(rtl/common/reset_sync.sv rtl/common/sync_fifo.sv rtl/uart/uart_rx.sv rtl/uart/uart_tx.sv rtl/bridge/uart_ctr_bridge.sv fpga/de10_lite/common/de10_lite_uart_ctr_top.sv)
+de10_baseline_rtl=("${de10_ctr_common[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" fpga/de10_lite/baseline/de10_lite_uart_baseline_top.sv)
+de10_secure_rtl=("${de10_ctr_common[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" fpga/de10_lite/secure/de10_lite_uart_secure_top.sv)
 scope_rtl=(rtl/uart/uart_scope.sv fpga/de10_lite/uart_scope/de10_lite_uart_scope_top.sv)
 
 run_test() {
@@ -142,10 +145,19 @@ test_integration() {
 lint_integration() {
     mkdir -p build/integration
     for variant in 0 1; do
-        verilator --lint-only --Wall --top-module uart_ctr_bridge -GENABLE_AES="$variant" \
+        local lint_options=()
+        if [[ "$variant" == 0 ]]; then
+            # The baseline intentionally does not consume the CTR context.
+            lint_options+=(--Wno-UNUSEDSIGNAL)
+        fi
+        verilator --lint-only --Wall "${lint_options[@]}" --top-module uart_ctr_bridge -GENABLE_AES="$variant" \
             "${rtl[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" "${integration_rtl[@]}" \
             2>&1 | tee "build/integration/lint-$variant.log"
     done
+    verilator --lint-only --Wall --Wno-UNUSEDSIGNAL --top-module de10_lite_uart_baseline_top \
+        "${de10_baseline_rtl[@]}" 2>&1 | tee build/integration/lint-de10-baseline.log
+    verilator --lint-only --Wall --top-module de10_lite_uart_secure_top \
+        "${de10_secure_rtl[@]}" 2>&1 | tee build/integration/lint-de10-secure.log
 }
 
 synth_integration() {
@@ -158,6 +170,10 @@ synth_integration() {
         yosys -q -Q -T -l "build/integration/synth-$variant.log" -p \
             "read_verilog -sv ${rtl[*]} ${aes_rtl[*]} ${ctr_rtl[*]} ${integration_rtl[*]}; chparam -set ENABLE_AES $variant uart_ctr_bridge; hierarchy -check -top uart_ctr_bridge; $baseline_assert proc; opt; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/integration/structure-$variant.json"
     done
+    yosys -q -Q -T -l build/integration/synth-de10-baseline.log -p \
+        "read_verilog -sv ${de10_baseline_rtl[*]}; hierarchy -check -top de10_lite_uart_baseline_top; proc; opt; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/integration/de10-baseline.json"
+    yosys -q -Q -T -l build/integration/synth-de10-secure.log -p \
+        "read_verilog -sv ${de10_secure_rtl[*]}; hierarchy -check -top de10_lite_uart_secure_top; proc; opt; check -assert; select -assert-none t:*latch* t:*LATCH*; select -clear; stat; write_json build/integration/de10-secure.json"
     echo 'PASS integration structure: no latches/check problems; no AES modules in baseline'
 }
 

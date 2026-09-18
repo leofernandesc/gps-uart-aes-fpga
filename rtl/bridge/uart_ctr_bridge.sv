@@ -90,7 +90,6 @@ module uart_ctr_bridge #(
                 .out_ready(output_ready)
             );
         end else begin : baseline
-            wire [255:0] unused_crypto_config = {cfg_key, cfg_nonce, cfg_counter};
             reg accepted;
             always @(posedge clk or posedge rst) begin
                 if (rst) accepted <= 1'b0;

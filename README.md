@@ -21,15 +21,17 @@ bancada. A integração UART–FIFO–CTR–TX passou nos modos baseline/secure,
 4.982 bytes decodificados do fio TX e conferidos no PC. O gravador binário e
 comparador do PC passaram em testes com porta virtual Linux. Ver
 [validação da integração](docs/validacao-integracao-2026-09-16.md).
-Ainda faltam provisionamento de contexto, registro persistente de nonces e
-builds completos. Os SOFs disponíveis continuam sendo UART de bancada e ponte
-sem cifra. A comparação inclui MAX 10 e Cyclone IV; modelo, clock e pinagem da
-segunda placa permanecem pendentes de confirmação.
+Ainda faltam provisionamento persistente de contexto, captura GPS e ensaios
+físicos integrados. Os tops baseline/secure da DE10-Lite já foram compilados e
+geraram SOFs próprios; a comparação também inclui Cyclone IV, cujo modelo,
+clock e pinagem permanecem pendentes de confirmação.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
-medição do TX no osciloscópio e o loopback TX→RX ainda precisam ser registrados;
-ver [relatório da bancada](docs/bancada-de10-lite-2026-09-18.md).
+medição do TX no osciloscópio e o loopback TX→RX foram concluídos; os resultados
+estão em [relatório da bancada](docs/bancada-de10-lite-2026-09-18.md). Os tops
+integrados baseline/secure foram separados em projetos próprios, mas ainda
+precisam ser compilados e programados.
 
 ## Configuração do protótipo
 
@@ -86,6 +88,8 @@ make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
 make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/9600
 make pc      # Comparador e gravação binária em porta virtual Linux
+make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
+make secure-fpga    # SOF DE10-Lite com AES-128-CTR
 ```
 
 A síntese Yosys é apenas uma verificação estrutural do RTL. **Não é fluxo ASIC**
@@ -105,7 +109,7 @@ O resultado é `build/de10_lite/uart_scope/uart_scope.sof`. O top transmite
 0x55 a cada 100 ms. O [roteiro de osciloscópio e jumper](fpga/de10_lite/uart_scope/README.md)
 explica a montagem, as medidas esperadas e o significado dos LEDs.
 
-Para a ponte **UART + FIFO**, que retransmite o que recebe:
+Para a ponte histórica **UART + FIFO**, que retransmite o que recebe:
 
 ```bash
 make fpga
@@ -124,6 +128,17 @@ Ver [pinagem e uso da ponte](fpga/de10_lite/README.md) e
 [resultados deste marco](docs/validacao-ponte-quartus-2026-09-07.md).
 As métricas atuais incluem FIFO e LEDs de diagnóstico, mas ainda não o AES-CTR
 integrado que será comparado nos dois builds do artigo.
+
+Para os projetos integrados usados no artigo:
+
+```bash
+make baseline-fpga
+make secure-fpga
+```
+
+Os resultados ficam, respectivamente, em `build/de10_lite/baseline/` e
+`build/de10_lite/secure/`. Os dois tops usam a mesma pinagem e a mesma UART;
+somente a presença do AES é alterada na elaboração.
 
 Para o AES isolado:
 
@@ -150,6 +165,9 @@ rtl/aes/                    AES-128 iterativo e transformações de rodada
 rtl/ctr/                    gerador de máscaras e adaptador CTR por byte
 fpga/de10_lite/              top da placa, projeto Quartus, QSF e SDC
 fpga/de10_lite/uart_scope/   UART autônoma para osciloscópio e loopback por jumper
+fpga/de10_lite/common/       wrapper comum e instrumentação dos tops integrados
+fpga/de10_lite/baseline/     projeto Quartus UART + FIFO sem AES
+fpga/de10_lite/secure/       projeto Quartus UART + FIFO + AES-CTR
 fpga/cyclone4/              dados necessários para criar o segundo alvo
 fpga/aes_analysis/           análise isolada do AES, sem pinagem de bancada
 tb/                         fontes seriais e verificadores independentes
@@ -181,6 +199,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)
+- [Plano de testes e resultados](docs/plano-de-testes.md)
 - [Plano de execução e colaboração](docs/PLANO_DE_EXECUCAO.md)
 - [Primeira bancada e materiais](docs/bancada.md)
 

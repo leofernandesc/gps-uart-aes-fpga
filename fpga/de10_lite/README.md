@@ -1,97 +1,105 @@
-# Primeiro teste na DE10-Lite — ponte sem cifra
+# Projetos da DE10-Lite
 
-Para testar **somente UART com osciloscópio**, usar
-[uart_scope/README.md](uart_scope/README.md) e `make uart-fpga`.
-O projeto descrito abaixo inclui a FIFO e espera dados na entrada para transmitir.
+Há três alvos Quartus para a placa:
 
-Abrir `uart_bridge.qpf` no Quartus ou executar `make fpga` na raiz do projeto.
-O resultado é `build/quartus/uart_bridge.sof`. Compilar não exige placa;
-programar e validar o sinal externo exigem a montagem real.
+| Alvo | Função | Comando | SOF |
+| --- | --- | --- | --- |
+| `uart_scope` | UART autônoma que gera `0x55`, usada no osciloscópio e loopback | `make uart-fpga` | `build/de10_lite/uart_scope/uart_scope.sof` |
+| `baseline` | UART RX → FIFO → UART TX, sem AES | `make baseline-fpga` | `build/de10_lite/baseline/uart_baseline.sof` |
+| `secure` | UART RX → FIFO → AES-128-CTR → UART TX | `make secure-fpga` | `build/de10_lite/secure/uart_secure.sof` |
 
-O top `de10_lite_uart_top` fixa 50 MHz, 9600 baud, 8N1 e FIFO de 1.024 bytes.
-KEY0 reinicia RX, TX, FIFO e diagnósticos. Pressionar e soltar KEY0 depois de
-carregar o `.sof`; deixar a entrada em repouso alto por pelo menos um bit antes
-de enviar a primeira mensagem.
+O projeto `uart_bridge` antigo continua disponível com `make fpga` como
+referência. Ele não é um dos dois tops usados na comparação final do artigo.
 
-## Pinagem do build
+Todos os alvos usam 50 MHz, 9600 baud, 8N1 e FIFO de 1.024 bytes. Compilar não
+exige a placa; programar e validar os sinais externos exigem a montagem real.
+O [plano de testes](../../docs/plano-de-testes.md) registra resultados de
+simulação, Quartus e bancada.
+
+## Pinagem comum
 
 | Sinal | Recurso da DE10-Lite | Pino FPGA | Uso |
 | --- | --- | --- | --- |
 | `MAX10_CLK1_50` | Oscilador de 50 MHz | P11 | Clock interno |
 | `KEY0_N` | Botão KEY0 | B8 | Reset ativo baixo |
-| `GPS_RX` | GPIO[0], pino físico 1 de JP1 | V10 | Entrada serial do GPS ou de uma fonte de teste |
-| `UART_TX` | GPIO[1], pino físico 2 de JP1 | W10 | Saída serial para o PC |
-| GND | Pino físico 12 ou 30 de JP1 | — | Referência comum dos sinais |
+| `UART_RX` | GPIO[0], pino físico 1 de JP1 | V10 | Entrada serial do GPS/fonte de teste |
+| `UART_TX` | GPIO[1], pino físico 2 de JP1 | W10 | Saída serial |
+| GND | Pino físico 12 ou 30 de JP1 | — | Referência comum |
 
 Fonte: manual da **Terasic**, edição de 05/06/2020, pp. 5, 24–27 e 30–31
 ([PDF hospedado pela Mouser](https://www.mouser.com/datasheet/2/598/DE10-Lite_User_Manual-1100361.pdf)).
-GPIO[0] e GPIO[1] são escolhas deste projeto entre os pinos livres do conector.
-Confirmar a orientação do pino 1 na placa. O receptor é o NEO-M8N-010; a pinagem
-do conector de sua placa de suporte ainda precisa ser conferida fisicamente.
+Confirmar a orientação do pino 1 na placa e a pinagem do conector do módulo
+NEO-M8N-010 antes de ligar o GPS.
 
 Os sinais usam I/O de 3,3 V; KEY0 usa o padrão Schmitt Trigger da placa. A RX
-tem pull-up fraco para manter repouso quando desconectada. A força de saída de
-UART/LEDs foi explicitada em 8 mA, igual ao default observado no primeiro fit.
-Os GPIOs não usados são entradas em alta impedância.
+tem pull-up fraco para manter repouso quando desconectada. UART e LEDs usam
+força de saída explícita de 8 mA.
 
-## Como testar quando a placa chegar
+## Configuração dos tops integrados
 
-1. Usar o Programmer para carregar o `.sof` por JTAG e reiniciar com KEY0.
-2. Fazer inicialmente PC → fonte UART 3,3 V → `GPS_RX` → FPGA → `UART_TX` →
-   receptor USB do PC. Um adaptador USB–UART full-duplex pode atender esse
-   loopback; um microcontrolador com ponte serial verificada também pode servir.
-3. Enviar uma sequência conhecida em modo binário e conferir os bytes devolvidos,
-   sem conversão de fim de linha ou eco local no terminal. LEDs 6 e 7 devem
-   permanecer apagados. Um eco visual sozinho não verifica perda de dados.
-4. Depois, substituir a fonte de teste pelo GPS M8 e capturar em paralelo o sinal
-   original para comparação. Essa comparação requer um segundo canal de captura,
-   como discutido em [bancada](../../docs/bancada.md).
+Após o reset, os tops `baseline` e `secure` carregam automaticamente um contexto
+de bring-up por `cfg_valid/cfg_ready`. A chave, o nonce e o contador ficam
+fixos no wrapper apenas para o primeiro ensaio:
 
-O cabo USB do USB-Blaster atende à programação; esta implementação transporta os
-dados pelos pinos UART. O software automatizado de captura ainda será escrito.
+```text
+key      = 000102030405060708090a0b0c0d0e0f
+nonce    = 101112131415161718191a1b
+counter  = 00000001
+```
 
-## Indicadores
+Isso não é um protocolo de configuração pela UART nem gerenciamento de chaves.
+O baseline fixa `ENABLE_AES=0` na elaboração; o secure fixa `ENABLE_AES=1`.
+
+## Indicadores dos tops integrados
 
 | LED | Significado |
 | --- | --- |
-| 0 | Reset liberado |
-| 1 / 2 | Alterna a cada byte recebido / transmissão concluída |
-| 3 | Há bytes na FIFO |
+| 0 | Heartbeat da placa |
+| 1 | Aquisição configurada/ativa |
+| 2 | Alterna a cada byte recebido |
+| 3 | Alterna a cada quadro transmitido |
 | 4 | TX ocupado |
-| 5 | FIFO cheia neste instante |
-| 6 | Ocorreu overflow desde o último reset |
-| 7 | Ocorreu erro de stop desde o último reset |
-| 8 / 9 | Ocupação máxima atingiu 512 / 1.024 bytes |
+| 5 | Configuração concluída |
+| 6 | Overflow da FIFO |
+| 7 | Erro de framing |
+| 8 | FIFO contém dados |
+| 9 | FIFO atingiu alta ocupação ou contexto CTR esgotou |
 
-Os indicadores de atividade podem parecer acesos ou com brilho médio sob fluxo
-rápido. LEDs são diagnóstico visual, não contadores de bytes nem medição de
-latência. A ocupação máxima exata existe no core; esta versão ainda não a exporta
-ao PC. Overflow descarta o byte novo; os bytes já guardados mantêm sua ordem.
-Uma captura com LED 6 ou 7 aceso é inválida, mesmo se o tráfego continuar.
+Os LEDs são diagnóstico visual; não substituem captura binária nem contagem de
+bytes no PC.
+
+## Procedimento físico
+
+1. Compilar o alvo escolhido e programar o `.sof` por JTAG.
+2. Pressionar e soltar KEY0.
+3. Para `baseline` ou `secure`, apresentar uma sequência UART de teste em V10.
+4. Observar a retransmissão em W10 e verificar LEDs 6 e 7 apagados.
+5. Medir no osciloscópio o quadro 8N1, o período de aproximadamente 104,16 µs
+   por bit e, com dois canais, a latência entre RX e TX.
+6. Repetir com o GPS quando o módulo estiver disponível.
+
+O `uart_scope` é o único alvo que transmite sem uma fonte externa: ele envia
+`0x55` a cada 100 ms. O roteiro e os resultados desse ensaio estão em
+[`uart_scope/README.md`](uart_scope/README.md) e em
+[`docs/bancada-de10-lite-2026-09-18.md`](../../docs/bancada-de10-lite-2026-09-18.md).
 
 ## Interface da FIFO e da ponte
 
 `sync_fifo` aceita escrita quando há espaço, inclusive no ciclo de leitura de
-uma fila cheia. Leitura aceita entrega `rd_data` com `rd_valid` após a borda;
-leitura da fila vazia não faz bypass de uma escrita simultânea. O teste cobre
-leitura/escrita no mesmo endereço com devolução do dado antigo. A RAM não é
-zerada no reset, mas seus dados ficam invalidados pelos ponteiros/contagem.
+uma fila cheia. A leitura entrega `rd_data` com `rd_valid` após a borda; os
+testes cobrem ordem, colisão, overflow, reset e pausa do TX.
 
-A ponte reserva o TX enquanto aguarda a leitura síncrona da FIFO. Seu
-`tx_enable` interno pode pausar novos pedidos; um pedido já aceito será
-transmitido. No top da placa ele está fixo em 1. A FIFO não pausa o GPS nem
-compensa indefinidamente uma entrada cuja taxa média exceda a capacidade de saída.
+`uart_ctr_bridge` reserva o TX enquanto aguarda a leitura síncrona da FIFO e só
+avança a máscara CTR quando o byte é aceito pelo estágio seguinte. Framing,
+overflow, abort e reset invalidam a captura. A FIFO não pausa o GPS nem
+compensa indefinidamente uma entrada cuja taxa média exceda a saída.
 
 ## Alcance da análise temporal
 
 O SDC define o clock de 20 ns e exceções apenas para a entrada assíncrona até
-os primeiros registradores de sincronização e para as saídas assíncronas UART/LED.
-RX meta → sync e liberação interna de reset continuam sujeitos a timing.
-O script verifica setup, hold, recovery e removal nos três cantos disponíveis,
-falha com slack negativo/cobertura ausente e verifica caminhos sem restrição.
+os primeiros registradores de sincronização e para as saídas UART/LED. RX
+meta→sync e a liberação interna do reset continuam sujeitos a timing.
 
-`check_timing` ainda lista ausência de delays síncronos para dois pinos de
-entrada, onze saídas e ausência de clock virtual. Isso é esperado neste contrato
-assíncrono e não foi ocultado com delays fictícios. A auditoria só aceita essas
-quantidades; outros problemas interrompem `make fpga`. Timing externo dos cabos,
-níveis elétricos, erros de transmissão e recepção de GPS real ficam para a bancada.
+O script verifica setup, hold, recovery e removal nos três cantos disponíveis,
+falha com slack negativo/cobertura ausente e registra os relatórios em
+`build/de10_lite/<configuracao>/`.

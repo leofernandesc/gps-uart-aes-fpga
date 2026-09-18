@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 16/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 18/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -16,6 +16,8 @@ branches temporárias servem para desenvolver e revisar alterações.
 | `make uart-waves` | Testbenches UART e bancada | VCD dos sinais públicos |
 | `make uart-fpga` | `de10_lite_uart_scope_top` → `uart_scope` → reset, RX, TX | `build/de10_lite/uart_scope/uart_scope.sof` |
 | `make fpga` | `de10_lite_uart_top` → ponte → RX, FIFO, TX | `build/quartus/uart_bridge.sof` |
+| `make baseline-fpga` | `de10_lite_uart_baseline_top` → wrapper comum → `uart_ctr_bridge(ENABLE_AES=0)` | `build/de10_lite/baseline/uart_baseline.sof` |
+| `make secure-fpga` | `de10_lite_uart_secure_top` → wrapper comum → `uart_ctr_bridge(ENABLE_AES=1)` | `build/de10_lite/secure/uart_secure.sof` |
 | `make aes-fpga` | AES e reset, com portas virtuais | `build/quartus_aes/`, somente análise |
 | `make integration` | `uart_ctr_bridge`, com e sem AES | Simulação serial, lint, estrutura e comparação no PC |
 | `make pc` | Gravador/comparador Linux | Testes de software com porta virtual |
@@ -26,8 +28,9 @@ do QSF e a hierarquia do top. Selecionar uma aba do editor não muda o alvo.
 O SDC descreve o clock existente; `create_clock` não gera clock em hardware.
 Testbenches são estímulos de simulação e não entram no SOF.
 
-Os projetos `baseline` e `secure` integrados ainda serão criados. O executor
-rejeita alvos ausentes; não os substitui pela ponte ou pelo AES isolado.
+Os projetos `baseline` e `secure` integrados possuem QPF, QSF, SDC e tops
+separados. O executor mantém as duas elaborações independentes para que o
+baseline não contenha um AES apenas desabilitado em tempo de execução.
 
 ## Teste UART de bancada
 
@@ -64,9 +67,10 @@ Usar nonce novo em cada captura e bloquear o wrap do contador. Não há
 autenticação com CTR; as alegações do artigo serão de confidencialidade e
 comportamento do transporte.
 
-A interface RTL `cfg_*` inicializa o contexto, sem protocolo serial adicional.
-Ainda é necessário implementá-la no wrapper e controlar o início da aquisição;
-registrar parâmetros no PC não os transfere automaticamente à FPGA. O
+O wrapper inicializa `cfg_*` automaticamente com um contexto fixo de bring-up,
+sem protocolo serial adicional. Isso permite compilar e testar os dois tops
+antes da chegada do GPS; registrar parâmetros no PC ainda não os transfere
+automaticamente à FPGA. O
 [software PC](captura-pc.md) grava e compara arquivos; provisionamento e
 registro persistente de nonces ainda estão pendentes.
 
@@ -74,7 +78,7 @@ registro persistente de nonces ainda estão pendentes.
 
 | Placa | Baseline integrado | Secure integrado | Clock |
 | --- | --- | --- | --- |
-| DE10-Lite / MAX 10 10M50DAF484C7G | Pendente | Pendente | 50 MHz |
+| DE10-Lite / MAX 10 10M50DAF484C7G | Build concluído | Build concluído | 50 MHz |
 | Cyclone IV | Pendente do cadastro da placa/build | Pendente do cadastro da placa/build | Oscilador a confirmar |
 
 Dentro de cada placa, ambos os builds terão a mesma FIFO, interfaces,
@@ -82,9 +86,10 @@ instrumentação, clock e restrições. O AES estará ausente por
 elaboração no baseline, não apenas desativado por um switch. A ponte atual e
 o gerador para osciloscópio são testes preparatórios, não esse comparador final.
 
-Projetos futuros: `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`, com saídas
-independentes em `build/<placa>/<configuracao>/`. Reutilizar o RTL, evitando
-cópias por placa. Dados privados e coordenadas reais ficam fora do Git.
+Os projetos da DE10-Lite estão em `fpga/de10_lite/baseline/` e
+`fpga/de10_lite/secure/`, com saídas independentes em
+`build/de10_lite/<configuracao>/`. Reutilizar o RTL, evitando cópias por placa.
+Dados privados e coordenadas reais ficam fora do Git.
 
 ## Clocks e comparação de desempenho
 
@@ -122,6 +127,7 @@ sustenta indefinidamente entrada com taxa média maior que a saída.
 - Experimento GPS: entrada capturada e saída recuperada, hashes, contagens,
   primeira divergência e parâmetros do ensaio. Osciloscópio sozinho não prova
   ausência de perdas em um fluxo longo.
+- Plano completo e registro dos resultados: [plano de testes](plano-de-testes.md).
 
 SignalTap pode ajudar no diagnóstico; seus builds devem ficar separados das
 medições oficiais de área. Não programar um SOF de outra placa/revisão.

@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration pc fpga aes-fpga uart uart-waves uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration pc fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -25,6 +25,13 @@ bridge:
 # Quartus build and timing analysis; does not connect to/program a board.
 fpga:
 	bash scripts/quartus_build.sh "$(BOARD)" "$(DESIGN)"
+
+# Separate elaborations used by the experimental comparison on the DE10-Lite.
+baseline-fpga:
+	bash scripts/quartus_build.sh de10_lite baseline
+
+secure-fpga:
+	bash scripts/quartus_build.sh de10_lite secure
 
 # UART RX/TX and autonomous bench only; no AES/FIFO simulation.
 uart:

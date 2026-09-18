@@ -21,8 +21,9 @@ A [arquitetura detalhada](arquitetura.md) especifica o fluxo e as fronteiras.
 
 As duas placas permanecem na `main`. O código de UART/FIFO/AES/CTR é único;
 cada alvo tem wrapper, QSF/SDC e saídas próprias. Usar branches temporárias para
-suporte e integração. Os quatro builds finais ainda serão implementados; o
-teste UART e a ponte atual são preparatórios.
+suporte e integração. Os dois builds da DE10-Lite já possuem projetos próprios
+e foram compilados; os dois builds da Cyclone IV dependem da identificação da
+placa.
 
 ## Estado atual
 
@@ -33,8 +34,9 @@ teste UART e a ponte atual são preparatórios.
 - Integração baseline/secure validada: 4.982 bytes de TX conferidos no PC.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
 - Regressão completa: 26 simulações, sete configurações de lint, estrutura e oito testes PC.
-- DE10-Lite detectada e `uart_scope` programada; TX/loopback ainda sem evidência registrada.
-- Sem GPS físico; provisionamento de contexto, registro de nonces e quatro builds pendentes.
+- DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
+- Tops baseline/secure da DE10-Lite compilados com recursos e timing registrados.
+- Sem GPS físico; provisionamento persistente de contexto, registro de nonces e Cyclone IV pendentes.
 - Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
@@ -48,11 +50,11 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
-| 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper ainda pendentes |
+| 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper registrados |
 | 16–17/09 | Identificação Cyclone IV | Modelo, clock e pinagem confirmados antes de criar o alvo |
 | 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
 | 17/09 | Contexto / preparação FPGA | Provisionamento, registro de nonces e início alinhado da aquisição |
-| 18/09 | FPGA / Quartus | Quatro builds, relatórios de recursos e auditoria temporal |
+| 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal; Cyclone pendente |
 | 19–20/09 | Experimentos | Três replays por configuração e ensaio GPS contínuo |
 | 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
@@ -61,8 +63,9 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 
 Introdução, trabalhos relacionados e metodologia avançam junto da implementação.
 A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
-A bancada prevista para 15/09 foi reagendada para 18/09; a placa já foi
-identificada e programada, mas TX/loopback ainda aguardam medição.
+A bancada prevista para 15/09 foi reagendada para 18/09; a placa foi
+identificada, programada e validada no TX/loopback. Os novos tops integrados
+foram então compilados para iniciar a etapa de comparação.
 Definir colaboradores para RTL, PC e bancada em paralelo. Registrar atrasos e
 ajustar as dependências no cronograma sem deslocar entregas necessárias após 25/09.
 
@@ -70,8 +73,8 @@ ajustar as dependências no cronograma sem deslocar entregas necessárias após 
 
 `make uart-fpga` e a programação JTAG da UART autônoma foram concluídos em
 18/09. `jtagconfig` encontrou a placa correta e `quartus_pgm` confirmou o SOF.
-O [relatório de bancada](bancada-de10-lite-2026-09-18.md) contém a evidência e
-as etapas que ainda dependem do osciloscópio/jumper. Usar também o
+O [relatório de bancada](bancada-de10-lite-2026-09-18.md) contém a evidência
+do osciloscópio e do loopback. Usar também o
 [guia da UART](../fpga/de10_lite/uart_scope/README.md).
 A FPGA gera 0x55 a cada 100 ms; observar TX no osciloscópio. Um jumper externo
 TX → RX permite verificar recepção nos LEDs.
@@ -114,8 +117,9 @@ O AES isolado, CTR isolado e ponte separados não comprovam essa integração.
 
 Gravador binário e comparador implementados; uso em [captura PC](captura-pc.md).
 Oito testes de software e comparação da saída serial simulada aprovados.
-Pendências para concluir a etapa: geração/registro persistente de nonces,
-carregamento de `cfg_*` no wrapper e início alinhado do GPS/replay. A validação
+Pendências para concluir a etapa: geração/registro persistente de nonces e
+início alinhado do GPS/replay. O wrapper de bring-up já carrega um contexto fixo;
+isso não substitui o provisionamento para a captura GPS. A validação
 do adaptador físico depende de bancada; PTY não representa esse dispositivo.
 
 Definir o procedimento de captura separado do fluxo cifrado. Cada ensaio terá
@@ -133,9 +137,9 @@ chave de teste, nonce, contador inicial e quantidade N de bytes registradas no P
 Aceite: nenhuma reutilização acidental de contexto e comparação do PC aprovada
 em fluxo vindo da simulação.
 
-## 4. Quatro builds comparáveis — 18/09
+## 4. Builds comparáveis — DE10-Lite em 18/09; Cyclone IV pendente
 
-Criar `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`; saídas em
+Os projetos seguem `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`; saídas em
 `build/<placa>/<configuracao>/`. Cada projeto seleciona suas fontes e top,
 sem precisar excluir outros módulos do repositório.
 
@@ -148,9 +152,12 @@ sem precisar excluir outros módulos do repositório.
 - Extrair LEs, registradores, bits/blocos de memória, Fmax e slacks do pós-fit.
 - Não copiar as exceções de portas virtuais do AES isolado para o sistema completo.
 
-Aceite: quatro builds rastreáveis e timing no clock de operação de cada placa.
-Se algum falhar, registrar a causa e resolver; não informar sucesso parcial como
-matriz concluída.
+Resultado DE10-Lite: baseline e secure compilados, com timing positivo. O
+baseline usou 342 LE/215 registradores/8.192 bits de memória e Fmax mínima de
+132,61 MHz; o secure usou 6.984 LE/2.196 registradores/8.192 bits e Fmax mínima
+de 82,19 MHz. Os dois operam a 50 MHz sem violação. A matriz completa continua
+pendente até confirmar a Cyclone IV; não apresentar esse resultado parcial como
+quatro builds concluídos.
 
 ## 5. GPS real e experimentos — 19–20/09
 
@@ -198,7 +205,7 @@ da confidencialidade implementada.
 | Coordenação | Manter cronograma, dependências e decisões com o orientador |
 | RTL | Integração, retenção de bytes e controle de fluxo |
 | Verificação | Oráculo independente, erros, reset e replay |
-| FPGA | Wrappers, QSF/SDC, quatro builds e recursos/timing |
+| FPGA | Wrappers, QSF/SDC, builds e recursos/timing |
 | Bancada | UART no osciloscópio, placa Cyclone IV e GPS real |
 | PC/artigo | Captura, decifragem, métricas e manuscrito |
 
@@ -220,6 +227,8 @@ make uart          # RX/TX e teste de bancada
 make uart-waves    # VCD dos sinais públicos
 make uart-fpga     # SOF UART autônoma DE10-Lite
 make fpga          # ponte UART + FIFO DE10-Lite
+make baseline-fpga # build integrado sem AES na DE10-Lite
+make secure-fpga   # build integrado com AES-128-CTR na DE10-Lite
 make aes
 make ctr
 make integration
@@ -231,7 +240,7 @@ git diff --check
 
 ## Encerramento em 25/09
 
-Concluir os quatro builds e seus resultados, comparar o fluxo recuperado,
+Concluir os builds disponíveis e seus resultados, comparar o fluxo recuperado,
 revisar o manuscrito, submeter em 24/09 e guardar o comprovante. O dia 25/09
 fica para eventual correção/reenvio e confirmação final. Relatar limitações
 de hardware explicitamente, sem transformar planos ou simulação em medições.
