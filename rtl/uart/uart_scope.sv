@@ -16,6 +16,7 @@ module uart_scope #(
     output wire       tx,
     output wire [7:0] last_rx_data,
     output reg        rx_seen,
+    output reg        tx_seen,
     output reg        error_sticky,
     output wire       reset_active
 );
@@ -48,10 +49,12 @@ module uart_scope #(
         if (rst) begin
             period_timer <= PERIOD_LAST;
             rx_seen <= 1'b0;
+            tx_seen <= 1'b0;
             error_sticky <= 1'b0;
         end else begin
             if (tx_start) period_timer <= PERIOD_LAST;
             else if (period_timer != 0) period_timer <= period_timer - 1'b1;
+            if (tx_start) tx_seen <= 1'b1;
             if (rx_done) begin
                 rx_seen <= 1'b1;
                 if (last_rx_data != TEST_BYTE) error_sticky <= 1'b1;

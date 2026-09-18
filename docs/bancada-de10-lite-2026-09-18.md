@@ -104,14 +104,16 @@ nível alto, start, oito bits e stop identificáveis.
 Resultado esperado:
 
 - `LEDR[0]` alterna como heartbeat independente da UART;
-- `LEDR[7:1]` registra os bits 7:1 de `0x55`, portanto LEDs 2, 4 e 6 ativos;
+- `LEDR[1]` acende após o início de uma transmissão;
+- `LEDR[7:2]` registra os bits 7:2 de `0x55`, portanto LEDs 2, 4 e 6 ativos;
 - LED 8 aceso: pelo menos um quadro válido recebido;
 - LED 9 apagado: nenhum framing error e nenhum byte diferente de `0x55`.
 
 | Observação | Resultado |
 | --- | --- |
 | `LEDR[0]` alterna como heartbeat | — |
-| `LEDR[7:1]` mostram os bits 7:1 de `0x55` | — |
+| `LEDR[1]` acende após início de TX | — |
+| `LEDR[7:2]` mostram os bits 7:2 de `0x55` | — |
 | LED 8 acende | — |
 | LED 9 permanece apagado | — |
 | Resultado do loopback | Pendente |

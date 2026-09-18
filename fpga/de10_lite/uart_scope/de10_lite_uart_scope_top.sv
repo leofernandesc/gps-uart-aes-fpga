@@ -2,8 +2,9 @@
 `default_nettype none
 
 // 0x55 every 100 ms, 9600 8N1. KEY0 clears the test and restarts the timer.
-// LED0 = board/clock heartbeat; LED[7:1] = upper seven bits of last RX byte;
-// LED8 = byte received; LED9 = error since reset.
+// LED0 = board/clock heartbeat; LED1 = at least one TX frame started;
+// LED[7:2] = upper six bits of last RX byte; LED8 = byte received;
+// LED9 = error since reset.
 module de10_lite_uart_scope_top (
     input  wire       MAX10_CLK1_50,
     input  wire       KEY0_N,
@@ -28,11 +29,11 @@ module de10_lite_uart_scope_top (
 
     uart_scope #(.CLK_FREQ(50_000_000), .BAUD_RATE(9600)) scope_inst (
         .clk(MAX10_CLK1_50), .arst(!KEY0_N), .rx(UART_RX), .tx(UART_TX),
-        .last_rx_data(last_rx_data), .rx_seen(LEDR[8]),
+        .last_rx_data(last_rx_data), .rx_seen(LEDR[8]), .tx_seen(LEDR[1]),
         .error_sticky(LEDR[9]), .reset_active(uart_reset_active)
     );
 
-    assign LEDR[7:1] = last_rx_data[7:1];
+    assign LEDR[7:2] = last_rx_data[7:2];
     assign LEDR[0] = heartbeat;
 endmodule
 
