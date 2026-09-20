@@ -70,8 +70,8 @@ comportamento do transporte.
 O wrapper inicializa `cfg_*` automaticamente com um contexto fixo de bring-up,
 sem protocolo serial adicional. Isso permite compilar e testar os dois tops
 antes da chegada do GPS; registrar parâmetros no PC ainda não os transfere
-automaticamente à FPGA. O
-[software PC](captura-pc.md) grava e compara arquivos. O gerador de contexto
+automaticamente à FPGA. O software PC (ver [captura-pc](captura-pc.md)) grava
+e compara arquivos. O gerador de contexto
 e o registro persistente de nonces já estão implementados no PC; o
 provisionamento desses parâmetros no wrapper/FPGA ainda está pendente.
 
