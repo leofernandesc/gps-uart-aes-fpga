@@ -38,7 +38,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
-| 20/09 | Replay NMEA | Fixture público validado e integrado ao ensaio RTL/PC | Concluído em simulação/PC; GPS físico pendente |
+| 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
 | 19–20/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
 | 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Pendente — artigo |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
@@ -150,12 +150,30 @@ secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
   a tabela está pronta para a seção de resultados do artigo.
 - O rascunho inicial do manuscrito foi criado em inglês, com os resultados
   atuais e marcação explícita das evidências físicas ainda pendentes.
-- A suíte do PC passou com 16 testes. A evidência está em
+- A suíte do PC passou com 19 testes. A evidência está em
   [validação do replay NMEA](validacao-replay-nmea-2026-09-20.md).
 
 Esta entrega valida apenas o contrato de dados e o caminho RTL/PC. Não é
 captura do GPS, não testa nível elétrico, nem altera a pendência dos ensaios
 P07–P11 na bancada.
+
+## Marco em 20/09: validação de captura NMEA
+
+- `scripts/gps_capture.py` valida arquivos binários produzidos pela captura
+  serial: sentença completa, ASCII, CRLF, checksum e limite de 82 caracteres.
+- O relatório registra tipos de sentença, quantidade, tamanho e SHA-256, com
+  permissão `0600` e sem sobrescrever um ensaio anterior.
+- O replay público foi usado como teste de contrato, com 19 testes PC aprovados.
+  Isso deixa o procedimento pronto para o NEO-M8N, mas ainda não comprova uma
+  captura física.
+- O comando de bancada será:
+
+  ```bash
+  make gps-capture-check GPS_CAPTURE=data/private/ensaio01/gps-reference.bin
+  ```
+
+  A referência só entra no experimento depois desse comando e do registro da
+  montagem física.
 
 ## Ensaio auxiliar — DE10-Nano
 

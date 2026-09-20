@@ -53,11 +53,12 @@ substitui um resultado físico.
 | S12 | Wrapper baseline | Lint e síntese estrutural do top DE10-Lite | Top elabora sem AES e sem latch/problema estrutural | **Concluído em 18/09** — `make integration`; AES ausente na hierarquia baseline |
 | S13 | Wrapper secure | Lint e síntese estrutural do top DE10-Lite | Top elabora com AES-CTR e sem latch/problema estrutural | **Concluído em 18/09** — `make integration` |
 | S14 | Regressão final | `make check` após a criação dos tops | Nenhuma regressão nos módulos já aprovados | **Concluído em 19/09** — código 0; 27 simulações, lint, estrutura e PC |
-| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto; a suíte atual tem 16 testes PC |
+| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto; a suíte atual tem 19 testes PC |
 | S16 | Contexto no wrapper | Testbench do top DE10-Lite com parâmetros substituídos | Ciphertext observado no TX corresponde ao contexto de elaboração | **Concluído em 19/09** — `make integration`, `0x55 -> 0xe2` |
 | S17 | Contexto no build Quartus | `CONTEXT_FILE=... make secure-fpga` e validação do pacote gerado | O JSON é validado, o modo é conferido e o pacote privado entra no SOF | **Concluído em 20/09** — baseline/secure compilados; programação física pendente |
 | S18 | Replay NMEA estruturado | `make gps-replay`, `make integration` e testes PC | Sentenças ASCII com checksum válido são convertidas para CRLF e preservadas nos modos baseline/secure | **Concluído em 20/09** — 5 sentenças, replay sintético de 309 bytes, RTL/PC; GPS físico pendente |
 | S19 | Replay GPS em clock de produção | `make integration-gps` e `--verify-gps` | Os 309 bytes do replay atravessam baseline e secure em 50 MHz/9600 sem perda, overflow ou divergência | **Concluído em 20/09** — FIFO máxima de 2 bytes; 169.269 ciclos até o primeiro TX; físico pendente |
+| S20 | Validação de captura NMEA | `scripts/gps_capture.py` e `make pc` | Captura bruta completa, ASCII, CRLF, checksum e limite NMEA aprovados antes do experimento | **Concluído em 20/09** — 19 testes PC; captura física ainda pendente |
 
 Comandos principais:
 
@@ -67,6 +68,7 @@ make bridge
 make aes
 make ctr
 make integration
+make gps-capture-check GPS_CAPTURE=data/private/ensaio01/gps-reference.bin
 make check
 ```
 
@@ -265,7 +267,8 @@ Observações:
 ```
 
 Última atualização: 20/09/2026. Próximo registro esperado: programação e
-ensaio físico dos projetos `baseline` e `secure` da DE10-Lite.
+ensaio físico dos projetos `baseline` e `secure` da DE10-Lite; a captura GPS
+deverá passar pelo S20 antes da comparação.
 
 ## Execuções registradas em 18–20/09/2026
 
@@ -273,13 +276,14 @@ ensaio físico dos projetos `baseline` e `secure` da DE10-Lite.
 | --- | --- | --- |
 | `make lint` | **Passou** | Lint UART, AES, CTR, bridge e tops DE10-Lite; acesso ao Docker local foi necessário |
 | `make gps-replay` | **Passou em 20/09** | 5 sentenças NMEA, 309 bytes CRLF, checksums válidos |
-| `make integration` | **Passou em 20/09** | Baseline e secure em clock acelerado e 50 MHz/9600; 2.681 bytes por modo sem divergência e 16 testes PC aprovados |
+| `make integration` | **Passou em 20/09** | Baseline e secure em clock acelerado e 50 MHz/9600; 2.681 bytes por modo sem divergência |
 | `make integration-gps` | **Passou em 20/09** | Replay completo de 309 bytes em 50 MHz/9600; FIFO máxima 2 bytes; baseline/secure recuperados no PC |
 | `make baseline-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make secure-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make context` | **Passou** | 7 testes de criação, permissões, limites, renderização e reutilização de nonce |
-| `make pc` | **Passou em 20/09** | 16 testes, incluindo captura, comparação, contexto e replay NMEA |
-| `make check` | **Passou em 20/09** | Código 0; 27 simulações, sete configurações de lint, estrutura e 16 testes PC |
+| `make pc` | **Passou em 20/09** | 19 testes, incluindo captura, comparação, contexto, replay e validação NMEA bruta |
+| `make gps-capture-check` | **Pronto em 20/09** | Requer `GPS_CAPTURE=...`; valida um arquivo real quando a captura estiver disponível |
+| `make check` | **Passou em 20/09** | Código 0; 27 simulações, sete configurações de lint, estrutura e 19 testes PC |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
 O erro de espaço registrado na execução histórica de `make uart` ocorreu ao

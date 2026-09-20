@@ -26,6 +26,9 @@ PC passaram em testes com porta virtual Linux. Ver
 O contrato do replay está em [validação NMEA](docs/validacao-replay-nmea-2026-09-20.md).
 As métricas baseline/secure foram extraídas automaticamente dos relatórios
 pós-fit; ver [métricas FPGA](docs/metricas-fpga-2026-09-20.md).
+O validador de captura bruta do GPS já está pronto: ele verifica CRLF, ASCII,
+checksum NMEA, sentenças completas e gera um hash do arquivo antes do ensaio
+físico. Isso prepara a captura real, mas não a substitui.
 O gerador de contexto do PC e o registro persistente de nonces foram
 implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e os builds DE10-Lite aceitam
@@ -69,8 +72,8 @@ make check
 Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e quatro da integração.
 Inclui sete configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 16 testes do software de captura, contexto
-e replay NMEA.
+bytes CTR e do TX integrado, além de 19 testes do software de captura, contexto,
+replay e validação NMEA.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -101,6 +104,7 @@ make metrics # Extrai recursos, Fmax e slacks dos builds Quartus existentes
 make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
+make gps-capture-check GPS_CAPTURE=arquivo.bin # Valida uma captura NMEA bruta
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
 # Exemplo de contexto privado aplicado ao build:
@@ -215,6 +219,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação do contexto e registro de nonces](docs/validacao-contexto-2026-09-19.md)
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)
+- [Validação da captura NMEA](docs/validacao-captura-nmea-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
 - [Rascunho do manuscrito BTSym em português](docs/manuscrito-btsym-rascunho-pt.md)

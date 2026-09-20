@@ -42,8 +42,9 @@ placa.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão anterior: 27 simulações, sete configurações de lint e 15 testes PC;
-  o replay acrescentou um teste PC, totalizando 16 nesta etapa.
+- Regressão atual: 27 simulações, sete configurações de lint e 19 testes PC.
+- Validador de captura NMEA pronto: confere a integridade formal do arquivo
+  bruto antes do ensaio; a origem física continua sendo registrada na bancada.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
 - Tops baseline/secure da DE10-Lite compilados com recursos e timing registrados.
 - Tops parametrizados para substituir contexto de elaboração; `CONTEXT_FILE` gera
@@ -59,6 +60,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 [bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md),
 [validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md) e
 [métricas FPGA de 20/09](metricas-fpga-2026-09-20.md) e
+[validação da captura NMEA de 20/09](validacao-captura-nmea-2026-09-20.md) e
 [rascunho do manuscrito BTSym](manuscrito-btsym-draft.md) e
 [versão em português](manuscrito-btsym-rascunho-pt.md).
 
@@ -75,7 +77,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal; Cyclone pendente |
 | 19/09 | Contexto / registro no PC | Gerador privado, registro persistente e wrapper parametrizado; `make check` aprovado |
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
-| 20/09 | Replay NMEA | Fixture público validado e integrado ao ensaio RTL/PC; GPS físico continua pendente |
+| 20/09 | Replay NMEA / captura | Fixture integrado ao RTL/PC e validador de captura bruta pronto; GPS físico continua pendente |
 | 19–20/09 | Experimentos | Três replays físicos por configuração e ensaio GPS contínuo |
 | 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo | Rascunho inicial criado; completar após bancada |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
@@ -149,6 +151,13 @@ bancada; PTY não representa esse dispositivo.
 Definir o procedimento de captura separado do fluxo cifrado. Cada ensaio terá
 chave de teste, nonce, contador inicial e quantidade N de bytes registradas no PC.
 
+Antes de aceitar uma referência do GPS, executar `scripts/gps_capture.py` sobre
+o arquivo binário produzido pelo gravador. O comando rejeita captura vazia,
+sentença incompleta, conversão para LF, bytes não ASCII, checksum inválido e
+linhas acima do limite NMEA. O relatório inclui tipos de sentença, quantidade,
+tamanho e SHA-256, mas não prova que a fonte foi um GPS real; essa evidência
+continua sendo o registro da montagem física.
+
 - Iniciar a captura antes do replay e contar exatamente N bytes no PC.
 - Gerar/registrar nonce novo por captura, inclusive após reset; o registro no PC
   já bloqueia a reutilização do par chave/nonce.
@@ -204,10 +213,11 @@ operacional ou a propagação elétrica da bancada.
 Após conferir módulo, alimentação e montagem:
 
 1. Validar GPS diretamente e guardar uma referência.
-2. Testar o baseline integrado na primeira placa.
-3. Executar a captura com AES e decifrar no PC.
-4. Comparar todos os bytes com a referência independente.
-5. Repetir o protocolo na Cyclone IV.
+2. Rodar o validador NMEA sobre a referência e registrar seu relatório/hash.
+3. Testar o baseline integrado na primeira placa.
+4. Executar a captura com AES e decifrar no PC.
+5. Comparar todos os bytes com a referência independente.
+6. Repetir o protocolo na Cyclone IV.
 
 Executar três repetições do mesmo replay físico por configuração, preservando bytes e
 intervalos. Acrescentar captura contínua do GPS com duração registrada; almejar

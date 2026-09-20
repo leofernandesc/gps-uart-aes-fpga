@@ -34,6 +34,36 @@ registra `INCOMPLETE` e retorna código 1. `CAPTURED` significa apenas que N byt
 foram gravados, não que sejam os bytes corretos. O tempo registrado é do PC,
 inclui USB/SO e **não é uma medida de latência da FPGA**.
 
+## Validar uma captura bruta do GPS
+
+Depois de gravar o TX do NEO-M8N com `capture.py record`, validar o arquivo
+antes de usá-lo como referência do experimento:
+
+```bash
+python3 scripts/gps_capture.py \
+  --input data/private/ensaio01/gps-reference.bin \
+  --report data/private/ensaio01/gps-reference.json
+```
+
+O validador exige que a captura termine em uma sentença completa e verifica,
+para cada linha, ASCII, delimitador CRLF, checksum NMEA e o limite de 82
+caracteres. O relatório registra quantidade de sentenças, tipos, tamanho e
+SHA-256. O arquivo de relatório é criado com permissão `0600` e não é
+sobrescrito.
+
+Esse comando comprova a integridade formal do arquivo, não sua origem física:
+um arquivo sintético bem formado também pode passar. A evidência de que os
+bytes vieram do NEO-M8N deve permanecer no registro de bancada, com módulo,
+alimentação, porta, data e montagem. Para executar apenas a validação sem
+gerar relatório:
+
+```bash
+make gps-capture-check GPS_CAPTURE=data/private/ensaio01/gps-reference.bin
+```
+
+Uma captura parcial, convertida para LF pelo terminal ou com checksum inválido
+deve ser rejeitada e não pode entrar como referência do baseline/secure.
+
 ## Criar e registrar um contexto
 
 `scripts/context.py` cria o JSON privado usado pela captura e mantém um registro
@@ -133,6 +163,7 @@ autenticação criptográfica.
 
 ```bash
 make pc
+make gps-capture-check GPS_CAPTURE=data/private/ensaio01/gps-reference.bin
 make context
 make integration
 make check

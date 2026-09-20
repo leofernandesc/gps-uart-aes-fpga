@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Validate and load the public NMEA replay used by RTL/PC tests."""
+"""Validate the public NMEA replay and raw GPS serial captures."""
 import argparse
 import hashlib
+from collections import Counter
 from pathlib import Path
 
 
@@ -58,18 +59,70 @@ def load_replay(path: Path = DEFAULT_FIXTURE) -> bytes:
     return b"".join(sentence.encode("ascii") + b"\r\n" for sentence in sentences(path))
 
 
+def parse_payload(payload: bytes) -> list[str]:
+    """Validate and return sentences from a complete raw GPS UART capture.
+
+    A capture is intentionally stricter than the checked-in LF-delimited
+    fixture: the serial stream must contain complete ASCII sentences delimited
+    by CRLF.  This catches a truncated capture, line-ending conversion, bad
+    checksum, or framing that would otherwise make a later byte comparison
+    misleading.
+    """
+    if not payload:
+        raise ValueError("capture is empty")
+    if not payload.endswith(b"\r\n"):
+        raise ValueError("capture must end at a complete CRLF-delimited sentence")
+    remainder = payload.replace(b"\r\n", b"")
+    if b"\r" in remainder or b"\n" in remainder:
+        raise ValueError("capture contains a bare CR or LF; expected CRLF delimiters")
+    raw_sentences = payload[:-2].split(b"\r\n")
+    if any(not raw_sentence for raw_sentence in raw_sentences):
+        raise ValueError("capture contains an empty NMEA sentence")
+    parsed = []
+    for line_number, raw_sentence in enumerate(raw_sentences, 1):
+        try:
+            line = raw_sentence.decode("ascii")
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"line {line_number}: sentence is not ASCII") from exc
+        parsed.append(_parse_sentence(line, line_number))
+    return parsed
+
+
+def _display_path(path: Path) -> str:
+    path = path.resolve()
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def capture_metadata(path: Path) -> dict[str, object]:
+    """Return reproducible metadata for a raw GPS capture file."""
+    path = path.resolve()
+    payload = path.read_bytes()
+    parsed = parse_payload(payload)
+    sentence_types = Counter(sentence[1:6] for sentence in parsed)
+    return {
+        "status": "PASS",
+        "path": _display_path(path),
+        "sentences": len(parsed),
+        "sentence_types": dict(sorted(sentence_types.items())),
+        "bytes": len(payload),
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "line_ending": "CRLF",
+        "source": "raw serial capture; physical origin must be documented separately",
+    }
+
+
 def metadata(path: Path = DEFAULT_FIXTURE) -> dict[str, object]:
     path = path.resolve()
     parsed = sentences(path)
     payload = b"".join(sentence.encode("ascii") + b"\r\n" for sentence in parsed)
-    try:
-        display_path = str(path.relative_to(ROOT))
-    except ValueError:
-        display_path = str(path)
     return {
         "status": "PASS",
-        "path": display_path,
+        "path": _display_path(path),
         "sentences": len(parsed),
+        "sentence_types": dict(sorted(Counter(sentence[1:6] for sentence in parsed).items())),
         "bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
         "line_ending": "CRLF",
