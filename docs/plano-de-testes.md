@@ -5,10 +5,17 @@ com a data, o commit do RTL, a configuração usada, o resultado e a evidência
 correspondente. Simulação, compilação e bancada física são resultados
 diferentes e não devem ser misturados.
 
+Revisão em 20/09: a regressão voltou a passar, mas há correções pendentes de
+área, métricas, contexto/reset e aquisição. Os ensaios extras e seus resultados
+estão na [revisão completa](revisao-completa-2026-09-20.md). A latência do replay
+com pausas não deve ser apresentada como latência nominal.
+
 ## Configuração fixa
 
 - Placa principal: DE10-Lite, MAX 10 `10M50DAF484C7G`.
 - Clock: 50 MHz.
+- Segundo alvo obrigatório: Cyclone IV E EP4CE6E22C8; provável 48 MHz, ainda
+  sem confirmação do oscilador e da pinagem da placa.
 - UART: 9600 baud, 8N1.
 - Caminho baseline: `UART RX -> FIFO -> UART TX`.
 - Caminho secure: `UART RX -> FIFO -> AES-128-CTR -> UART TX`.
@@ -243,11 +250,26 @@ Repetir um ensaio após pressionar KEY0, confirmando que:
 
 **Situação: pendente.**
 
-## Testes condicionais da Cyclone IV
+## Testes obrigatórios da Cyclone IV
 
-Quando o modelo exato, clock e pinagem forem confirmados, repetir F01–F07 e
-P03–P10 em dois projetos separados: `cyclone4/baseline` e
-`cyclone4/secure`. Não criar esse alvo com dispositivo ou pinagem hipotéticos.
+O dispositivo é EP4CE6E22C8. Confirmar modelo da placa, clock e pinagem,
+adequar a área do secure e repetir F01–F07 e P03–P11 em dois projetos separados:
+`cyclone4/baseline` e `cyclone4/secure`. Não programar pinagem ou clock
+hipotéticos. O fit exploratório reprovado por área não conclui nenhum desses testes.
+
+## Diagnósticos da revisão — 20/09/2026
+
+| Ensaio | Resultado | Limite |
+| --- | --- | --- |
+| `make check` | PASS: 27 simulações, 9 configurações de lint, 19 testes PC | Não comprova GPS/bancada integrada |
+| Fit exploratório EP4CE6E22C8 | FAIL: 6.520 funções combinacionais / 6.272 disponíveis | Sem pinagem, SDC de bancada ou SOF; reduzir área |
+| Latência sem pausa, máscara pronta | RX válido → início TX: 80 ns; → fim TX: 1.041.680 ns, nos dois modos | Duas transferências de diagnóstico; não substitui o replay completo |
+| Reset do contexto estático | Reutilização de máscara reproduzida | Corrigir procedimento/controle antes do GPS real |
+| Relatório temporal negativo injetado | Extrator aceitou −0,125 ns e reportou +8,698 ns | Cópias de diagnóstico; relatórios reais preservados |
+| Entradas NMEA inválidas | Corpo vazio, NUL e 84 bytes aceitos | Correção do validador pendente |
+
+Artefatos locais em `build/review-2026-09-20/`; referências às linhas de código
+e próximos passos na [revisão](revisao-completa-2026-09-20.md).
 
 ## Registro de cada execução
 

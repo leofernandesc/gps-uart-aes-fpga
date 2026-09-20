@@ -1,15 +1,16 @@
 # Alvo Cyclone IV
 
 O pacote Cyclone IV já foi adicionado ao Quartus Lite 25.1 deste computador.
-O alvo de bancada aguarda a identificação da placa em 15/09/2026.
+O dispositivo foi identificado em 20/09/2026 como **EP4CE6E22C8**.
+O alvo de bancada ainda depende do modelo/esquema da placa, clock e pinagem.
 
 Registrar antes de criar QSF/SDC e gerar um SOF:
 
 | Informação | Situação |
 | --- | --- |
 | Fabricante/modelo e revisão da placa | A confirmar |
-| Código completo da FPGA e speed grade | A confirmar |
-| Frequência do oscilador e pino do clock | A confirmar |
+| Código completo da FPGA e speed grade | EP4CE6E22C8 — Cyclone IV E, EQFP-144, comercial, speed grade 8 |
+| Frequência do oscilador e pino do clock | Provável 48 MHz; confirmar frequência e pino |
 | GPIO RX/TX, alimentação dos bancos e GND | A confirmar |
 | Reset e LEDs disponíveis | A confirmar |
 | Esquema/manual da placa | A confirmar |
@@ -17,6 +18,23 @@ Registrar antes de criar QSF/SDC e gerar um SOF:
 Cyclone IV é uma família de dispositivos, não uma frequência de clock.
 O EP4CE22F17C6 usado na checagem da instalação do pacote não identifica a placa
 do experimento. Nenhuma pinagem ou frequência hipotética deve ser programada.
+
+## Capacidade e revisão de área
+
+O EP4CE6 tem 6.272 elementos lógicos, 270 Kbits de RAM, 15 multiplicadores
+18 × 18 e duas PLLs.
+[Manual oficial](https://docs.altera.com/api/khub/documents/8ZIWxPYpX_ESk1aWBAaflA/content).
+
+Em 20/09, o secure existente foi sintetizado exploratoriamente para esse
+dispositivo. O fit falhou: 6.520 funções combinacionais para 6.272 disponíveis;
+o resumo indicou 7.735 LEs estimados. Não foi gerado SOF e não há resultado de
+timing. O ensaio manteve os parâmetros do wrapper MAX 10 e não usa pinagem de
+bancada. Ver [revisão e evidências](../../docs/revisao-completa-2026-09-20.md).
+
+Antes dos quatro builds finais, reduzir área do AES no RTL compartilhado e
+validar novamente ambas as plataformas. Se confirmado clock de 48 MHz, usar
+5.000 ciclos por bit a 9600 baud e período SDC de 20,833333 ns. A DE10-Lite
+permanece em 50 MHz; não duplicar a implementação AES entre as placas.
 
 ## Como acrescentar a placa
 

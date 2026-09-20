@@ -6,6 +6,13 @@ placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
 
 ## Situação em 20/09/2026
 
+**Revisão técnica:** as duas plataformas são obrigatórias. A segunda FPGA é a
+Cyclone IV E `EP4CE6E22C8`; oscilador provável de 48 MHz, ainda sem confirmação
+do clock/pinagem da placa. O secure atual não coube no fit exploratório desse
+dispositivo. Redução de área, correções nas métricas e preparação da captura
+passam a preceder os experimentos. **Prazo em risco**, mantendo submissão em
+24/09 e contingência até 25/09. Ver [revisão completa](revisao-completa-2026-09-20.md).
+
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
 O gravador/comparador binário passou em testes com porta virtual Linux.
@@ -33,14 +40,15 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 07–10/09 | UART, FIFO, AES e CTR isolados | Testes e evidências dos marcos abaixo | Concluído em RTL; ponte e AES analisados no Quartus |
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus |
 | 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Concluído em 18/09 — relatório da bancada |
-| 16–17/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo; reagendado de 15/09 |
+| 20–21/09 | Identificar Cyclone IV | Modelo da placa, clock, pinos e esquema confirmados | Em andamento — EP4CE6E22C8 definido em 20/09; clock provável 48 MHz; etapa de 16–17/09 atrasada |
+| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Em andamento — revisão concluída; correções pendentes; fit exploratório reprovado por área |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
 | 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
-| 19–20/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
-| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Em andamento — métricas RTL/Quartus consolidadas; seção física aguarda bancada |
+| 21–22/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — reagendado de 19–20/09; depende dos quatro builds, interfaces e GPS |
+| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Em andamento — reavaliar latência e refazer comparação após otimização; resultados físicos pendentes |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
 | 24/09 | Submissão principal | Envio e comprovante preservados | Pendente |
 | **25/09** | **Contingência e encerramento** | **Correções de envio, eventual reenvio e confirmação final** | **Pendente** |
@@ -49,6 +57,28 @@ A chamada pública do BTSym consultada em 14/09 informa 30/09/2026 como prazo
 externo. Confirmar modalidade e template no portal antes do envio. O planejamento
 interno termina em 25/09 independentemente dessa folga.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
+
+## Marco em 20/09: revisão completa e identificação do EP4CE6
+
+- `make check` passou novamente: 27 simulações, nove configurações de lint,
+  checagens estruturais e 19 testes PC. Isso não substitui bancada integrada.
+- Compilação exploratória do secure para `EP4CE6E22C8`: síntese concluída;
+  fit reprovado, com 6.520 funções combinacionais para 6.272 disponíveis.
+  Não houve SOF, programação, pinagem real ou análise temporal válida desse alvo.
+- A latência de 169.269 ciclos registrada no replay abaixo inclui pausas
+  artificiais do TX. Deve ser mantida como evidência histórica desse estímulo,
+  não utilizada como latência nominal no artigo antes de nova medição.
+- Testes adicionais reproduziram reutilização de máscara CTR após reset,
+  aceitação de slack negativo pelo extrator de métricas e falhas do validador
+  NMEA. O RTL não foi modificado nesta revisão; correções continuam pendentes.
+- ESP32 disponível como alternativa. Dois CP2102 com sinais de 3,3 V são
+  recomendados para observar referência e saída; aquisição ainda não confirmada.
+- Próximo passo sem placa: adequar a área do AES compartilhado e os testes;
+  em paralelo, Leonardo confirma placa/oscilador/pinagem e prepara as interfaces.
+
+Detalhes, fontes, evidências e prioridades na
+[revisão completa](revisao-completa-2026-09-20.md). Os marcos anteriores abaixo
+preservam o que foi executado; esta revisão qualifica suas limitações.
 
 ## Marco em 18/09: DE10-Lite conectada e programada
 

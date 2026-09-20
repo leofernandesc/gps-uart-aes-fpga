@@ -4,6 +4,11 @@
 Working draft for BTSym'26. Physical GPS and integrated-board results are
 identified explicitly as pending where applicable.
 
+Editorial review, 20 September: the current RX-to-TX latency table includes
+deliberate TX stalls and is not a nominal-latency measurement. Remeasure before
+submission. The mandatory second target is EP4CE6E22C8; the present secure RTL
+failed an exploratory fit due to capacity. See [technical review](revisao-completa-2026-09-20.md).
+
 ## Abstract
 
 GPS receivers commonly expose their navigation data through an asynchronous
@@ -132,7 +137,7 @@ The evaluation separates three kinds of evidence:
    separately for the MAX 10 device, and resources, Fmax and timing slacks are
    collected from post-fit reports.
 
-The current software/RTL evidence comprises 27 HDL simulations, seven lint
+The current software/RTL evidence comprises 27 HDL simulations, nine lint
 configurations and 19 PC tests. These counts include the public replay and the
 raw-capture validation contract; they do not represent a physical GPS run.
 
@@ -215,8 +220,9 @@ The current evaluation has four important limitations. First, the NMEA input
 used in RTL is a public synthetic replay and not a live NEO-M8N capture. Second,
 the integrated baseline and secure designs have been compiled but still need a
 physical DE10-Lite programming and serial-output test. Third, the Cyclone IV
-comparison is not part of the current quantitative table because its exact
-device, clock and pinout have not been confirmed. Finally, AES-CTR alone does
+comparison is not part of the current quantitative table: the EP4CE6E22C8 is
+identified, but the secure design requires area reduction and the board clock
+and pinout still need confirmation. Finally, AES-CTR alone does
 not authenticate the data; an authenticated mode or a separate integrity
 mechanism would be required for a complete secure telemetry protocol.
 

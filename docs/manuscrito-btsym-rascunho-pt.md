@@ -5,6 +5,11 @@ Rascunho de trabalho para o BTSym’26. Os resultados de GPS físico e da
 integração em bancada são identificados explicitamente como pendentes quando
 aplicável.
 
+Revisão editorial de 20/09: a tabela de latência RX–TX inclui pausas deliberadas
+do TX e não mede latência nominal. Refazer a medição antes da submissão. O
+segundo alvo obrigatório é o EP4CE6E22C8; o secure atual não coube no fit
+exploratório. Ver [revisão técnica](revisao-completa-2026-09-20.md).
+
 ## Resumo
 
 Receptores GPS frequentemente disponibilizam seus dados de navegação por uma
@@ -135,7 +140,7 @@ A avaliação separa três tipos de evidência:
    ajustados separadamente para o dispositivo MAX 10, e recursos, Fmax e slacks
    temporais são coletados dos relatórios pós-fit.
 
-As evidências atuais de software/RTL compreendem 27 simulações HDL, sete
+As evidências atuais de software/RTL compreendem 27 simulações HDL, nove
 configurações de lint e 19 testes no PC. Essas contagens incluem o replay
 público e o contrato de validação da captura bruta; não representam um ensaio
 físico de GPS.
@@ -220,8 +225,9 @@ A avaliação atual possui quatro limitações importantes. Primeiro, a entrada
 NMEA usada no RTL é um replay público/sintético, e não uma captura ao vivo do
 NEO-M8N. Segundo, os designs integrados baseline e secure foram compilados, mas
 ainda precisam ser programados e testados fisicamente na DE10-Lite. Terceiro, a
-comparação com a Cyclone IV não faz parte da tabela quantitativa atual porque o
-dispositivo, clock e pinagem exatos ainda não foram confirmados. Por fim,
+comparação com a Cyclone IV ainda não faz parte da tabela quantitativa: o
+EP4CE6E22C8 está identificado, mas o secure exige redução de área e faltam
+confirmar clock e pinagem da placa. Por fim,
 AES-CTR sozinho não autentica os dados; um modo autenticado ou mecanismo de
 integridade separado seria necessário para um protocolo completo de telemetria
 segura.

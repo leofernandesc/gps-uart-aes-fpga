@@ -36,8 +36,14 @@ implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e os builds DE10-Lite aceitam
 `CONTEXT_FILE` para gerar esse pacote privado a partir do JSON. O valor padrão
 continua sendo apenas o contexto de bring-up. A captura GPS e os ensaios físicos
-integrados continuam pendentes. A comparação também inclui Cyclone IV, cujo
-modelo, clock e pinagem permanecem pendentes de confirmação.
+integrados continuam pendentes. A comparação exige também a Cyclone IV E
+EP4CE6E22C8; modelo da placa, oscilador e pinagem ainda precisam de confirmação.
+Os 48 MHz são uma hipótese, não uma configuração de bancada aprovada.
+
+A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) confirmou que o secure
+atual não cabe no EP4CE6 em um fit exploratório. Também identificou correções
+necessárias na medição de latência, extração de métricas e captura/contexto.
+Há trabalho sem placa antes da comparação final; o prazo até 25/09 está em risco.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
@@ -51,7 +57,7 @@ compilados; ainda precisam ser programados e validados fisicamente.
 | Item | Decisão |
 | --- | --- |
 | Placa | DE10-Lite, clock de 50 MHz |
-| Segundo alvo | Cyclone IV; placa, dispositivo e oscilador a confirmar |
+| Segundo alvo | Cyclone IV E EP4CE6E22C8; placa/pinagem pendentes, oscilador provável de 48 MHz |
 | GPS | NEO-M8N-010; VCC de 3,3 V; conferir conector da placa de suporte na bancada |
 | Serial | 9600 baud, 8N1, sem seleção de taxa em execução |
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
@@ -72,8 +78,8 @@ make check
 ```
 
 Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
-bancada/FIFO/ponte, dois testbenches AES, dois de CTR e quatro da integração.
-Inclui sete configurações de lint, checagem estrutural, verificação no PC dos
+bancada/FIFO/ponte, dois testbenches AES, dois de CTR e cinco da integração/wrapper.
+Inclui nove configurações de lint, checagem estrutural, verificação no PC dos
 bytes CTR e do TX integrado, além de 19 testes do software de captura, contexto,
 replay e validação NMEA.
 Falhas abortam o comando com código não zero.

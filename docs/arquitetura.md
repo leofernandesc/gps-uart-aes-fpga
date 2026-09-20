@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 19/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 20/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -79,7 +79,12 @@ compara arquivos. Não há configuração em tempo de execução.
 | Placa | Baseline integrado | Secure integrado | Clock |
 | --- | --- | --- | --- |
 | DE10-Lite / MAX 10 10M50DAF484C7G | Build concluído | Build concluído | 50 MHz |
-| Cyclone IV | Pendente do cadastro da placa/build | Pendente do cadastro da placa/build | Oscilador a confirmar |
+| Cyclone IV E / EP4CE6E22C8 | Pendente da configuração da placa | Redução de área pendente; fit exploratório falhou | Provável 48 MHz; confirmar |
+
+As quatro configurações são obrigatórias. A [revisão de 20/09](revisao-completa-2026-09-20.md)
+identificou que o secure existente excede a capacidade do EP4CE6. A otimização
+deve preservar o RTL comum; depois, atualizar recursos e timing de ambas as
+plataformas. A arquitetura do caminho de dados permanece a mesma.
 
 Dentro de cada placa, ambos os builds terão a mesma FIFO, interfaces,
 instrumentação, clock e restrições. O AES estará ausente por

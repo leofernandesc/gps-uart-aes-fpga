@@ -198,10 +198,10 @@
           <thead><tr><th>Material / função</th><th>Situação</th></tr></thead>
           <tbody>
             <tr><td><span class="material-name">DE10-Lite</span><span class="material-use">Primeiro teste UART e implementação MAX 10</span></td><td><span class="badge">Disponível · UART validada</span></td></tr>
-            <tr><td><span class="material-name">Placa Cyclone IV</span><span class="material-use">Segundo alvo para os dois builds</span></td><td><span class="badge pending">Modelo a confirmar</span></td></tr>
+            <tr><td><span class="material-name">Cyclone IV E · EP4CE6E22C8</span><span class="material-use">Segundo alvo obrigatório; adequação de área pendente</span></td><td><span class="badge pending">Clock e pinagem a confirmar</span></td></tr>
             <tr><td><span class="material-name">GPS NEO-M8N-010 + antena</span><span class="material-use">Aquisição real das sentenças GPS</span></td><td><span class="badge pending">Aguardando módulo</span></td></tr>
             <tr><td><span class="material-name">Osciloscópio + pontas</span><span class="material-use">Níveis elétricos, duração dos bits e quadros</span></td><td><span class="badge">TX e loopback concluídos</span></td></tr>
-            <tr><td><span class="material-name">Interface serial para o PC</span><span class="material-use">Captura da saída da FPGA e referência GPS</span></td><td><span class="badge pending">Fonte UART pendente</span></td></tr>
+            <tr><td><span class="material-name">Interface serial para o PC</span><span class="material-use">Dois CP2102 recomendados para referência e saída; ESP32 como alternativa</span></td><td><span class="badge pending">ESP32 disponível; CP2102 a obter</span></td></tr>
             <tr><td><span class="material-name">PC, cabos e conexões</span><span class="material-use">Quartus instalado; USB-Blaster, jumper e GND comum</span></td><td><span class="badge">Disponível</span></td></tr>
           </tbody>
         </table>
@@ -214,23 +214,23 @@
       <p class="sources">USB-Blaster programa a FPGA. A interface serial transporta os dados ao PC. O osciloscópio fornece a evidência elétrica e temporal.</p>
     </section>
     <section class="slide" id="4" data-label="Cronograma" aria-labelledby="title-4">
-      <p class="eyebrow">04 / Planejamento · atualizado em 18/09/2026</p>
+      <p class="eyebrow">04 / Planejamento · atualizado em 20/09/2026</p>
       <h2 id="title-4">Submissão e contingência até <em>25/09.</em></h2>
       <table class="schedule-table" aria-label="Cronograma de setembro de 2026">
         <thead><tr><th>Data</th><th>Etapa</th><th>Situação</th><th>Observação / entrega</th></tr></thead>
         <tbody>
-          <tr><td>07–14/09</td><td>Base RTL</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>UART, FIFO, AES e CTR integrados; simulações, lint e comparador serial validados.</td></tr>
-          <tr><td>15–17/09</td><td>Integração e PC</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Fluxo serial validado em simulação; wrappers baseline/secure e contexto de bring-up preparados.</td></tr>
+          <tr><td>07–14/09</td><td>Base RTL</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>UART, FIFO, AES e CTR implementados; testes unitários e referências independentes.</td></tr>
+          <tr><td>15–20/09</td><td>Integração e PC</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Regressão aprovada: 27 simulações e 19 testes PC. Contexto e replay NMEA testados; bancada integrada ainda pendente.</td></tr>
           <tr><td>18/09</td><td>DE10-Lite</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Dois builds Quartus concluídos, recursos/timing registrados; UART autônoma validada no osciloscópio e em loopback.</td></tr>
-          <tr><td>19–20/09</td><td>Validação integrada</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Programar baseline/secure, testar com fonte UART independente e iniciar o ensaio GPS se o módulo estiver disponível.</td></tr>
-          <tr><td>19–20/09</td><td>Cyclone IV</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Confirmar modelo, clock e pinagem; criar os builds somente após identificar a placa.</td></tr>
-          <tr><td>21–22/09</td><td>Resultados e artigo</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Fechar tabelas e gráficos; discutir custo do AES, latência e limites do fluxo serial.</td></tr>
+          <tr><td>20–21/09</td><td>Cyclone IV e revisão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Secure não coube no EP4CE6: reduzir área do AES comum, confirmar clock/pinos e corrigir métricas e captura.</td></tr>
+          <tr><td>21–22/09</td><td>Bancada integrada</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Reagendado de 19–20/09. Após os quatro builds, testar replay e GPS nas duas placas, com comparação no PC.</td></tr>
+          <tr><td>21–22/09</td><td>Resultados e artigo</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Refazer latência sem pausas artificiais e recursos após otimização; completar resultados físicos e bibliografia.</td></tr>
           <tr><td>23/09</td><td>Revisão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Manuscrito completo com o orientador; incorporar correções e congelar a versão.</td></tr>
           <tr><td>24/09</td><td>Submissão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Enviar os arquivos finais e salvar o comprovante.</td></tr>
           <tr class="final-date"><td>25/09</td><td>Contingência</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Resolver eventual problema de envio, confirmar a submissão e encerrar a execução.</td></tr>
         </tbody>
       </table>
-      <p class="schedule-note"><span class="status-mark check" aria-label="Concluído">✓</span> Concluído <span class="status-mark cross" aria-label="Pendente">✕</span> Pendente. Até 18/09: integração RTL, simulação serial, UART física na DE10-Lite e os dois builds MAX 10. Próximo passo: validar os tops integrados com uma fonte UART; GPS e Cyclone IV dependem da disponibilidade do hardware.</p>
+      <p class="schedule-note"><span class="status-mark check" aria-label="Concluído">✓</span> Concluído <span class="status-mark cross" aria-label="Pendente">✕</span> Pendente. Prazo em risco: as duas plataformas são obrigatórias. Prioridades: área do AES, métricas e início da captura. UART física validada; GPS e os quatro ensaios integrados ainda pendentes.</p>
       <div class="closing-foot"><p class="sources">Planejamento interno. Andamento e evidências: <code>docs/cronograma.md</code>.</p><button class="reference-button only-js" id="open-references" type="button">Referências técnicas ↗</button></div>
     </section>
   </main>

@@ -13,7 +13,7 @@ comparar o custo da cifra em **MAX 10 e Cyclone IV**, com o mesmo RTL.
 | Plataforma | Sem cifra | Com cifra | Clock |
 | --- | --- | --- | --- |
 | DE10-Lite / MAX 10 | UART + FIFO | Mesmo sistema + AES-CTR | 50 MHz |
-| Cyclone IV | UART + FIFO | Mesmo sistema + AES-CTR | Oscilador da placa a confirmar |
+| Cyclone IV E / EP4CE6E22C8 | UART + FIFO | Mesmo sistema + AES-CTR | Provável 48 MHz; confirmar oscilador |
 
 UART fixa em 9600/8N1, FIFO de 1.024 bytes, AES iterativo próprio e decifragem
 independente no PC. AES-CTR oferece confidencialidade, sem autenticação.
@@ -24,6 +24,12 @@ cada alvo tem wrapper, QSF/SDC e saídas próprias. Usar branches temporárias p
 suporte e integração. Os dois builds da DE10-Lite já possuem projetos próprios
 e foram compilados; os dois builds da Cyclone IV dependem da identificação da
 placa.
+
+As duas plataformas são obrigatórias. A [revisão completa de 20/09](revisao-completa-2026-09-20.md)
+identificou um bloqueio de capacidade: o secure existente não coube no EP4CE6
+no fit exploratório. Reduzir área no RTL comum, corrigir métricas e fechar a
+captura antes dos ensaios finais. A hipótese de 48 MHz não autoriza gerar SOF
+sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
 
 ## Estado atual
 
@@ -43,7 +49,7 @@ placa.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão atual: 27 simulações, sete configurações de lint e 19 testes PC.
+- Regressão atual: 27 simulações, nove configurações de lint e 19 testes PC.
 - Validador de captura NMEA pronto: confere a integridade formal do arquivo
   bruto antes do ensaio; a origem física continua sendo registrada na bancada.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
@@ -53,7 +59,11 @@ placa.
 - Sem GPS físico; geração/registro persistente de contexto no PC concluídos.
 - Provisionamento estático no wrapper/bitstream concluído; configuração em tempo
   de execução, GPS físico e Cyclone IV permanecem pendentes.
-- Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
+- Cyclone IV definida como EP4CE6E22C8; faltam modelo da placa, oscilador e pinagem.
+- ESP32 disponível; dois adaptadores CP2102 são recomendados para captura dupla,
+  com lógica de 3,3 V confirmada. A compra/disponibilidade não está confirmada.
+- A latência de 169.269 ciclos do replay inclui pausas artificiais. Refazer a
+  medição nominal e os resultados comparativos após a otimização de área.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
 [CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
@@ -73,15 +83,16 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
 | 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper registrados |
-| 16–17/09 | Identificação Cyclone IV | Modelo, clock e pinagem confirmados antes de criar o alvo |
+| 20–21/09 | Identificação Cyclone IV | EP4CE6 definido; confirmar placa, clock e pinagem; etapa de 16–17/09 atrasada |
+| 20–21/09 | Adequação e revisão | Reduzir área do AES comum; corrigir métricas, validação e início das capturas |
 | 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
 | 17/09 | Contexto / preparação FPGA | Estrutura do wrapper e contexto de bring-up |
 | 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal; Cyclone pendente |
 | 19/09 | Contexto / registro no PC | Gerador privado, registro persistente e wrapper parametrizado; `make check` aprovado |
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao RTL/PC e validador de captura bruta pronto; GPS físico continua pendente |
-| 19–20/09 | Experimentos | Três replays físicos por configuração e ensaio GPS contínuo |
-| 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo | Em andamento — métricas RTL/Quartus consolidadas; seção física aguarda bancada |
+| 21–22/09 | Experimentos | Reagendado de 19–20/09; três replays por configuração e GPS contínuo, após os quatro builds |
+| 21–22/09 | Resultados / manuscrito | Corrigir latência, atualizar recursos após otimização e incorporar resultados físicos |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
 | 24/09 | Submissão | Arquivos enviados e comprovante salvo |
 | 25/09 | Contingência | Correções de envio/reenvio e confirmação final |
@@ -196,7 +207,7 @@ de 82,19 MHz. Os dois operam a 50 MHz sem violação. A matriz completa continua
 pendente até confirmar a Cyclone IV; não apresentar esse resultado parcial como
 quatro builds concluídos.
 
-## 5. GPS real e experimentos — 19–20/09
+## 5. GPS real e experimentos — 21–22/09 (reagendado de 19–20/09)
 
 Enquanto a placa e o módulo GPS não estão disponíveis, o fluxo de aplicação usa
 `reference/gps/neo-m8n-nmea-sample.txt`. O script `scripts/gps_fixture.py`
