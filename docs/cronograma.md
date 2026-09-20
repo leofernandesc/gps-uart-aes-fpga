@@ -4,7 +4,7 @@ Objetivo: adquirir GPS NEO-M8N-010 por UART e medir o custo do AES-128-CTR em
 DE10-Lite/MAX 10 e Cyclone IV, com um build sem cifra e outro com cifra por
 placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
 
-## Situação em 19/09/2026
+## Situação em 20/09/2026
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
@@ -38,7 +38,8 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
-| 19–20/09 | Experimentos | Três replays por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
+| 20/09 | Replay NMEA | Fixture público validado e integrado ao ensaio RTL/PC | Concluído em simulação/PC; GPS físico pendente |
+| 19–20/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
 | 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Pendente — artigo |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
 | 24/09 | Submissão principal | Envio e comprovante preservados | Pendente |
@@ -133,6 +134,22 @@ Essa entrega encerra a implementação sem placa desta etapa. Ainda faltam
 programar os tops integrados, transmitir uma sequência de teste, validar o
 secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
 
+## Marco em 20/09: replay NMEA reproduzível sem placa
+
+- Foi adicionado `reference/gps/neo-m8n-nmea-sample.txt` com cinco sentenças
+  públicas/sintéticas do formato esperado do NEO-M8N: RMC, GGA, GSA, GSV e TXT.
+- `scripts/gps_fixture.py` valida ASCII, checksum NMEA, limite de 82 caracteres
+  e transforma as linhas de referência em uma transmissão CRLF de 309 bytes.
+- O replay passou a ser o caso NMEA do vetor comum de integração. Baseline e
+  secure processaram 9 streams/2.681 bytes no modo acelerado e 4 streams/49
+  bytes em 50 MHz/9600, sem divergências.
+- A suíte do PC passou com 16 testes. A evidência está em
+  [validação do replay NMEA](validacao-replay-nmea-2026-09-20.md).
+
+Esta entrega valida apenas o contrato de dados e o caminho RTL/PC. Não é
+captura do GPS, não testa nível elétrico, nem altera a pendência dos ensaios
+P07–P11 na bancada.
+
 ## Ensaio auxiliar — DE10-Nano
 
 Em 18/09 foi disponibilizada uma DE10-Nano para repetir a medição da UART
@@ -223,12 +240,12 @@ Esses resultados não representam programação de placa ou captura GPS.
 - Framing/overflow interrompem a aquisição; abort/reset descartam dados
   pendentes. O último quadro termina antes de parar por esgotamento do contador.
 - Quatro simulações integradas: nove fluxos por modo no teste acelerado e
-  quatro por modo em 50 MHz/9600 com FIFO de 1.024 bytes. São 4.982 bytes
-  decodificados do fio TX, conferidos e recuperados no PC sem divergências.
+  quatro por modo em 50 MHz/9600 com FIFO de 1.024 bytes. A execução histórica
+  foi preservada; o replay atual é documentado no marco de 20/09.
 - Cancelamento em 32 situações por modo acelerado, falhas e recuperação
   byte a byte com contexto novo. Baseline sem módulos AES confirmado pelo Yosys.
 - Gravador binário Linux e comparador com contagens, hashes e primeira
-  divergência; 15 testes PC, incluindo porta virtual, timeout e arquivos privados.
+  divergência; a execução atual também inclui o contrato do replay NMEA.
 - Regressão completa: 27 simulações, sete configurações de lint, estrutura e
   conferência independente; 15 testes PC; evidências no [relatório](validacao-integracao-2026-09-16.md).
 - Antes da consolidação desta etapa, `git fetch origin` foi executado e

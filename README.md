@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 19/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 20/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -18,10 +18,12 @@ com RX e LEDs para loopback por jumper. Seu SOF e a auditoria temporal passaram;
 ver [revisão e resultados de 14/09](docs/revisao-2026-09-14.md).
 Os testes físicos da UART autônoma já foram concluídos na DE10-Lite; ainda não
 há aquisição de GPS nem validação física dos caminhos baseline/secure integrados.
-A integração UART–FIFO–CTR–TX passou nos modos baseline/secure, com 4.982 bytes
-decodificados do fio TX e conferidos no PC. O gravador binário e comparador do
+A integração UART–FIFO–CTR–TX passou novamente nos modos baseline/secure, com
+2.681 bytes por modo decodificados do fio TX e conferidos no PC. O replay público
+inclui cinco sentenças NMEA, 309 bytes e CRLF; o gravador binário e comparador do
 PC passaram em testes com porta virtual Linux. Ver
 [validação da integração](docs/validacao-integracao-2026-09-16.md).
+O contrato do replay está em [validação NMEA](docs/validacao-replay-nmea-2026-09-20.md).
 O gerador de contexto do PC e o registro persistente de nonces foram
 implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e os builds DE10-Lite aceitam
@@ -34,8 +36,8 @@ Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
 medição do TX no osciloscópio e o loopback TX→RX foram concluídos; os resultados
 estão em [relatório da bancada](docs/bancada-de10-lite-2026-09-18.md). Os tops
-integrados baseline/secure foram separados em projetos próprios, mas ainda
-precisam ser compilados e programados.
+integrados baseline/secure foram separados em projetos próprios e já foram
+compilados; ainda precisam ser programados e validados fisicamente.
 
 ## Configuração do protótipo
 
@@ -65,7 +67,8 @@ make check
 Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e quatro da integração.
 Inclui sete configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 15 testes do software de captura e contexto.
+bytes CTR e do TX integrado, além de 16 testes do software de captura, contexto
+e replay NMEA.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -93,6 +96,7 @@ make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/9600
 make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
+make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
 # Exemplo de contexto privado aplicado ao build:
@@ -182,6 +186,7 @@ scripts/                    execução reproduzível dos testes e checagens
 reference/uart-v1/           cópia imutável do UART anterior e checksums
 reference/aes-cavp/          vetores públicos oficiais NIST e sua procedência
 reference/ctr-sp800-38a/     exemplo público AES-128-CTR do NIST
+reference/gps/               replay NMEA público para simulação e verificação PC
 docs/                       contratos, cronograma, evidências e checklist de bancada
 build/                      saídas geradas, ignoradas pelo Git
 ```
@@ -205,6 +210,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Captura binária e comparação no PC](docs/captura-pc.md)
 - [Validação do contexto e registro de nonces](docs/validacao-contexto-2026-09-19.md)
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
+- [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)

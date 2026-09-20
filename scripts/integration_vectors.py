@@ -11,15 +11,17 @@ from cryptography.hazmat.backends.openssl.backend import backend
 
 from ctr_vectors import crypt, deterministic_bytes
 from capture import compare
+from gps_fixture import load_replay
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build/integration"
 
 
 def cases():
-    nmea = b"$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A\r\n"
+    nmea_replay = load_replay()
     payloads = [bytes([0x55]), bytes(range(15)), bytes(range(16)), bytes(range(17)),
-                nmea, bytes(range(255)), bytes(i % 256 for i in range(2049)), bytes(range(16)), b"\x00\xff\x55"]
+                nmea_replay, bytes(range(255)), bytes(i % 256 for i in range(2049)),
+                bytes(range(16)), b"\x00\xff\x55"]
     result = []
     for index, plain in enumerate(payloads):
         label = f"uart-integration-{index}"

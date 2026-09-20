@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration pc context fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration pc context gps-replay fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -61,6 +61,9 @@ pc:
 
 context:
 	python3 -m unittest discover -s tb -p 'test_context.py' -v
+
+gps-replay:
+	python3 scripts/gps_fixture.py
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:

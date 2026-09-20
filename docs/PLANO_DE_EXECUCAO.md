@@ -1,6 +1,6 @@
 # Plano de execução e colaboração
 
-Atualizado em 19/09/2026. O [cronograma](cronograma.md) registra o andamento e
+Atualizado em 20/09/2026. O [cronograma](cronograma.md) registra o andamento e
 as evidências; este plano detalha as entregas e como aceitá-las.
 A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
 materiais e datas em quatro telas.
@@ -31,9 +31,13 @@ placa.
 - AES conferido em 866 vetores e analisado isoladamente no Quartus.
 - CTR por byte conferido em 60 fluxos / 19.009 bytes por biblioteca independente.
 - UART autônoma para osciloscópio implementada, simulada e compilada.
-- Integração baseline/secure validada: 4.982 bytes de TX conferidos no PC.
+- Integração baseline/secure validada novamente: 2.681 bytes por modo conferidos
+  no PC, incluindo o replay NMEA estruturado de 309 bytes.
+- Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
+  usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão completa: 27 simulações, sete configurações de lint, estrutura e 15 testes PC.
+- Regressão anterior: 27 simulações, sete configurações de lint e 15 testes PC;
+  o replay acrescentou um teste PC, totalizando 16 nesta etapa.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
 - Tops baseline/secure da DE10-Lite compilados com recursos e timing registrados.
 - Tops parametrizados para substituir contexto de elaboração; `CONTEXT_FILE` gera
@@ -46,7 +50,8 @@ placa.
 Relatórios: [AES](validacao-aes-2026-09-09.md),
 [CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
 e [integração de 16/09](validacao-integracao-2026-09-16.md),
-[bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md).
+[bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md) e
+[validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md).
 
 ## Datas e entregas
 
@@ -61,7 +66,8 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal; Cyclone pendente |
 | 19/09 | Contexto / registro no PC | Gerador privado, registro persistente e wrapper parametrizado; `make check` aprovado |
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
-| 19–20/09 | Experimentos | Três replays por configuração e ensaio GPS contínuo |
+| 20/09 | Replay NMEA | Fixture público validado e integrado ao ensaio RTL/PC; GPS físico continua pendente |
+| 19–20/09 | Experimentos | Três replays físicos por configuração e ensaio GPS contínuo |
 | 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
 | 24/09 | Submissão | Arquivos enviados e comprovante salvo |
@@ -172,6 +178,13 @@ quatro builds concluídos.
 
 ## 5. GPS real e experimentos — 19–20/09
 
+Enquanto a placa e o módulo GPS não estão disponíveis, o fluxo de aplicação usa
+`reference/gps/neo-m8n-nmea-sample.txt`. O script `scripts/gps_fixture.py`
+confere ASCII, checksum NMEA e o limite de 82 caracteres e transforma cada
+linha em uma transmissão CRLF. Esse replay é consumido pelo mesmo vetor usado
+na simulação baseline/secure e pelo verificador independente no PC. Ele valida
+o contrato de dados, mas não substitui a aquisição do NEO-M8N.
+
 Após conferir módulo, alimentação e montagem:
 
 1. Validar GPS diretamente e guardar uma referência.
@@ -180,7 +193,7 @@ Após conferir módulo, alimentação e montagem:
 4. Comparar todos os bytes com a referência independente.
 5. Repetir o protocolo na Cyclone IV.
 
-Executar três repetições do mesmo replay por configuração, preservando bytes e
+Executar três repetições do mesmo replay físico por configuração, preservando bytes e
 intervalos. Acrescentar captura contínua do GPS com duração registrada; almejar
 uma hora por configuração quando a bancada permitir. Se houver impedimento
 físico, registrá-lo e revisar o experimento com o orientador; replay sintético

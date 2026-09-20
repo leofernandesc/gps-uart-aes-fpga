@@ -53,9 +53,10 @@ substitui um resultado físico.
 | S12 | Wrapper baseline | Lint e síntese estrutural do top DE10-Lite | Top elabora sem AES e sem latch/problema estrutural | **Concluído em 18/09** — `make integration`; AES ausente na hierarquia baseline |
 | S13 | Wrapper secure | Lint e síntese estrutural do top DE10-Lite | Top elabora com AES-CTR e sem latch/problema estrutural | **Concluído em 18/09** — `make integration` |
 | S14 | Regressão final | `make check` após a criação dos tops | Nenhuma regressão nos módulos já aprovados | **Concluído em 19/09** — código 0; 27 simulações, lint, estrutura e PC |
-| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto e 15 testes PC |
+| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto; a suíte atual tem 16 testes PC |
 | S16 | Contexto no wrapper | Testbench do top DE10-Lite com parâmetros substituídos | Ciphertext observado no TX corresponde ao contexto de elaboração | **Concluído em 19/09** — `make integration`, `0x55 -> 0xe2` |
 | S17 | Contexto no build Quartus | `CONTEXT_FILE=... make secure-fpga` e validação do pacote gerado | O JSON é validado, o modo é conferido e o pacote privado entra no SOF | **Concluído em 20/09** — baseline/secure compilados; programação física pendente |
+| S18 | Replay NMEA estruturado | `make gps-replay`, `make integration` e testes PC | Sentenças ASCII com checksum válido são convertidas para CRLF e preservadas nos modos baseline/secure | **Concluído em 20/09** — 5 sentenças, replay sintético de 309 bytes, RTL/PC; GPS físico pendente |
 
 Comandos principais:
 
@@ -261,20 +262,21 @@ Evidência:
 Observações:
 ```
 
-Última atualização: 19/09/2026. Próximo registro esperado: programação e
+Última atualização: 20/09/2026. Próximo registro esperado: programação e
 ensaio físico dos projetos `baseline` e `secure` da DE10-Lite.
 
-## Execuções registradas em 18–19/09/2026
+## Execuções registradas em 18–20/09/2026
 
 | Comando | Resultado | Observação |
 | --- | --- | --- |
 | `make lint` | **Passou** | Lint UART, AES, CTR, bridge e tops DE10-Lite; acesso ao Docker local foi necessário |
-| `make integration` | **Passou** | Baseline e secure em clock acelerado e 50 MHz/9600; 4.982 bytes sem divergência e 15 testes PC aprovados |
+| `make gps-replay` | **Passou em 20/09** | 5 sentenças NMEA, 309 bytes CRLF, checksums válidos |
+| `make integration` | **Passou em 20/09** | Baseline e secure em clock acelerado e 50 MHz/9600; 2.681 bytes por modo sem divergência e 16 testes PC aprovados |
 | `make baseline-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make secure-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make context` | **Passou** | 7 testes de criação, permissões, limites, renderização e reutilização de nonce |
-| `make pc` | **Passou** | 15 testes, incluindo captura, comparação e contexto |
-| `make check` | **Passou em 20/09** | Código 0; 27 simulações, sete configurações de lint, estrutura e 15 testes PC |
+| `make pc` | **Passou em 20/09** | 16 testes, incluindo captura, comparação, contexto e replay NMEA |
+| `make check` | **Passou em 20/09** | Código 0; 27 simulações, sete configurações de lint, estrutura e 16 testes PC |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
 O erro de espaço registrado na execução histórica de `make uart` ocorreu ao
