@@ -61,7 +61,7 @@ esac
 case "$check_mode" in
     all|test|integration)
         python3 "$project_dir/scripts/integration_vectors.py" --verify
-        python3 -m unittest discover -s "$project_dir/tb" -p test_capture.py -v 2>&1 | tee "$project_dir/build/integration/pc-tests.log"
+        python3 -m unittest discover -s "$project_dir/tb" -p 'test_*.py' -v 2>&1 | tee "$project_dir/build/integration/pc-tests.log"
         ;;
 esac
 if [[ "$check_mode" == all ]]; then

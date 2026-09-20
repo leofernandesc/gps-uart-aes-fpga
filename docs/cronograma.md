@@ -4,7 +4,7 @@ Objetivo: adquirir GPS NEO-M8N-010 por UART e medir o custo do AES-128-CTR em
 DE10-Lite/MAX 10 e Cyclone IV, com um build sem cifra e outro com cifra por
 placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
 
-## Situação em 18/09/2026
+## Situação em 19/09/2026
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
@@ -31,12 +31,13 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | Data | Entrega | Critério de conclusão | Situação |
 | --- | --- | --- | --- |
 | 07–10/09 | UART, FIFO, AES e CTR isolados | Testes e evidências dos marcos abaixo | Concluído em RTL; ponte e AES analisados no Quartus |
-| 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus; bancada pendente |
+| 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus |
 | 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Concluído em 18/09 — relatório da bancada |
 | 16–17/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo; reagendado de 15/09 |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
-| 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — provisionamento persistente ainda pendente |
+| 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — provisionamento físico ainda pendente |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
+| 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 19–20/09 | Experimentos | Três replays por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
 | 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Pendente — artigo |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
@@ -60,8 +61,9 @@ interno termina em 25/09 independentemente dessa folga.
 - O SOF SHA-256 `3aa552c5004c35cb42602608ec8c2ab387418a98789f9bb0d080f543c7e6ec5f`
   foi programado por JTAG; o Quartus confirmou configuração bem-sucedida de
   `10M50DAF484@1`.
-- A forma de onda do TX e o loopback TX→RX ainda não foram observados/registrados.
-  Portanto, a UART física continua `Em andamento`, não `Concluída`.
+- A forma de onda do TX e o loopback TX→RX foram observados e registrados:
+  bit de `104,22 µs`, quadro de aproximadamente `1,042 ms`, intervalo de `0,1 s`
+  e loopback aprovado. Portanto, a UART autônoma física está `Concluída`.
 
 O procedimento e os valores medidos estão no
 [relatório da bancada](bancada-de10-lite-2026-09-18.md). O plano completo,
@@ -91,8 +93,26 @@ Detalhes, hashes e todas as margens estão no [plano de testes](plano-de-testes.
 
 `make integration`, `make baseline-fpga` e `make secure-fpga` foram executados.
 Os relatórios de recursos e timing e o [plano de testes](plano-de-testes.md)
-foram atualizados. O próximo passo é programar o baseline na DE10-Lite e
-realizar o ensaio físico com uma fonte UART; o GPS continua pendente.
+foram atualizados. A próxima etapa física é programar os tops baseline e
+secure na DE10-Lite e realizar o ensaio integrado com uma fonte UART; o GPS
+continua pendente.
+
+## Marco em 19/09: contexto de experimento no PC
+
+- `scripts/context.py` cria contextos `baseline` e `aes-128-ctr` para cada
+  captura, com tamanho, contador, chave e nonce quando aplicável.
+- O nonce secure é gerado aleatoriamente quando não é informado; o registro
+  persistente guarda somente o fingerprint SHA-256 da chave e rejeita o mesmo
+  par chave/nonce.
+- Contexto, registro e lock são privados (`0600`), com atualização bloqueada e
+  substituição atômica. Limites do contador e colisões foram testados.
+- `make context` passou com cinco testes; `make pc` passou com 13 testes; a
+  integração baseline/secure continuou aprovada.
+
+Essa etapa prepara os ensaios sem depender da placa. O JSON ainda não configura
+automaticamente a FPGA: o wrapper de bancada precisa receber a chave, o nonce e
+o contador antes da captura. Não há GPS real nem validação física dos tops
+integrados neste marco.
 
 ## Ensaio auxiliar — DE10-Nano
 
@@ -189,16 +209,19 @@ Esses resultados não representam programação de placa ou captura GPS.
 - Cancelamento em 32 situações por modo acelerado, falhas e recuperação
   byte a byte com contexto novo. Baseline sem módulos AES confirmado pelo Yosys.
 - Gravador binário Linux e comparador com contagens, hashes e primeira
-  divergência; oito testes PC, incluindo porta virtual, timeout e arquivos privados.
+  divergência; 13 testes PC, incluindo porta virtual, timeout e arquivos privados.
 - Regressão completa: 26 simulações, sete configurações de lint, estrutura e
   conferência independente; evidências no [relatório](validacao-integracao-2026-09-16.md).
-- GitHub conferido antes do trabalho: nenhuma contribuição nova em relação
-  a `bb0f15f`; não foi necessário pull. Histórico anterior preservado.
+- No marco anterior, o estado remoto havia sido conferido e o histórico local
+  preservado. Nesta entrega, uma nova consulta com `git fetch origin` não
+  completou por falha temporária de DNS; nenhum conteúdo remoto foi incorporado.
 
 O [contrato RTL](integracao-uart-ctr.md) e o [guia PC](captura-pc.md) delimitam
 o que está pronto. A interface `cfg_*` ainda precisa de um wrapper que receba
-os parâmetros; um JSON no PC não configura sozinho a FPGA. Registro persistente
-de nonces, início alinhado, builds completos e validação física seguem pendentes.
+os parâmetros; um JSON no PC não configura sozinho a FPGA. O registro persistente
+de nonces já está pronto no PC; início alinhado, provisionamento no wrapper e
+validação física seguem pendentes. `make check` foi repetido em 19/09 e terminou
+com código 0, incluindo os testes do novo gerador de contexto.
 
 ## Contrato da integração e pendências de bancada
 

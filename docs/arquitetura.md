@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 18/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 19/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -71,8 +71,9 @@ O wrapper inicializa `cfg_*` automaticamente com um contexto fixo de bring-up,
 sem protocolo serial adicional. Isso permite compilar e testar os dois tops
 antes da chegada do GPS; registrar parâmetros no PC ainda não os transfere
 automaticamente à FPGA. O
-[software PC](captura-pc.md) grava e compara arquivos; provisionamento e
-registro persistente de nonces ainda estão pendentes.
+[software PC](captura-pc.md) grava e compara arquivos. O gerador de contexto
+e o registro persistente de nonces já estão implementados no PC; o
+provisionamento desses parâmetros no wrapper/FPGA ainda está pendente.
 
 ## Matriz experimental
 

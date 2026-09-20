@@ -34,6 +34,30 @@ registra `INCOMPLETE` e retorna código 1. `CAPTURED` significa apenas que N byt
 foram gravados, não que sejam os bytes corretos. O tempo registrado é do PC,
 inclui USB/SO e **não é uma medida de latência da FPGA**.
 
+## Criar e registrar um contexto
+
+`scripts/context.py` cria o JSON privado usado pela captura e mantém um registro
+de nonces já utilizados. No modo secure, omitir `--nonce-hex` para gerar um
+nonce aleatório novo:
+
+```bash
+python3 scripts/context.py new \
+  --mode aes-128-ctr --bytes 1024 \
+  --key-hex 000102030405060708090a0b0c0d0e0f \
+  --registry data/private/nonce-registry.json \
+  --output data/private/ensaio01/contexto.json
+```
+
+O programa rejeita a reutilização do mesmo nonce com a mesma chave, bloqueia
+overflow do contador de 32 bits e cria contexto e registro com permissão
+`0600`. O registro guarda apenas o fingerprint SHA-256 da chave; a chave fica
+somente no contexto privado. A ferramenta prepara os metadados no PC, mas ainda
+não envia a chave/nonce para a FPGA.
+
+Para um ensaio baseline, use `--mode baseline` sem chave, nonce ou registro.
+`--nonce-hex` deve ser reservado a testes determinísticos, nunca reutilizado em
+capturas reais.
+
 ## Contexto do ensaio
 
 Guardar um JSON local com os mesmos parâmetros efetivamente carregados na
@@ -54,11 +78,11 @@ positivo. Chave e nonce têm 16 e 12 bytes; contador é inteiro de 32 bits.
 A comparação rejeita N que ultrapasse a capacidade restante do contador.
 
 Não usar o exemplo público em capturas reais. Cada nova captura com a mesma
-chave exige nonce novo, inclusive após reset. A geração/registro persistente
-dos contextos e o carregamento no wrapper ainda serão implementados: este
-comparador **não controla reutilização de nonce**. Proteger também o JSON de
-contexto; arquivos criados pelo gravador/comparador têm permissão `0600` e
-nunca sobrescrevem arquivos existentes.
+chave exige nonce novo, inclusive após reset. O gerador acima controla a
+reutilização no registro do PC; o carregamento no wrapper ainda será
+implementado. Proteger também o JSON de contexto; arquivos criados pelo
+gravador/comparador têm permissão `0600` e nunca sobrescrevem arquivos
+existentes.
 
 ## Comparar a saída
 
@@ -88,6 +112,7 @@ autenticação criptográfica.
 
 ```bash
 make pc
+make context
 make integration
 make check
 ```

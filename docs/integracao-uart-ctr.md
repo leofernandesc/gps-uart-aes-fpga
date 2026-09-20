@@ -44,7 +44,7 @@ chave/nonce num JSON no PC, sozinho, não configura a FPGA.
 
 Sequência de um ensaio:
 
-1. Preparar um contexto novo e registrar seus parâmetros no PC.
+1. Criar um contexto novo com `scripts/context.py` e registrar seus parâmetros no PC.
 2. Iniciar os dois canais de captura antes de habilitar a fonte/replay.
 3. Com a entrada ociosa em nível alto, apresentar `cfg_*` até o handshake.
 4. Aguardar `cfg_done` e pelo menos um bit ocioso para sincronizar o RX.
@@ -86,4 +86,5 @@ esgotamento do contador, falhas e recuperação com contexto novo.
 O Yosys confirma também a ausência dos módulos AES no baseline. Isso é
 checagem de elaboração, não medição de recursos FPGA. Ver
 [validação de 16/09](validacao-integracao-2026-09-16.md) e
-[captura no PC](captura-pc.md). Os builds completos e a bancada continuam pendentes.
+[captura no PC](captura-pc.md). O registro de nonces no PC já está implementado;
+o provisionamento no wrapper, os builds físicos e a bancada continuam pendentes.

@@ -52,7 +52,8 @@ substitui um resultado físico.
 | S11 | Replay NMEA sintético | Sentença NMEA incluída no vetor de integração | Bytes de uma sentença são preservados no baseline e recuperados no secure | **Concluído no núcleo** — replay de 70 bytes; wrapper físico ainda pendente |
 | S12 | Wrapper baseline | Lint e síntese estrutural do top DE10-Lite | Top elabora sem AES e sem latch/problema estrutural | **Concluído em 18/09** — `make integration`; AES ausente na hierarquia baseline |
 | S13 | Wrapper secure | Lint e síntese estrutural do top DE10-Lite | Top elabora com AES-CTR e sem latch/problema estrutural | **Concluído em 18/09** — `make integration` |
-| S14 | Regressão final | `make check` após a criação dos tops | Nenhuma regressão nos módulos já aprovados | **Em andamento** — `make lint` e `make integration` passaram; `make check` completo ainda não terminou |
+| S14 | Regressão final | `make check` após a criação dos tops | Nenhuma regressão nos módulos já aprovados | **Concluído em 19/09** — código 0; 26 simulações, lint, estrutura e PC |
+| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 19/09** — 5 testes de contexto e 13 testes PC |
 
 Comandos principais:
 
@@ -258,21 +259,22 @@ Evidência:
 Observações:
 ```
 
-Última atualização: 18/09/2026. Próximo registro esperado: programação e
+Última atualização: 19/09/2026. Próximo registro esperado: programação e
 ensaio físico dos projetos `baseline` e `secure` da DE10-Lite.
 
-## Execuções registradas em 18/09/2026
+## Execuções registradas em 18–19/09/2026
 
 | Comando | Resultado | Observação |
 | --- | --- | --- |
 | `make lint` | **Passou** | Lint UART, AES, CTR, bridge e tops DE10-Lite; acesso ao Docker local foi necessário |
-| `make integration` | **Passou** | Baseline e secure em clock acelerado e 50 MHz/9600; 4.982 bytes sem divergência e 8 testes PC aprovados |
+| `make integration` | **Passou** | Baseline e secure em clock acelerado e 50 MHz/9600; 4.982 bytes sem divergência e 13 testes PC aprovados |
 | `make baseline-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make secure-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
-| `make check` | **Interrompido** | A execução global foi interrompida durante os testes longos; não é contabilizada como regressão completa |
+| `make context` | **Passou** | 5 testes de criação, permissões, limites e reutilização de nonce |
+| `make pc` | **Passou** | 13 testes, incluindo captura, comparação e contexto |
+| `make check` | **Passou** | Código 0; 26 simulações, sete configurações de lint, estrutura e 13 testes PC |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
-O erro de espaço ocorreu ao gravar artefatos locais de teste, não em uma
-simulação com falha funcional. A regressão global deve ser repetida após liberar
-espaço no ambiente; até lá, somente os comandos explicitamente marcados como
-passados devem ser usados como evidência.
+O erro de espaço registrado na execução histórica de `make uart` ocorreu ao
+gravar artefatos locais de teste, não em uma simulação com falha funcional. A
+regressão global posterior passou sem esse erro.

@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 18/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 19/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -16,15 +16,18 @@ biblioteca independente; ver
 O teste UART autônomo gera 0x55 a cada 100 ms para observar TX no osciloscópio,
 com RX e LEDs para loopback por jumper. Seu SOF e a auditoria temporal passaram;
 ver [revisão e resultados de 14/09](docs/revisao-2026-09-14.md).
-Ainda não há registro de programação, recepção de GPS real ou medição de
-bancada. A integração UART–FIFO–CTR–TX passou nos modos baseline/secure, com
-4.982 bytes decodificados do fio TX e conferidos no PC. O gravador binário e
-comparador do PC passaram em testes com porta virtual Linux. Ver
+Os testes físicos da UART autônoma já foram concluídos na DE10-Lite; ainda não
+há aquisição de GPS nem validação física dos caminhos baseline/secure integrados.
+A integração UART–FIFO–CTR–TX passou nos modos baseline/secure, com 4.982 bytes
+decodificados do fio TX e conferidos no PC. O gravador binário e comparador do
+PC passaram em testes com porta virtual Linux. Ver
 [validação da integração](docs/validacao-integracao-2026-09-16.md).
-Ainda faltam provisionamento persistente de contexto, captura GPS e ensaios
-físicos integrados. Os tops baseline/secure da DE10-Lite já foram compilados e
-geraram SOFs próprios; a comparação também inclui Cyclone IV, cujo modelo,
-clock e pinagem permanecem pendentes de confirmação.
+O gerador de contexto do PC e o registro persistente de nonces foram
+implementados e testados; o carregamento desses parâmetros no wrapper FPGA,
+a captura GPS e os ensaios físicos integrados continuam pendentes. Os tops
+baseline/secure da DE10-Lite já foram compilados e geraram SOFs próprios; a
+comparação também inclui Cyclone IV, cujo modelo, clock e pinagem permanecem
+pendentes de confirmação.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
@@ -61,7 +64,7 @@ make check
 Executa 26 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e quatro da integração.
 Inclui sete configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de oito testes do software de captura.
+bytes CTR e do TX integrado, além de 13 testes do software de captura e contexto.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -87,7 +90,8 @@ make bridge  # Apenas os novos testes de FIFO/ponte e lint do top da placa
 make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
 make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/9600
-make pc      # Comparador e gravação binária em porta virtual Linux
+make pc      # Comparador, gravação binária e testes de contexto no PC
+make context # Testes do gerador e registro persistente de nonces
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
 ```
@@ -196,6 +200,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Interface e funcionamento do CTR](docs/ctr.md)
 - [Contrato da integração UART–FIFO–CTR](docs/integracao-uart-ctr.md)
 - [Captura binária e comparação no PC](docs/captura-pc.md)
+- [Validação do contexto e registro de nonces](docs/validacao-contexto-2026-09-19.md)
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)
@@ -207,8 +212,8 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada, com quatro telas e cronograma até 25/09. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo da bancada: medir o TX e executar o loopback descritos no
-[relatório da DE10-Lite](docs/bancada-de10-lite-2026-09-18.md). Em paralelo,
-implementar o provisionamento do contexto no wrapper, registrar nonces e gerar
-os builds baseline/secure integrados. Simulação, fit e programação não
-substituem a medição física nem a captura GPS.
+Próximo passo da bancada: programar os tops baseline/secure e executar os
+ensaios integrados descritos no [plano de testes](docs/plano-de-testes.md).
+Sem a placa/GPS, a etapa disponível é preparar contextos privados no PC com
+`scripts/context.py`; isso não provisiona automaticamente a FPGA. Simulação,
+fit e programação não substituem a medição física nem a captura GPS.

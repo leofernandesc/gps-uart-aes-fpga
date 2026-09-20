@@ -1,6 +1,6 @@
 # Plano de execução e colaboração
 
-Atualizado em 18/09/2026. O [cronograma](cronograma.md) registra o andamento e
+Atualizado em 19/09/2026. O [cronograma](cronograma.md) registra o andamento e
 as evidências; este plano detalha as entregas e como aceitá-las.
 A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
 materiais e datas em quatro telas.
@@ -33,10 +33,11 @@ placa.
 - UART autônoma para osciloscópio implementada, simulada e compilada.
 - Integração baseline/secure validada: 4.982 bytes de TX conferidos no PC.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão completa: 26 simulações, sete configurações de lint, estrutura e oito testes PC.
+- Regressão completa: 26 simulações, sete configurações de lint, estrutura e 13 testes PC.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
 - Tops baseline/secure da DE10-Lite compilados com recursos e timing registrados.
-- Sem GPS físico; provisionamento persistente de contexto, registro de nonces e Cyclone IV pendentes.
+- Sem GPS físico; geração/registro persistente de contexto no PC concluídos.
+- Provisionamento desses parâmetros no wrapper/FPGA e Cyclone IV permanecem pendentes.
 - Cyclone IV aguarda fabricante/modelo, part number, oscilador e pinagem.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
@@ -53,8 +54,9 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper registrados |
 | 16–17/09 | Identificação Cyclone IV | Modelo, clock e pinagem confirmados antes de criar o alvo |
 | 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
-| 17/09 | Contexto / preparação FPGA | Provisionamento, registro de nonces e início alinhado da aquisição |
+| 17/09 | Contexto / preparação FPGA | Estrutura do wrapper e contexto de bring-up |
 | 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal; Cyclone pendente |
+| 19/09 | Contexto / registro no PC | Gerador privado e registro persistente de nonces, com testes de limites; `make check` aprovado |
 | 19–20/09 | Experimentos | Três replays por configuração e ensaio GPS contínuo |
 | 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
@@ -113,12 +115,13 @@ UART RX → FIFO → retenção de byte → estágio selecionado → UART TX.
 Aceite: regressão completa aprovada e replay serial recuperado sem divergências.
 O AES isolado, CTR isolado e ponte separados não comprovam essa integração.
 
-## 3. Captura e software de PC — 16–17/09
+## 3. Captura e software de PC — 16–19/09
 
 Gravador binário e comparador implementados; uso em [captura PC](captura-pc.md).
-Oito testes de software e comparação da saída serial simulada aprovados.
-Pendências para concluir a etapa: geração/registro persistente de nonces e
-início alinhado do GPS/replay. O wrapper de bring-up já carrega um contexto fixo;
+Os testes de software e a comparação da saída serial simulada foram aprovados.
+`scripts/context.py` agora cria contextos privados baseline/AES-CTR, gera nonce
+quando necessário e mantém um registro que rejeita o mesmo nonce com a mesma
+chave. O wrapper de bring-up já carrega um contexto fixo;
 isso não substitui o provisionamento para a captura GPS. A validação
 do adaptador físico depende de bancada; PTY não representa esse dispositivo.
 
@@ -126,7 +129,8 @@ Definir o procedimento de captura separado do fluxo cifrado. Cada ensaio terá
 chave de teste, nonce, contador inicial e quantidade N de bytes registradas no PC.
 
 - Iniciar a captura antes do replay e contar exatamente N bytes no PC.
-- Gerar/registrar nonce novo por captura, inclusive após reset.
+- Gerar/registrar nonce novo por captura, inclusive após reset; o registro no PC
+  já bloqueia a reutilização do par chave/nonce.
 - Bloquear ultrapassagem do contador de 32 bits; invalidar a captura em framing,
   overflow, perda ou reset.
 - Manter os parâmetros de bancada separados dos dados cifrados.
@@ -135,7 +139,8 @@ chave de teste, nonce, contador inicial e quantidade N de bytes registradas no P
 - Não versionar chaves privadas, capturas reais ou coordenadas pessoais.
 
 Aceite: nenhuma reutilização acidental de contexto e comparação do PC aprovada
-em fluxo vindo da simulação.
+em fluxo vindo da simulação. O primeiro critério foi coberto pelos testes do
+gerador; o envio do contexto à FPGA ainda depende do wrapper de bancada.
 
 ## 4. Builds comparáveis — DE10-Lite em 18/09; Cyclone IV pendente
 
@@ -233,6 +238,7 @@ make aes
 make ctr
 make integration
 make pc
+make context
 make aes-fpga
 make check
 git diff --check
