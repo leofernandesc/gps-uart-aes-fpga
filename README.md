@@ -94,6 +94,7 @@ make bridge  # Apenas os novos testes de FIFO/ponte e lint do top da placa
 make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
 make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/9600
+make integration-gps # Replay NMEA completo no timing de produção; separado por ser lento
 make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF

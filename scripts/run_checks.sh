@@ -144,6 +144,15 @@ test_integration() {
     run_test de10_lite_uart_ctr_top_tb de10_context_wrapper
 }
 
+test_integration_gps() {
+    run_test uart_ctr_bridge_tb integration_secure_50mhz_gps \
+        -Puart_ctr_bridge_tb.CLK_FREQ=50000000 -Puart_ctr_bridge_tb.FIFO_DEPTH=1024 \
+        -Puart_ctr_bridge_tb.GPS_ONLY=1
+    run_test uart_ctr_bridge_tb integration_baseline_50mhz_gps \
+        -Puart_ctr_bridge_tb.ENABLE_AES=0 -Puart_ctr_bridge_tb.CLK_FREQ=50000000 \
+        -Puart_ctr_bridge_tb.FIFO_DEPTH=1024 -Puart_ctr_bridge_tb.GPS_ONLY=1
+}
+
 lint_integration() {
     mkdir -p build/integration
     for variant in 0 1; do
@@ -192,6 +201,7 @@ case "$check_mode" in
     aes) test_aes; lint_aes; synth_aes ;;
     ctr) test_ctr; lint_ctr; synth_ctr ;;
     integration) test_integration; lint_integration; synth_integration ;;
+    integration-gps) test_integration_gps ;;
     synth) synth_uart; synth_aes; synth_ctr; synth_integration ;;
     reference) test_reference ;;
     all)

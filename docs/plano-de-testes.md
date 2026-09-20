@@ -57,6 +57,7 @@ substitui um resultado físico.
 | S16 | Contexto no wrapper | Testbench do top DE10-Lite com parâmetros substituídos | Ciphertext observado no TX corresponde ao contexto de elaboração | **Concluído em 19/09** — `make integration`, `0x55 -> 0xe2` |
 | S17 | Contexto no build Quartus | `CONTEXT_FILE=... make secure-fpga` e validação do pacote gerado | O JSON é validado, o modo é conferido e o pacote privado entra no SOF | **Concluído em 20/09** — baseline/secure compilados; programação física pendente |
 | S18 | Replay NMEA estruturado | `make gps-replay`, `make integration` e testes PC | Sentenças ASCII com checksum válido são convertidas para CRLF e preservadas nos modos baseline/secure | **Concluído em 20/09** — 5 sentenças, replay sintético de 309 bytes, RTL/PC; GPS físico pendente |
+| S19 | Replay GPS em clock de produção | `make integration-gps` e `--verify-gps` | Os 309 bytes do replay atravessam baseline e secure em 50 MHz/9600 sem perda, overflow ou divergência | **Concluído em 20/09** — FIFO máxima de 2 bytes; 169.269 ciclos até o primeiro TX; físico pendente |
 
 Comandos principais:
 
@@ -272,6 +273,7 @@ ensaio físico dos projetos `baseline` e `secure` da DE10-Lite.
 | `make lint` | **Passou** | Lint UART, AES, CTR, bridge e tops DE10-Lite; acesso ao Docker local foi necessário |
 | `make gps-replay` | **Passou em 20/09** | 5 sentenças NMEA, 309 bytes CRLF, checksums válidos |
 | `make integration` | **Passou em 20/09** | Baseline e secure em clock acelerado e 50 MHz/9600; 2.681 bytes por modo sem divergência e 16 testes PC aprovados |
+| `make integration-gps` | **Passou em 20/09** | Replay completo de 309 bytes em 50 MHz/9600; FIFO máxima 2 bytes; baseline/secure recuperados no PC |
 | `make baseline-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make secure-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make context` | **Passou** | 7 testes de criação, permissões, limites, renderização e reutilização de nonce |

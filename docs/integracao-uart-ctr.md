@@ -81,6 +81,9 @@ Os resultados de timing dos tops antigos não cobrem esse circuito novo.
 
 `make integration` executa os dois modos em simulação acelerada e em
 50 MHz/9600, lint, checagem estrutural e comparação independente no PC. O
+comando separado `make integration-gps` reproduz os 309 bytes do fixture NMEA
+completo no clock de produção; ele permanece fora da regressão padrão porque a
+simulação é proporcional ao tempo serial real. O
 verificador decodifica o fio TX, sem ler payloads ou máscaras internos do RTL.
 Os testes incluem buffers parciais, sequência maior que a FIFO, pausas,
 esgotamento do contador, falhas e recuperação com contexto novo.

@@ -5,6 +5,7 @@ module uart_ctr_bridge_tb;
     parameter integer ENABLE_AES = 1;
     parameter integer CLK_FREQ = 307200;
     parameter integer FIFO_DEPTH = 8;
+    parameter integer GPS_ONLY = 0;
     localparam integer CPB = CLK_FREQ / 9600;
     localparam integer BIT_NS = CPB * 20;
     localparam integer LW = $clog2(FIFO_DEPTH + 1);
@@ -24,14 +25,27 @@ module uart_ctr_bridge_tb;
     integer decoded = 0, completed = 0, received = 0;
     integer case_id = 0, length = 0, epoch = 0, total_decoded = 0;
     integer capture, fixtures, count, fields, i, p, c, run_limit;
+    integer first_case = 0, cases_run = 0;
     integer cfg_pulses = 0, fault_checks = 0, cancel_checks = 0;
+    integer sim_cycle = 0;
+    integer first_rx_cycle = -1, first_tx_cycle = -1, last_tx_cycle = -1;
+    integer gps_fifo_high_water = 0;
+    integer gps_rx_to_first_tx_cycles = 0, gps_rx_to_last_tx_cycles = 0;
     reg checking = 0;
     string run_name, run_speed;
 
     always @(posedge clk) begin
+        sim_cycle = sim_cycle + 1;
         if (cfg_done) cfg_pulses = cfg_pulses + 1;
-        if (checking && rx_event) received = received + 1;
-        if (checking && tx_event) completed = completed + 1;
+        if (checking && rx_event) begin
+            received = received + 1;
+            if (first_rx_cycle < 0) first_rx_cycle = sim_cycle;
+        end
+        if (checking && tx_event) begin
+            completed = completed + 1;
+            if (first_tx_cycle < 0) first_tx_cycle = sim_cycle;
+            last_tx_cycle = sim_cycle;
+        end
     end
 
     // Decoder observes the serial wire only, never DUT payload/mask registers.
@@ -132,14 +146,30 @@ module uart_ctr_bridge_tb;
         fixtures = $fopen("build/integration/vectors.txt", "r");
         if (ENABLE_AES) run_name = "secure";
         else run_name = "baseline";
-        if (CLK_FREQ == 50000000) run_speed = "50mhz";
+        if (CLK_FREQ == 50000000) begin
+            if (GPS_ONLY) run_speed = "50mhz-gps";
+            else run_speed = "50mhz";
+        end
         else run_speed = "fast";
         capture = $fopen($sformatf("build/integration/%s-%s.txt", run_name, run_speed), "w");
         if (!fixtures || !capture) $fatal(1, "Cannot open integration fixtures/output");
         fields = $fscanf(fixtures, "%d\n", count);
         if (fields != 1) $fatal(1, "Missing fixture count");
         // The final fixture is reserved for byte-exact recovery after faults.
-        run_limit = CLK_FREQ == 50000000 ? 4 : count - 1;
+        // GPS_ONLY selects the public NMEA replay (fixture 4) at the real
+        // 50 MHz/9600 baud timing without repeating the preceding short cases.
+        if (GPS_ONLY) begin
+            if (count <= 4) $fatal(1, "GPS replay fixture is missing");
+            first_case = 4;
+            run_limit = 5;
+        end else if (CLK_FREQ == 50000000) begin
+            first_case = 0;
+            run_limit = 4;
+        end else begin
+            first_case = 0;
+            run_limit = count - 1;
+        end
+        cases_run = run_limit - first_case;
         ticks(5);
         rst = 0;
         ticks(CPB + 5);
@@ -158,9 +188,13 @@ module uart_ctr_bridge_tb;
                 plain[i] = p[7:0];
                 expected[i] = ENABLE_AES ? c[7:0] : p[7:0];
             end
+            if (case_id < first_case) continue;
             decoded = 0;
             completed = 0;
             received = 0;
+            first_rx_cycle = -1;
+            first_tx_cycle = -1;
+            last_tx_cycle = -1;
             tx_enable = 1;
             configure();
             checking = 1;
@@ -189,6 +223,13 @@ module uart_ctr_bridge_tb;
                 end
             end
             await_drain();
+            if (GPS_ONLY) begin
+                if (first_rx_cycle < 0 || first_tx_cycle < 0 || last_tx_cycle < 0)
+                    $fatal(1, "GPS replay timing markers were not observed");
+                gps_fifo_high_water = fifo_high_water;
+                gps_rx_to_first_tx_cycles = first_tx_cycle - first_rx_cycle;
+                gps_rx_to_last_tx_cycles = last_tx_cycle - first_rx_cycle;
+            end
             if (cfg_counter == 32'hffffffff && ENABLE_AES) begin
                 if (!exhausted) $fatal(1, "Counter exhaustion not reported");
                 send_frame(8'h99, 0);
@@ -294,13 +335,17 @@ module uart_ctr_bridge_tb;
             checking = 1;
             for (i = 0; i < length; i = i + 1) send_frame(plain[i], 0);
             await_drain();
-            run_limit = run_limit + 1;
+            cases_run = cases_run + 1;
         end
         cancel();
         $fclose(fixtures);
         $fclose(capture);
         $display("PASS UART integration AES=%0d clock=%0d cases=%0d serial_bytes=%0d faults=%0d cancellations=%0d",
-                 ENABLE_AES, CLK_FREQ, run_limit, total_decoded, fault_checks, cancel_checks);
+                 ENABLE_AES, CLK_FREQ, cases_run, total_decoded, fault_checks, cancel_checks);
+        if (GPS_ONLY)
+            $display("METRIC GPS AES=%0d bytes=%0d fifo_high_water=%0d rx_to_first_tx_cycles=%0d rx_to_last_tx_cycles=%0d",
+                     ENABLE_AES, total_decoded, gps_fifo_high_water,
+                     gps_rx_to_first_tx_cycles, gps_rx_to_last_tx_cycles);
         $finish;
     end
 

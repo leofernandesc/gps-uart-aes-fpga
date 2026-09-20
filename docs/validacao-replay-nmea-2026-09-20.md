@@ -42,14 +42,20 @@ Resultados observados:
   cada, sem divergência.
 - Simulação em 50 MHz/9600 baud: baseline e secure processaram 4 streams e 49
   bytes cada, sem divergência.
+- Simulação dedicada `make integration-gps`: baseline e secure processaram o
+  replay completo de 309 bytes em 50 MHz/9600, sem divergência ou overflow.
+- Nos dois modos, a ocupação máxima da FIFO foi de 2 bytes. A distância entre o
+  primeiro byte RX e o primeiro quadro TX foi de 169.269 ciclos (3,385 ms); até
+  o último quadro TX foram 16.236.274 ciclos (324,725 ms).
 - Verificação independente no PC: os bytes do baseline foram preservados e o
   ciphertext do secure foi recuperado byte a byte com AES-CTR.
 - Suíte Python: 16 testes aprovados, incluindo o contrato do replay NMEA.
 
 ## Limite e próximo uso
 
-O caso de 309 bytes agora é o estímulo comum do fluxo de integração. Quando o
-GPS estiver disponível, a mesma referência deve ser substituída por uma captura
-real registrada no PC; o teste físico deverá comparar a captura de entrada com
-a saída recuperada e registrar perdas, framing, overflow e duração. A validação
-atual não altera a situação pendente dos ensaios P07–P11.
+O caso de 309 bytes agora é o estímulo comum do fluxo de integração e foi
+validado também no timing de produção em RTL. Quando o GPS estiver disponível,
+a mesma referência deve ser substituída por uma captura real registrada no PC;
+o teste físico deverá comparar a captura de entrada com a saída recuperada e
+registrar perdas, framing, overflow e duração. A validação atual não altera a
+situação pendente dos ensaios P07–P11.

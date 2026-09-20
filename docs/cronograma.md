@@ -143,6 +143,9 @@ secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
 - O replay passou a ser o caso NMEA do vetor comum de integração. Baseline e
   secure processaram 9 streams/2.681 bytes no modo acelerado e 4 streams/49
   bytes em 50 MHz/9600, sem divergências.
+- A simulação dedicada processou os 309 bytes do replay em 50 MHz/9600 nos dois
+  modos, com FIFO máxima de 2 bytes e latência de 169.269 ciclos até o primeiro
+  TX; a recuperação no PC não apresentou divergências.
 - A suíte do PC passou com 16 testes. A evidência está em
   [validação do replay NMEA](validacao-replay-nmea-2026-09-20.md).
 

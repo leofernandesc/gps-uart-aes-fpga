@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration pc context gps-replay fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -55,6 +55,11 @@ ctr:
 
 integration:
 	bash scripts/hdl.sh integration
+
+# Full public NMEA replay at the production 50 MHz/9600 baud timing; slower
+# than the regular regression and intentionally kept as a separate target.
+integration-gps:
+	bash scripts/hdl.sh integration-gps
 
 pc:
 	python3 -m unittest discover -s tb -p 'test_*.py' -v

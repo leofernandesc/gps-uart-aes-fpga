@@ -33,6 +33,8 @@ placa.
 - UART autônoma para osciloscópio implementada, simulada e compilada.
 - Integração baseline/secure validada novamente: 2.681 bytes por modo conferidos
   no PC, incluindo o replay NMEA estruturado de 309 bytes.
+- Replay GPS completo validado em RTL no clock de produção: 309 bytes a 50 MHz/
+  9600 baud, FIFO máxima de 2 bytes e recuperação sem divergência nos dois modos.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
@@ -184,6 +186,13 @@ confere ASCII, checksum NMEA e o limite de 82 caracteres e transforma cada
 linha em uma transmissão CRLF. Esse replay é consumido pelo mesmo vetor usado
 na simulação baseline/secure e pelo verificador independente no PC. Ele valida
 o contrato de dados, mas não substitui a aquisição do NEO-M8N.
+
+O replay completo também foi executado com o divisor real de 50 MHz/9600 baud
+nos dois modos. A FIFO atingiu no máximo 2 bytes; a recuperação no PC coincidiu
+com os 309 bytes de entrada. A latência medida no testbench foi de 169.269 ciclos
+até o primeiro TX e 16.236.274 ciclos até o último TX, equivalentes a 3,385 ms e
+324,725 ms a 50 MHz. Esses valores são de RTL e não incluem USB, sistema
+operacional ou a propagação elétrica da bancada.
 
 Após conferir módulo, alimentação e montagem:
 

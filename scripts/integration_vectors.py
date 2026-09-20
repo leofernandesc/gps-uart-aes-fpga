@@ -42,22 +42,29 @@ def generate():
     print(f"PASS integration fixtures: {len(records)} public synthetic streams")
 
 
-def verify():
+def verify(speeds=("fast", "50mhz"), report_name="verification.json"):
     report = {"kind": "RTL simulation, not physical capture", "runs": {},
               "python": platform.python_version(), "cryptography": cryptography.__version__,
               "openssl": backend.openssl_version_text()}
+    all_records = cases()
+    record_sets = {
+        "fast": all_records,
+        "50mhz": all_records[:4],
+        "50mhz-gps": [all_records[4]],
+    }
     for mode in ("baseline", "secure"):
-        for speed in ("fast", "50mhz"):
+        for speed in speeds:
             name = f"{mode}-{speed}"
             path = OUT / f"{name}.txt"
             lines = iter(path.read_text(encoding="ascii").splitlines())
-            records = cases() if speed == "fast" else cases()[:4]
+            records = record_sets[speed]
             total, recovered_hash = 0, hashlib.sha256()
             for case_id, (key, nonce, counter, plain, encrypted) in enumerate(records):
                 actual = bytearray()
+                expected_case_id = 4 if speed == "50mhz-gps" else case_id
                 for offset in range(len(plain)):
                     row = next(lines, "").split()
-                    if len(row) != 3 or row[:2] != [str(case_id), str(offset)]:
+                    if len(row) != 3 or row[:2] != [str(expected_case_id), str(offset)]:
                         raise ValueError(f"{name}: truncated/reordered output at {case_id}:{offset}")
                     actual.append(int(row[2], 16))
                 expected = encrypted if mode == "secure" else plain
@@ -77,11 +84,17 @@ def verify():
                 "recovered_sha256": recovered_hash.hexdigest(),
             }
             print(f"PASS PC serial verification: {name}, {len(records)} streams, {total} bytes")
-    (OUT / "verification.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (OUT / report_name).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", action="store_true")
+    parser.add_argument("--verify-gps", action="store_true")
     args = parser.parse_args()
-    verify() if args.verify else generate()
+    if args.verify_gps:
+        verify(("50mhz-gps",), "gps-verification.json")
+    elif args.verify:
+        verify()
+    else:
+        generate()
