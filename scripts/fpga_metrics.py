@@ -18,7 +18,8 @@ FIT_FIELDS = {
     "device": r"Device\s*:\s*(\S+)",
     "quartus_version": r"Quartus Prime Version\s*:\s*(.+)",
 }
-SLACK_RE = re.compile(r"AUDIT corner=(\d+) check=(\w+) slack_ns=([\d.]+)")
+SLACK_RE = re.compile(r"AUDIT corner=(\d+) check=(\w+) slack_ns=([-+]?\d+(?:\.\d+)?)")
+AUDIT_PASS_RE = re.compile(r"PASS: (\d+) timing corners audited\b")
 FMAX_RE = re.compile(r";\s*([\d.]+) MHz\s*;\s*([\d.]+) MHz\s*;")
 
 
@@ -51,12 +52,36 @@ def _timing_metrics(path: Path) -> dict[str, object]:
         raise ValueError(f"{path}: no fmax_corner*.rpt reports")
 
     audit = path / "timing-audit.log"
+    if not audit.is_file():
+        raise ValueError(f"{audit}: missing timing audit log")
+    audit_text = audit.read_text(encoding="utf-8", errors="replace")
+    pass_match = AUDIT_PASS_RE.search(audit_text)
+    if not pass_match:
+        raise ValueError(f"{audit}: missing successful timing-audit status")
+    audited_corners = int(pass_match.group(1))
+    if audited_corners <= 0:
+        raise ValueError(f"{audit}: timing audit reported no corners")
     checks: dict[str, list[float]] = {}
-    for corner, check, value in SLACK_RE.findall(audit.read_text(encoding="utf-8", errors="replace")):
+    corners: dict[int, set[str]] = {}
+    for corner, check, value in SLACK_RE.findall(audit_text):
+        corner_number = int(corner)
+        corners.setdefault(corner_number, set()).add(check)
         checks.setdefault(check, []).append(float(value))
     required = {"setup", "hold", "recovery", "removal"}
     if set(checks) != required:
         raise ValueError(f"{audit}: expected {sorted(required)}, found {sorted(checks)}")
+    if sorted(corners) != list(range(1, audited_corners + 1)):
+        raise ValueError(f"{audit}: incomplete corner audit, found {sorted(corners)}")
+    if any(checks_for_corner != required for checks_for_corner in corners.values()):
+        raise ValueError(f"{audit}: every corner must contain {sorted(required)}")
+    if any(value < 0 for values in checks.values() for value in values):
+        raise ValueError(f"{audit}: negative timing slack is not publishable")
+    if len(fmax_values) != audited_corners:
+        raise ValueError(f"{path}: expected one Fmax report per audited corner")
+
+    build_status = path / "build-status.txt"
+    if not build_status.is_file() or not build_status.read_text(encoding="utf-8", errors="replace").startswith("PASS:"):
+        raise ValueError(f"{build_status}: missing successful Quartus build status")
     return {
         "fmax_mhz_by_corner": fmax_values,
         "fmax_mhz_min": min(fmax_values),

@@ -42,7 +42,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus |
 | 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Concluído em 18/09 — relatório da bancada |
 | 20–21/09 | Identificar Cyclone IV | Modelo da placa, clock, pinos e esquema confirmados | Em andamento — EP4CE6E22C8 definido em 20/09; clock provável 48 MHz; etapa de 16–17/09 atrasada |
-| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Em andamento — AES otimizado e fit de capacidade aprovado; consolidar demais correções e alvo físico |
+| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Em andamento — área, métricas e NMEA corrigidos em 20/09; falta regressão HDL/Linux, latência nominal e alvo físico |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
 | 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
@@ -85,6 +85,28 @@ da captura/contexto e atualizar as tabelas dos dois manuscritos antes de publica
 essas correções. Os artefatos de builds locais podem refletir esse trabalho
 adicional; não confundi-los com resultados reproduzíveis apenas pelo commit AES.
 Leonardo confirma modelo da placa, oscilador e pinagem da Cyclone IV em 21/09.
+
+## Marco em 20/09: correções sem hardware
+
+- `scripts/fpga_metrics.py` passou a rejeitar slack negativo, auditoria
+  incompleta, ausência de Fmax por canto e status de build não aprovado; foram
+  adicionados testes negativos em `tb/test_fpga_metrics.py`.
+- O validador NMEA passou a rejeitar identificador inválido, controles ASCII,
+  corpo vazio e sentenças acima de 82 bytes incluindo CRLF. O replay público
+  continua com 5 sentenças e 309 bytes.
+- O replay de produção foi separado do estímulo com pausas artificiais; a nova
+  latência ainda precisa ser medida em Linux com simulador HDL.
+- O wrapper DE10-Lite não rearma o mesmo contexto estático após um reset
+  operacional; nova programação é necessária antes de outro ensaio. Isso é
+  proteção contra reutilização acidental, não gerenciamento de chaves.
+- Evidência: [validação das correções](validacao-correcoes-2026-09-20.md).
+- `python -m unittest tb.test_gps_fixture tb.test_fpga_metrics -v`: 8 testes
+  aprovados; `py_compile` e `git diff --check` aprovados. PTY e HDL ficam
+  pendentes neste Windows.
+
+O próximo passo sem placa é executar a regressão completa em Linux, medir a
+latência nominal e atualizar os manuscritos. Não criar alvo Cyclone IV enquanto
+clock e pinagem permanecerem não confirmados.
 
 ## Marco em 20/09: revisão completa e identificação do EP4CE6
 

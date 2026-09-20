@@ -38,6 +38,11 @@ module de10_lite_uart_ctr_top #(
     wire [10:0] fifo_high_water;
 
     reg cfg_pending;
+    // This flag uses the FPGA power-up value to distinguish initial
+    // provisioning from a later KEY0 reset.  Reprogramming the FPGA starts a
+    // fresh context; pressing KEY0 after provisioning invalidates the static
+    // context and leaves the bridge inactive until the next programming.
+    reg context_booted = 1'b0;
     reg cfg_done_seen;
     reg rx_toggle;
     reg tx_toggle;
@@ -49,11 +54,13 @@ module de10_lite_uart_ctr_top #(
         .rst  (rst)
     );
 
-    // Hold configuration valid until the bridge accepts it.  KEY0 resets the
-    // context and causes the same fixed test context to be loaded again.
+    // Hold configuration valid until the bridge accepts it.  Only the first
+    // reset after FPGA programming arms the static context.  A later KEY0
+    // reset deliberately does not reload the same nonce/counter pair.
     always @(posedge MAX10_CLK1_50 or posedge rst) begin
         if (rst) begin
-            cfg_pending <= 1'b1;
+            cfg_pending <= !context_booted;
+            if (!context_booted) context_booted <= 1'b1;
         end else if (cfg_pending && cfg_ready) begin
             cfg_pending <= 1'b0;
         end

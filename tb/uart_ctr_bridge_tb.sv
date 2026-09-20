@@ -207,14 +207,14 @@ module uart_ctr_bridge_tb;
             for (i = 0; i < length; i = i + 1) begin
                 // Hold the first three bytes across FIFO synchronous reads,
                 // then pause a later byte while TX is already in progress.
-                if (i == 0) tx_enable = 0;
+                if (!GPS_ONLY && i == 0) tx_enable = 0;
                 send_frame(plain[i], 0);
-                if (i == 2 || i == length - 1) begin
+                if (!GPS_ONLY && (i == 2 || i == length - 1)) begin
                     ticks(2 * CPB);
                     if (decoded != 0 && i <= 2) $fatal(1, "TX ignored pause");
                     tx_enable = 1;
                 end
-                if (i == 8) begin
+                if (!GPS_ONLY && i == 8) begin
                     tx_enable = 0;
                     ticks(13 * CPB);
                     if (tx_busy) $fatal(1, "TX started another byte while paused");

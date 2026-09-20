@@ -2,6 +2,7 @@
 """Validate the public NMEA replay and raw GPS serial captures."""
 import argparse
 import hashlib
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -16,6 +17,10 @@ def _parse_sentence(line: str, line_number: int) -> str:
     if line.count("*") != 1:
         raise ValueError(f"line {line_number}: NMEA sentence must contain one checksum separator")
     body, supplied = line[1:].rsplit("*", 1)
+    if len(body) < 5 or not re.fullmatch(r"[A-Za-z0-9]{5}", body[:5]):
+        raise ValueError(f"line {line_number}: invalid NMEA sentence identifier")
+    if any(ord(char) < 0x20 or ord(char) > 0x7e for char in body):
+        raise ValueError(f"line {line_number}: sentence contains non-printable ASCII")
     if len(supplied) != 2:
         raise ValueError(f"line {line_number}: checksum must contain two hexadecimal digits")
     try:
@@ -31,15 +36,18 @@ def _parse_sentence(line: str, line_number: int) -> str:
         checksum ^= byte
     if checksum != expected:
         raise ValueError(f"line {line_number}: checksum {supplied.upper()} != {checksum:02X}")
-    if len(line) > 82:
-        raise ValueError(f"line {line_number}: sentence exceeds the 82-character NMEA limit")
+    if len(line) + 2 > 82:
+        raise ValueError(f"line {line_number}: sentence plus CRLF exceeds the 82-character NMEA limit")
     return line
 
 
 def sentences(path: Path = DEFAULT_FIXTURE) -> list[str]:
     raw = path.read_bytes()
+    # Git may materialize the checked-in LF fixture as CRLF on Windows.  Treat
+    # that checkout conversion as equivalent, while still rejecting bare CR.
+    raw = raw.replace(b"\r\n", b"\n")
     if b"\r" in raw:
-        raise ValueError(f"{path}: source fixture must use one LF-delimited sentence per line")
+        raise ValueError(f"{path}: source fixture must use LF-delimited sentences")
     try:
         text = raw.decode("ascii")
     except UnicodeDecodeError as exc:

@@ -62,8 +62,12 @@ sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
 - Cyclone IV definida como EP4CE6E22C8; faltam modelo da placa, oscilador e pinagem.
 - ESP32 disponível; dois adaptadores CP2102 são recomendados para captura dupla,
   com lógica de 3,3 V confirmada. A compra/disponibilidade não está confirmada.
-- A latência de 169.269 ciclos do replay inclui pausas artificiais. Refazer a
-  medição nominal e os resultados comparativos após a otimização de área.
+- A latência de 169.269 ciclos do replay inclui pausas artificiais. O testbench
+  foi corrigido para o ensaio nominal; refazer a medição em Linux e atualizar os
+  resultados comparativos após a otimização de área.
+- As correções sem hardware de métricas, NMEA e rearmamento do contexto estão
+  registradas em `validacao-correcoes-2026-09-20.md`; a regressão HDL/Linux ainda
+  é necessária antes de congelar o artigo.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
 [CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
@@ -72,6 +76,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 [validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md) e
 [métricas FPGA de 20/09](metricas-fpga-2026-09-20.md) e
 [validação da captura NMEA de 20/09](validacao-captura-nmea-2026-09-20.md) e
+[validação das correções sem hardware de 20/09](validacao-correcoes-2026-09-20.md) e
 [validação dos manuscritos de 20/09](validacao-manuscrito-2026-09-20.md) e
 [rascunho do manuscrito BTSym](manuscrito-btsym-draft.md) e
 [versão em português](manuscrito-btsym-rascunho-pt.md).

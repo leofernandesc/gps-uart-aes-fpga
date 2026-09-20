@@ -183,10 +183,14 @@ coincidiu com os mesmos 309 bytes de entrada.
 | --- | ---: | ---: |
 | Bytes reproduzidos | 309 | 309 |
 | Ocupação máxima da FIFO | 2 bytes | 2 bytes |
-| Primeiro RX até primeiro TX | 169.269 ciclos / 3,385 ms | 169.269 ciclos / 3,385 ms |
-| Primeiro RX até último TX | 16.236.274 ciclos / 324,725 ms | 16.236.274 ciclos / 324,725 ms |
+| Primeiro RX até primeiro TX | 169.269 ciclos / 3,385 ms* | 169.269 ciclos / 3,385 ms* |
+| Primeiro RX até último TX | 16.236.274 ciclos / 324,725 ms* | 16.236.274 ciclos / 324,725 ms* |
 | Divergências de bytes | 0 | 0 após recuperação |
 | Overflow da FIFO | 0 | 0 |
+
+*Valores históricos do estímulo com pausas artificiais no TX; a medição nominal
+foi separada no testbench e ainda precisa ser regenerada em Linux antes da
+submissão.*
 
 A pequena ocupação da FIFO no replay em clock de produção indica que a fonte
 serial, e não o estágio AES, domina a taxa de transferência nessa carga. Essa
@@ -226,8 +230,8 @@ NMEA usada no RTL é um replay público/sintético, e não uma captura ao vivo d
 NEO-M8N. Segundo, os designs integrados baseline e secure foram compilados, mas
 ainda precisam ser programados e testados fisicamente na DE10-Lite. Terceiro, a
 comparação com a Cyclone IV ainda não faz parte da tabela quantitativa: o
-EP4CE6E22C8 está identificado, mas o secure exige redução de área e faltam
-confirmar clock e pinagem da placa. Por fim,
+EP4CE6E22C8 está identificado; o fit exploratório após a redução de área passou,
+mas faltam confirmar clock e pinagem da placa. Por fim,
 AES-CTR sozinho não autentica os dados; um modo autenticado ou mecanismo de
 integridade separado seria necessário para um protocolo completo de telemetria
 segura.
