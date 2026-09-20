@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check metrics fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check manuscript-check metrics fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -73,6 +73,9 @@ gps-replay:
 gps-capture-check:
 	@if [ -z "$(GPS_CAPTURE)" ]; then echo "Uso: make gps-capture-check GPS_CAPTURE=arquivo.bin" >&2; exit 2; fi
 	python3 scripts/gps_capture.py --input "$(GPS_CAPTURE)"
+
+manuscript-check:
+	python3 scripts/manuscript_check.py
 
 metrics:
 	python3 scripts/fpga_metrics.py --json build/de10_lite/metrics.json --markdown build/de10_lite/metrics.md

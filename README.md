@@ -29,6 +29,8 @@ pós-fit; ver [métricas FPGA](docs/metricas-fpga-2026-09-20.md).
 O validador de captura bruta do GPS já está pronto: ele verifica CRLF, ASCII,
 checksum NMEA, sentenças completas e gera um hash do arquivo antes do ensaio
 físico. Isso prepara a captura real, mas não a substitui.
+Os rascunhos em inglês e português também possuem uma checagem automática para
+preservar as métricas atuais e a distinção entre evidência RTL e validação física.
 O gerador de contexto do PC e o registro persistente de nonces foram
 implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e os builds DE10-Lite aceitam
@@ -105,6 +107,7 @@ make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
 make gps-capture-check GPS_CAPTURE=arquivo.bin # Valida uma captura NMEA bruta
+make manuscript-check # Confere métricas e limitações declaradas nos manuscritos
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
 # Exemplo de contexto privado aplicado ao build:
@@ -220,6 +223,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)
 - [Validação da captura NMEA](docs/validacao-captura-nmea-2026-09-20.md)
+- [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
 - [Rascunho do manuscrito BTSym em português](docs/manuscrito-btsym-rascunho-pt.md)

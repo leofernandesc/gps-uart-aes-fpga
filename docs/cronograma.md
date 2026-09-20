@@ -40,7 +40,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
 | 19–20/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
-| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Pendente — artigo |
+| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Em andamento — métricas RTL/Quartus consolidadas; seção física aguarda bancada |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
 | 24/09 | Submissão principal | Envio e comprovante preservados | Pendente |
 | **25/09** | **Contingência e encerramento** | **Correções de envio, eventual reenvio e confirmação final** | **Pendente** |
@@ -148,8 +148,8 @@ secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
   TX; a recuperação no PC não apresentou divergências.
 - `make metrics` consolidou recursos, Fmax e slacks dos builds baseline/secure;
   a tabela está pronta para a seção de resultados do artigo.
-- O rascunho inicial do manuscrito foi criado em inglês, com os resultados
-  atuais e marcação explícita das evidências físicas ainda pendentes.
+- Os rascunhos em inglês e português foram consolidados com os resultados
+  atuais e a marcação explícita das evidências físicas ainda pendentes.
 - A suíte do PC passou com 19 testes. A evidência está em
   [validação do replay NMEA](validacao-replay-nmea-2026-09-20.md).
 
@@ -174,6 +174,17 @@ P07–P11 na bancada.
 
   A referência só entra no experimento depois desse comando e do registro da
   montagem física.
+
+## Marco em 20/09: consolidação dos manuscritos
+
+- As versões em inglês e português incorporam as métricas pós-fit da DE10-Lite,
+  o replay de 309 bytes, a latência RTL e as limitações atuais.
+- O plano de validação física agora exige validar a referência NMEA e guardar o
+  relatório/hash antes da comparação baseline/secure.
+- `make manuscript-check` passou nos dois rascunhos e verifica que o replay
+  sintético e a pendência da validação física continuam declarados.
+- A seção de resultados físicos permanece em aberto; não foi substituída por
+  simulação ou síntese.
 
 ## Ensaio auxiliar — DE10-Nano
 

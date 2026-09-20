@@ -128,10 +128,17 @@ A avaliação separa três tipos de evidência:
    cancelamento, reset e esgotamento do contador.
 2. **Verificação independente no PC:** o testbench decodifica o fio serial TX,
    enquanto Python e `cryptography` recuperam o fluxo secure sem usar payloads
-   ou máscaras internas do RTL como oráculo.
+   ou máscaras internas do RTL como oráculo. Um validador separado confere
+   sentenças NMEA completas com CRLF, ASCII, checksum e tamanho antes que um
+   arquivo de GPS físico possa se tornar referência do experimento.
 3. **Análise de implementação no Quartus:** os projetos baseline e secure são
    ajustados separadamente para o dispositivo MAX 10, e recursos, Fmax e slacks
    temporais são coletados dos relatórios pós-fit.
+
+As evidências atuais de software/RTL compreendem 27 simulações HDL, sete
+configurações de lint e 19 testes no PC. Essas contagens incluem o replay
+público e o contrato de validação da captura bruta; não representam um ensaio
+físico de GPS.
 
 A evidência atual não substitui o ensaio físico final. Os bitstreams integrados
 baseline e secure ainda precisam ser programados e testados na DE10-Lite, e a
@@ -143,6 +150,13 @@ O fixture público de aplicação contém cinco sentenças NMEA (RMC, GGA, GSA, 
 e TXT), checksums válidos e final de linha CRLF na transmissão. Seu tamanho
 total é de 309 bytes. Trata-se de um replay público/sintético do formato
 esperado do GPS, não de uma captura física.
+
+O fixture versionado é convertido para o mesmo fluxo de bytes CRLF esperado da
+fonte serial. Para uma captura ao vivo, `scripts/gps_capture.py` registra a
+quantidade e os tipos de sentença, o número de bytes e o SHA-256 somente depois
+de o arquivo bruto passar pelas verificações formais. Isso protege o fluxo de
+comparação contra truncamento ou conversão de final de linha, mas não comprova
+a origem elétrica do arquivo.
 
 | Teste | Clock/UART | Dados | Objetivo |
 | --- | --- | ---: | --- |
@@ -219,10 +233,12 @@ O ensaio físico restante é:
 1. programar o bitstream baseline e verificar uma sequência serial conhecida;
 2. conectar o TX do NEO-M8N ao RX configurado da FPGA, com terra comum e níveis
    lógicos confirmados;
-3. registrar uma referência GPS independente e comparar a saída baseline;
-4. programar o bitstream secure, registrar o ciphertext e recuperá-lo no PC com
+3. registrar uma referência GPS independente, validá-la com o verificador NMEA
+   e preservar seu relatório/hash;
+4. comparar a referência validada com a saída baseline;
+5. programar o bitstream secure, registrar o ciphertext e recuperá-lo no PC com
    um nonce novo devidamente registrado; e
-5. repetir o teste durante um intervalo contínuo, registrando perdas, erros de
+6. repetir o teste durante um intervalo contínuo, registrando perdas, erros de
    framing, overflow da FIFO, latência e recuperação após reset.
 
 Os resultados físicos devem substituir ou complementar a Seção 4 sem alterar a
@@ -245,6 +261,8 @@ o manuscrito poder afirmar operação de hardware de ponta a ponta.
 
 - [`docs/metricas-fpga-2026-09-20.md`](metricas-fpga-2026-09-20.md)
 - [`docs/validacao-replay-nmea-2026-09-20.md`](validacao-replay-nmea-2026-09-20.md)
+- [`docs/validacao-captura-nmea-2026-09-20.md`](validacao-captura-nmea-2026-09-20.md)
 - [`docs/plano-de-testes.md`](plano-de-testes.md)
 - [`docs/integracao-uart-ctr.md`](integracao-uart-ctr.md)
 - [`scripts/fpga_metrics.py`](../scripts/fpga_metrics.py)
+- [`scripts/gps_capture.py`](../scripts/gps_capture.py)
