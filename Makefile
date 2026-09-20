@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay metrics fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -69,6 +69,9 @@ context:
 
 gps-replay:
 	python3 scripts/gps_fixture.py
+
+metrics:
+	python3 scripts/fpga_metrics.py --json build/de10_lite/metrics.json --markdown build/de10_lite/metrics.md
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:

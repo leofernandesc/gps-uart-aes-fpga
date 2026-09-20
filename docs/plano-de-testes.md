@@ -81,6 +81,7 @@ make check
 | F05 | Recursos baseline | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Concluído em 18/09** — 342 LE, 215 FF, 8.192 bits, 14 pinos |
 | F06 | Recursos secure | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Concluído em 18/09** — 6.984 LE, 2.196 FF, 8.192 bits, 14 pinos |
 | F07 | Comparação | `secure - baseline` | Custo absoluto e percentual da inclusão do AES | **Concluído em 18/09** — tabela abaixo |
+| F08 | Extração reprodutível | `make metrics` | JSON/Markdown gerados diretamente dos relatórios Quartus | **Concluído em 20/09** — [relatório de métricas](metricas-fpga-2026-09-20.md) |
 
 Os relatórios de F01–F07 devem ficar em `build/` e ser resumidos em uma tabela
 do artigo. Os resultados da UART autônoma não devem ser usados como se fossem

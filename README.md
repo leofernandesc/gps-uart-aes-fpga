@@ -24,6 +24,8 @@ inclui cinco sentenças NMEA, 309 bytes e CRLF; o gravador binário e comparador
 PC passaram em testes com porta virtual Linux. Ver
 [validação da integração](docs/validacao-integracao-2026-09-16.md).
 O contrato do replay está em [validação NMEA](docs/validacao-replay-nmea-2026-09-20.md).
+As métricas baseline/secure foram extraídas automaticamente dos relatórios
+pós-fit; ver [métricas FPGA](docs/metricas-fpga-2026-09-20.md).
 O gerador de contexto do PC e o registro persistente de nonces foram
 implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e os builds DE10-Lite aceitam
@@ -95,6 +97,7 @@ make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
 make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/9600
 make integration-gps # Replay NMEA completo no timing de produção; separado por ser lento
+make metrics # Extrai recursos, Fmax e slacks dos builds Quartus existentes
 make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
@@ -212,6 +215,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação do contexto e registro de nonces](docs/validacao-contexto-2026-09-19.md)
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)
+- [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)

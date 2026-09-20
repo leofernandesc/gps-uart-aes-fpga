@@ -35,6 +35,8 @@ placa.
   no PC, incluindo o replay NMEA estruturado de 309 bytes.
 - Replay GPS completo validado em RTL no clock de produção: 309 bytes a 50 MHz/
   9600 baud, FIFO máxima de 2 bytes e recuperação sem divergência nos dois modos.
+- Métricas de recursos, Fmax e slacks consolidadas por `make metrics`; potência
+  permanece sem estimativa representativa até haver atividade de bancada.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
@@ -52,8 +54,9 @@ placa.
 Relatórios: [AES](validacao-aes-2026-09-09.md),
 [CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
 e [integração de 16/09](validacao-integracao-2026-09-16.md),
-[bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md) e
-[validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md).
+[bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md),
+[validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md) e
+[métricas FPGA de 20/09](metricas-fpga-2026-09-20.md).
 
 ## Datas e entregas
 
