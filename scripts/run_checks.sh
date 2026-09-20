@@ -10,7 +10,7 @@ bridge_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_bridge.sv fpga/de10_lite/de1
 aes_rtl=(rtl/aes/aes_sbox.sv rtl/aes/aes_sub_shift.sv rtl/aes/aes_mix_columns.sv rtl/aes/aes128_next_key.sv rtl/aes/aes128_core.sv)
 ctr_rtl=(rtl/ctr/aes128_ctr_mask.sv rtl/ctr/aes128_ctr_stream.sv)
 integration_rtl=(rtl/common/sync_fifo.sv rtl/bridge/uart_ctr_bridge.sv)
-de10_ctr_common=(rtl/common/reset_sync.sv rtl/common/sync_fifo.sv rtl/uart/uart_rx.sv rtl/uart/uart_tx.sv rtl/bridge/uart_ctr_bridge.sv fpga/de10_lite/common/de10_lite_uart_ctr_top.sv)
+de10_ctr_common=(rtl/common/reset_sync.sv rtl/common/sync_fifo.sv rtl/uart/uart_rx.sv rtl/uart/uart_tx.sv rtl/bridge/uart_ctr_bridge.sv fpga/de10_lite/common/de10_lite_context_pkg.sv fpga/de10_lite/common/de10_lite_uart_ctr_top.sv)
 de10_baseline_rtl=("${de10_ctr_common[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" fpga/de10_lite/baseline/de10_lite_uart_baseline_top.sv)
 de10_secure_rtl=("${de10_ctr_common[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" fpga/de10_lite/secure/de10_lite_uart_secure_top.sv)
 scope_rtl=(rtl/uart/uart_scope.sv fpga/de10_lite/uart_scope/de10_lite_uart_scope_top.sv)
@@ -28,6 +28,7 @@ run_test() {
         aes_components_tb|aes128_core_tb) test_sources=("${aes_rtl[@]}") ;;
         aes128_ctr_mask_tb|aes128_ctr_stream_tb) test_sources=("${aes_rtl[@]}" "${ctr_rtl[@]}") ;;
         uart_ctr_bridge_tb) test_sources=("${rtl[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}" "${integration_rtl[@]}") ;;
+        de10_lite_uart_ctr_top_tb) test_sources=("${de10_ctr_common[@]}" "${aes_rtl[@]}" "${ctr_rtl[@]}") ;;
         *) echo "Missing source list for test: $test_name" >&2; exit 2 ;;
     esac
     if [[ "$check_mode" == uart-waves ]]; then simulator_args=(+vcd); fi
@@ -140,6 +141,7 @@ test_integration() {
     run_test uart_ctr_bridge_tb integration_baseline_fast -Puart_ctr_bridge_tb.ENABLE_AES=0
     run_test uart_ctr_bridge_tb integration_secure_50mhz -Puart_ctr_bridge_tb.CLK_FREQ=50000000 -Puart_ctr_bridge_tb.FIFO_DEPTH=1024
     run_test uart_ctr_bridge_tb integration_baseline_50mhz -Puart_ctr_bridge_tb.ENABLE_AES=0 -Puart_ctr_bridge_tb.CLK_FREQ=50000000 -Puart_ctr_bridge_tb.FIFO_DEPTH=1024
+    run_test de10_lite_uart_ctr_top_tb de10_context_wrapper
 }
 
 lint_integration() {

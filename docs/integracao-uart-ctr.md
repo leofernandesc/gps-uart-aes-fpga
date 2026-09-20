@@ -38,9 +38,11 @@ transmissão são reservas adicionais, não posições contabilizadas em `fifo_l
 
 Não há configuração por comandos UART, parser NMEA ou contador de comprimento
 de aquisição. A interface `cfg_*` reaproveita o contrato do CTR; é uma interface
-RTL, **não uma conexão já implementada entre o PC e a placa**. O wrapper de
-bancada ainda precisa carregar os parâmetros e comandar o início. Registrar
-chave/nonce num JSON no PC, sozinho, não configura a FPGA.
+RTL, **não uma conexão já implementada entre o PC e a placa**. O wrapper
+DE10-Lite carrega os parâmetros de elaboração a partir do pacote público ou do
+pacote privado gerado pelo build com `CONTEXT_FILE`. Registrar chave/nonce num
+JSON no PC, sozinho, não configura a FPGA: o JSON precisa ser incorporado ao
+bitstream antes da programação, e não existe configuração em tempo de execução.
 
 Sequência de um ensaio:
 
@@ -85,6 +87,8 @@ esgotamento do contador, falhas e recuperação com contexto novo.
 
 O Yosys confirma também a ausência dos módulos AES no baseline. Isso é
 checagem de elaboração, não medição de recursos FPGA. Ver
-[validação de 16/09](validacao-integracao-2026-09-16.md) e
+[validação de 16/09](validacao-integracao-2026-09-16.md), a
+[validação do build de 20/09](validacao-build-contexto-2026-09-20.md) e
 [captura no PC](captura-pc.md). O registro de nonces no PC já está implementado;
-o provisionamento no wrapper, os builds físicos e a bancada continuam pendentes.
+o provisionamento estático no wrapper/build foi validado; programação dos tops,
+captura física e GPS continuam pendentes.

@@ -38,8 +38,9 @@ força de saída explícita de 8 mA.
 ## Configuração dos tops integrados
 
 Após o reset, os tops `baseline` e `secure` carregam automaticamente um contexto
-de bring-up por `cfg_valid/cfg_ready`. A chave, o nonce e o contador ficam
-fixos no wrapper apenas para o primeiro ensaio:
+de elaboração por `cfg_valid/cfg_ready`. Os parâmetros `CONTEXT_KEY`,
+`CONTEXT_NONCE` e `CONTEXT_COUNTER` podem ser substituídos em um build privado;
+os valores padrão são apenas para o primeiro bring-up:
 
 ```text
 key      = 000102030405060708090a0b0c0d0e0f
@@ -48,6 +49,16 @@ counter  = 00000001
 ```
 
 Isso não é um protocolo de configuração pela UART nem gerenciamento de chaves.
+Para aplicar um JSON privado ao build secure, use `CONTEXT_FILE`:
+
+```bash
+CONTEXT_FILE=data/private/ensaio01/contexto.json make secure-fpga
+```
+
+Para o baseline, use um contexto criado com `--mode baseline` e
+`make baseline-fpga`. O script gera `context_params.sv` em `build/` com
+permissão `0600`; não há transferência pela UART nem provisão em tempo de
+execução. Sem `CONTEXT_FILE`, o build copia o contexto público de bring-up.
 O baseline fixa `ENABLE_AES=0` na elaboração; o secure fixa `ENABLE_AES=1`.
 
 ## Indicadores dos tops integrados

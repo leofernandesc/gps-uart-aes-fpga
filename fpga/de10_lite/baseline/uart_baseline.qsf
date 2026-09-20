@@ -22,6 +22,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes128_core.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/ctr/aes128_ctr_mask.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/ctr/aes128_ctr_stream.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/bridge/uart_ctr_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../build/de10_lite/baseline/context_params.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../common/de10_lite_uart_ctr_top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE de10_lite_uart_baseline_top.sv
 set_global_assignment -name SDC_FILE uart_baseline.sdc

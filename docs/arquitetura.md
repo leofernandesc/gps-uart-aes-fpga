@@ -67,13 +67,12 @@ Usar nonce novo em cada captura e bloquear o wrap do contador. Não há
 autenticação com CTR; as alegações do artigo serão de confidencialidade e
 comportamento do transporte.
 
-O wrapper inicializa `cfg_*` automaticamente com um contexto fixo de bring-up,
-sem protocolo serial adicional. Isso permite compilar e testar os dois tops
-antes da chegada do GPS; registrar parâmetros no PC ainda não os transfere
-automaticamente à FPGA. O software PC (ver [captura-pc](captura-pc.md)) grava
-e compara arquivos. O gerador de contexto
-e o registro persistente de nonces já estão implementados no PC; o
-provisionamento desses parâmetros no wrapper/FPGA ainda está pendente.
+O wrapper inicializa `cfg_*` automaticamente com um contexto de elaboração,
+sem protocolo serial adicional. Os parâmetros `CONTEXT_KEY`, `CONTEXT_NONCE` e
+`CONTEXT_COUNTER` podem ser substituídos em um build privado; `CONTEXT_FILE`
+valida o JSON e gera o pacote usado pelo Quartus. Os valores padrão servem
+apenas ao bring-up. O software PC (ver [captura-pc](captura-pc.md)) grava e
+compara arquivos. Não há configuração em tempo de execução.
 
 ## Matriz experimental
 

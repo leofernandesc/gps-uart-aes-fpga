@@ -1,4 +1,4 @@
-# Validação do contexto de experimento — 19/09/2026
+# Validação do contexto de experimento — 19–20/09/2026
 
 ## Objetivo
 
@@ -16,11 +16,13 @@ mesma chave.
 - `aes-128-ctr`: valida a chave de 128 bits, gera nonce de 96 bits quando ele
   não é fornecido e registra o fingerprint SHA-256 da chave.
 
-Os JSONs privados, o registro e o arquivo de lock são criados com permissão
-`0600`. A atualização do registro usa lock e substituição atômica. O utilitário
-também rejeita saída já existente, contador fora do intervalo de 32 bits e
-ensaios que ultrapassariam o contador. Ele prepara o contexto no PC, mas ainda
-não o envia para a FPGA.
+Os JSONs privados, o registro, o arquivo de lock e o pacote SystemVerilog
+gerado são criados com permissão `0600`. A atualização do registro usa lock e
+substituição atômica. O utilitário também rejeita saída já existente, contador
+fora do intervalo de 32 bits e ensaios que ultrapassariam o contador. O build
+Quartus aceita o JSON por `CONTEXT_FILE`, valida o modo solicitado e gera o
+pacote em `build/de10_lite/<design>/context_params.sv`; a configuração continua
+estática no bitstream e não é um protocolo de runtime.
 
 ## Verificações executadas
 
@@ -28,20 +30,28 @@ não o envia para a FPGA.
 make context
 make pc
 make integration
+make secure-fpga
 ```
 
 Resultados:
 
-- `make context`: 5 testes aprovados;
-- `make pc`: 13 testes aprovados, incluindo os testes anteriores de captura e
+- `make context`: 7 testes aprovados;
+- `make pc`: 15 testes aprovados, incluindo os testes anteriores de captura e
   comparação;
 - `make integration`: variantes baseline/secure aceleradas e em 50 MHz/9600,
   lint, estrutura e comparação independente aprovados.
 
 Depois dessas verificações, `make check` também terminou com código 0, cobrindo
-26 simulações, sete configurações de lint, a estrutura dos tops e os 13 testes
+27 simulações, sete configurações de lint, a estrutura dos tops e os 15 testes
 do PC.
 
+O testbench do wrapper DE10-Lite substituiu o contexto padrão por uma chave,
+nonce e contador de teste. Observando somente o TX serial, confirmou
+`0x55 -> 0xe2`, conforme o oráculo independente AES-CTR. O teste também exigiu
+um bit de repouso após a ativação do datapath, condição necessária para o
+rearme do receptor UART.
+
 Os dados temporários permanecem em `build/` ou `data/private/` e não entram no
-versionamento. A etapa seguinte é conectar o contexto ao wrapper de bancada,
-sem alterar o contrato UART fixo em 50 MHz, 9600 baud e 8N1.
+versionamento. A aplicação do contexto ao build está validada; ainda falta
+programar os tops baseline/secure e validar o tráfego na placa, sem alterar o
+contrato UART fixo em 50 MHz, 9600 baud e 8N1.

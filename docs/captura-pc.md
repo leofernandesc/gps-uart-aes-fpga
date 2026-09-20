@@ -51,8 +51,29 @@ python3 scripts/context.py new \
 O programa rejeita a reutilização do mesmo nonce com a mesma chave, bloqueia
 overflow do contador de 32 bits e cria contexto e registro com permissão
 `0600`. O registro guarda apenas o fingerprint SHA-256 da chave; a chave fica
-somente no contexto privado. A ferramenta prepara os metadados no PC, mas ainda
-não envia a chave/nonce para a FPGA.
+somente no contexto privado.
+
+Os tops DE10-Lite aceitam `CONTEXT_KEY`, `CONTEXT_NONCE` e `CONTEXT_COUNTER`
+como parâmetros de elaboração. O build Quartus agora aceita o mesmo JSON por
+`CONTEXT_FILE`, gera um pacote SystemVerilog privado em `build/` e o incorpora
+ao SOF. Essa é uma provisão estática no bitstream, não um protocolo de
+configuração em tempo de execução. O testbench `de10_lite_uart_ctr_top_tb`
+verifica o caminho com um ciphertext conhecido.
+
+Exemplo para um ensaio secure:
+
+```bash
+CONTEXT_FILE=data/private/ensaio01/contexto.json make secure-fpga
+```
+
+Para o baseline, use um JSON criado com `--mode baseline`:
+
+```bash
+CONTEXT_FILE=data/private/ensaio01/baseline.json make baseline-fpga
+```
+
+Sem `CONTEXT_FILE`, os projetos usam o contexto público de bring-up. O pacote
+gerado é temporário, tem permissão `0600` e não deve ser versionado.
 
 Para um ensaio baseline, use `--mode baseline` sem chave, nonce ou registro.
 `--nonce-hex` deve ser reservado a testes determinísticos, nunca reutilizado em
@@ -79,10 +100,10 @@ A comparação rejeita N que ultrapasse a capacidade restante do contador.
 
 Não usar o exemplo público em capturas reais. Cada nova captura com a mesma
 chave exige nonce novo, inclusive após reset. O gerador acima controla a
-reutilização no registro do PC; o carregamento no wrapper ainda será
-implementado. Proteger também o JSON de contexto; arquivos criados pelo
-gravador/comparador têm permissão `0600` e nunca sobrescrevem arquivos
-existentes.
+reutilização no registro do PC; o comando de build aplica o JSON somente ao
+bitstream privado daquela captura. Proteger também o JSON de contexto; arquivos
+criados pelo gravador/comparador têm permissão `0600` e nunca sobrescrevem
+arquivos existentes.
 
 ## Comparar a saída
 

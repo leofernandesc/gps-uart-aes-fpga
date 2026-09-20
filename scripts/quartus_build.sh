@@ -57,6 +57,31 @@ record_build_exit() {
     fi
 }
 trap record_build_exit EXIT
+context_file="${CONTEXT_FILE:-}"
+if [[ "$design" == baseline || "$design" == secure ]]; then
+    context_output="$output_dir/context_params.sv"
+    if [[ -n "$context_file" ]]; then
+        if [[ "$context_file" != /* ]]; then
+            context_file="$project_dir/$context_file"
+        fi
+        if [[ ! -f "$context_file" ]]; then
+            echo "Context file not found: $context_file" >&2
+            exit 1
+        fi
+        expected_mode=aes-128-ctr
+        if [[ "$design" == baseline ]]; then
+            expected_mode=baseline
+        fi
+        python3 "$project_dir/scripts/context.py" render-sv \
+            --context "$context_file" \
+            --output "$context_output" \
+            --expected-mode "$expected_mode"
+    else
+        cp "$project_dir/fpga/de10_lite/common/de10_lite_context_pkg.sv" \
+            "$context_output"
+        chmod 600 "$context_output"
+    fi
+fi
 cd "$target_dir"
 printf 'RUNNING: Quartus %s/%s (no board programming)\n' "$board" "$design" >"$output_dir/build-status.txt"
 "$quartus_shell" --version >"$output_dir/tool-version.txt"

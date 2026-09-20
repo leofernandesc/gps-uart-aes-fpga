@@ -28,10 +28,10 @@ fpga:
 
 # Separate elaborations used by the experimental comparison on the DE10-Lite.
 baseline-fpga:
-	bash scripts/quartus_build.sh de10_lite baseline
+	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh de10_lite baseline
 
 secure-fpga:
-	bash scripts/quartus_build.sh de10_lite secure
+	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh de10_lite secure
 
 # UART RX/TX and autonomous bench only; no AES/FIFO simulation.
 uart:

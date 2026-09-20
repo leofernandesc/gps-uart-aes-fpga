@@ -76,6 +76,20 @@ def _private_json(path, payload):
     os.chmod(path, 0o600)
 
 
+def _private_text(path, content):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except Exception:
+        raise
+    os.chmod(path, 0o600)
+
+
 @contextmanager
 def _registry_lock(path):
     lock_path = Path(f"{path}.lock")
@@ -131,6 +145,53 @@ def _write_registry(path, registry):
         except FileNotFoundError:
             pass
         raise
+
+
+def _load_context(path):
+    path = Path(path)
+    try:
+        context = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read context: {path}") from exc
+    if not isinstance(context, dict) or context.get("schema") != SCHEMA:
+        raise ValueError("unsupported or malformed context")
+    mode = context.get("mode")
+    if mode not in ("baseline", "aes-128-ctr"):
+        raise ValueError("context mode must be baseline or aes-128-ctr")
+    length = context.get("bytes")
+    counter = context.get("initial_counter", 0)
+    _validate_length_counter(length, counter)
+    if mode == "baseline":
+        if any(field in context for field in ("key_hex", "nonce_hex")):
+            raise ValueError("baseline context cannot contain key or nonce")
+        return mode, bytes(KEY_BYTES), bytes(NONCE_BYTES), counter
+
+    key = _hex_bytes(context.get("key_hex"), KEY_BYTES, "key_hex")
+    nonce = _hex_bytes(context.get("nonce_hex"), NONCE_BYTES, "nonce_hex")
+    expected_key_id = hashlib.sha256(key).hexdigest()
+    if context.get("key_sha256") != expected_key_id:
+        raise ValueError("context key fingerprint does not match key_hex")
+    return mode, key, nonce, counter
+
+
+def render_context_sv(context_path, output, expected_mode=None):
+    """Render a private context as a Quartus/SystemVerilog package."""
+    mode, key, nonce, counter = _load_context(context_path)
+    if expected_mode is not None and mode != expected_mode:
+        raise ValueError(f"context mode {mode} does not match expected {expected_mode}")
+    content = (
+        "`timescale 1ns/1ps\n"
+        "`default_nettype none\n\n"
+        "// Generated from a private experiment context; do not commit.\n"
+        "package de10_lite_context_pkg;\n"
+        f"    localparam [127:0] CONTEXT_KEY = 128'h{key.hex()};\n"
+        f"    localparam [95:0] CONTEXT_NONCE = 96'h{nonce.hex()};\n"
+        f"    localparam [31:0] CONTEXT_COUNTER = 32'h{counter:08x};\n"
+        "endpackage\n\n"
+        "`default_nettype wire\n"
+    )
+    _private_text(output, content)
+    return {"mode": mode, "output": str(output), "bytes": len(content)}
 
 
 def create_context(mode, length, output, registry=None, key_hex=None,
@@ -203,16 +264,26 @@ def main():
     new.add_argument("--key-hex")
     new.add_argument("--nonce-hex")
     new.add_argument("--initial-counter", type=_parse_int, default=0)
+    render = commands.add_parser("render-sv", help="render a context as a private SV package")
+    render.add_argument("--context", type=Path, required=True)
+    render.add_argument("--output", type=Path, required=True)
+    render.add_argument("--expected-mode", choices=("baseline", "aes-128-ctr"))
     args = parser.parse_args()
     try:
-        context = create_context(args.mode, args.length, args.output, args.registry,
-                                 args.key_hex, args.nonce_hex, args.initial_counter)
+        if args.command == "new":
+            context = create_context(args.mode, args.length, args.output, args.registry,
+                                     args.key_hex, args.nonce_hex, args.initial_counter)
+        else:
+            rendered = render_context_sv(args.context, args.output, args.expected_mode)
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
-    summary = {key: context[key] for key in
-               ("context_id", "created_utc", "mode", "bytes", "nonce_hex")
-               if key in context}
+    if args.command == "new":
+        summary = {key: context[key] for key in
+                   ("context_id", "created_utc", "mode", "bytes", "nonce_hex")
+                   if key in context}
+    else:
+        summary = rendered
     print(json.dumps(summary, indent=2))
     return 0
 

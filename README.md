@@ -23,11 +23,12 @@ decodificados do fio TX e conferidos no PC. O gravador binário e comparador do
 PC passaram em testes com porta virtual Linux. Ver
 [validação da integração](docs/validacao-integracao-2026-09-16.md).
 O gerador de contexto do PC e o registro persistente de nonces foram
-implementados e testados; o carregamento desses parâmetros no wrapper FPGA,
-a captura GPS e os ensaios físicos integrados continuam pendentes. Os tops
-baseline/secure da DE10-Lite já foram compilados e geraram SOFs próprios; a
-comparação também inclui Cyclone IV, cujo modelo, clock e pinagem permanecem
-pendentes de confirmação.
+implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
+`CONTEXT_COUNTER` como parâmetros de elaboração, e os builds DE10-Lite aceitam
+`CONTEXT_FILE` para gerar esse pacote privado a partir do JSON. O valor padrão
+continua sendo apenas o contexto de bring-up. A captura GPS e os ensaios físicos
+integrados continuam pendentes. A comparação também inclui Cyclone IV, cujo
+modelo, clock e pinagem permanecem pendentes de confirmação.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
@@ -61,10 +62,10 @@ No Linux, a partir deste diretório:
 make check
 ```
 
-Executa 26 simulações: quatro testes históricos, catorze configurações de UART/
+Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e quatro da integração.
 Inclui sete configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 13 testes do software de captura e contexto.
+bytes CTR e do TX integrado, além de 15 testes do software de captura e contexto.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -91,9 +92,11 @@ make aes     # Vetores independentes, componentes, núcleo, lint e estrutura AES
 make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/9600
 make pc      # Comparador, gravação binária e testes de contexto no PC
-make context # Testes do gerador e registro persistente de nonces
+make context # Testes do gerador, registro e pacote SystemVerilog privado
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
+# Exemplo de contexto privado aplicado ao build:
+# CONTEXT_FILE=data/private/ensaio01/contexto.json make secure-fpga
 ```
 
 A síntese Yosys é apenas uma verificação estrutural do RTL. **Não é fluxo ASIC**
@@ -201,6 +204,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Contrato da integração UART–FIFO–CTR](docs/integracao-uart-ctr.md)
 - [Captura binária e comparação no PC](docs/captura-pc.md)
 - [Validação do contexto e registro de nonces](docs/validacao-contexto-2026-09-19.md)
+- [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)
@@ -214,6 +218,6 @@ versionada, com quatro telas e cronograma até 25/09. A cópia local em
 
 Próximo passo da bancada: programar os tops baseline/secure e executar os
 ensaios integrados descritos no [plano de testes](docs/plano-de-testes.md).
-Sem a placa/GPS, a etapa disponível é preparar contextos privados no PC com
-`scripts/context.py`; isso não provisiona automaticamente a FPGA. Simulação,
-fit e programação não substituem a medição física nem a captura GPS.
+Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
+provisionamento estático de build, não configuração em tempo de execução.
+Simulação, fit e programação não substituem a medição física nem a captura GPS.

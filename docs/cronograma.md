@@ -35,7 +35,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Concluído em 18/09 — relatório da bancada |
 | 16–17/09 | Identificar Cyclone IV | Modelo, part number, clock, pinos e esquema confirmados | Pendente — Leonardo; reagendado de 15/09 |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
-| 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — provisionamento físico ainda pendente |
+| 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 19–20/09 | Experimentos | Três replays por configuração e captura GPS contínua com comparação byte a byte | Pendente — bancada/verificação |
@@ -106,13 +106,32 @@ continua pendente.
   par chave/nonce.
 - Contexto, registro e lock são privados (`0600`), com atualização bloqueada e
   substituição atômica. Limites do contador e colisões foram testados.
-- `make context` passou com cinco testes; `make pc` passou com 13 testes; a
-  integração baseline/secure continuou aprovada.
+- Os tops DE10-Lite passaram a aceitar `CONTEXT_KEY`, `CONTEXT_NONCE` e
+  `CONTEXT_COUNTER` como parâmetros de elaboração; o testbench confirmou um
+  contexto diferente do padrão (`0x55` recebido e `0xe2` transmitido).
+- `make context` passou com sete testes; `make pc` passou com 15 testes; a
+  integração baseline/secure e o wrapper parametrizado continuaram aprovados.
 
-Essa etapa prepara os ensaios sem depender da placa. O JSON ainda não configura
-automaticamente a FPGA: o wrapper de bancada precisa receber a chave, o nonce e
-o contador antes da captura. Não há GPS real nem validação física dos tops
-integrados neste marco.
+Essa etapa prepara os ensaios sem depender da placa. A configuração do wrapper
+é estática no build: `CONTEXT_FILE` gera o pacote privado e o incorpora ao SOF.
+Não há configuração em tempo de execução, GPS real nem validação física dos
+tops integrados neste marco.
+
+## Marco em 20/09: contexto privado aplicado ao Quartus
+
+- `scripts/quartus_build.sh` passou a aceitar `CONTEXT_FILE` nos alvos baseline
+  e secure, validar o modo e gerar `context_params.sv` com permissão `0600`.
+- `make baseline-fpga` foi repetido com o pacote de bring-up: 0 erros, SOF e
+  três cantos temporais aprovados.
+- Um build secure recebeu um JSON privado temporário: o Quartus reconheceu o
+  pacote, gerou o SOF e não apresentou violações temporais. O contexto foi
+  removido depois do ensaio e o secure foi recompilado com o contexto público.
+- A evidência detalhada está em
+  [validação do build com contexto](validacao-build-contexto-2026-09-20.md).
+
+Essa entrega encerra a implementação sem placa desta etapa. Ainda faltam
+programar os tops integrados, transmitir uma sequência de teste, validar o
+secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
 
 ## Ensaio auxiliar — DE10-Nano
 
@@ -209,19 +228,19 @@ Esses resultados não representam programação de placa ou captura GPS.
 - Cancelamento em 32 situações por modo acelerado, falhas e recuperação
   byte a byte com contexto novo. Baseline sem módulos AES confirmado pelo Yosys.
 - Gravador binário Linux e comparador com contagens, hashes e primeira
-  divergência; 13 testes PC, incluindo porta virtual, timeout e arquivos privados.
-- Regressão completa: 26 simulações, sete configurações de lint, estrutura e
-  conferência independente; evidências no [relatório](validacao-integracao-2026-09-16.md).
-- No marco anterior, o estado remoto havia sido conferido e o histórico local
-  preservado. Nesta entrega, uma nova consulta com `git fetch origin` não
-  completou por falha temporária de DNS; nenhum conteúdo remoto foi incorporado.
+  divergência; 15 testes PC, incluindo porta virtual, timeout e arquivos privados.
+- Regressão completa: 27 simulações, sete configurações de lint, estrutura e
+  conferência independente; 15 testes PC; evidências no [relatório](validacao-integracao-2026-09-16.md).
+- Antes da consolidação desta etapa, `git fetch origin` foi executado e
+  `origin/main` permaneceu alinhada ao histórico local; nenhum conteúdo remoto
+  novo precisou ser incorporado.
 
 O [contrato RTL](integracao-uart-ctr.md) e o [guia PC](captura-pc.md) delimitam
-o que está pronto. A interface `cfg_*` ainda precisa de um wrapper que receba
-os parâmetros; um JSON no PC não configura sozinho a FPGA. O registro persistente
-de nonces já está pronto no PC; início alinhado, provisionamento no wrapper e
-validação física seguem pendentes. `make check` foi repetido em 19/09 e terminou
-com código 0, incluindo os testes do novo gerador de contexto.
+o que está pronto. O wrapper e o build já aceitam contexto privado estático por
+`CONTEXT_FILE`; um JSON ainda não configura a FPGA em tempo de execução. O
+registro persistente de nonces e o início alinhado seguem prontos para a
+bancada; validação física e GPS continuam pendentes. `make check` foi repetido
+em 20/09 e terminou com código 0.
 
 ## Contrato da integração e pendências de bancada
 

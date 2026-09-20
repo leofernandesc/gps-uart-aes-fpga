@@ -10,7 +10,13 @@
 // key-management protocol and must be replaced by the experiment controller
 // before any real deployment.
 module de10_lite_uart_ctr_top #(
-    parameter integer ENABLE_AES = 1
+    parameter integer ENABLE_AES = 1,
+    parameter [127:0] CONTEXT_KEY =
+        de10_lite_context_pkg::CONTEXT_KEY,
+    parameter [95:0] CONTEXT_NONCE =
+        de10_lite_context_pkg::CONTEXT_NONCE,
+    parameter [31:0] CONTEXT_COUNTER =
+        de10_lite_context_pkg::CONTEXT_COUNTER
 ) (
     input  wire       MAX10_CLK1_50,
     input  wire       KEY0_N,
@@ -18,12 +24,6 @@ module de10_lite_uart_ctr_top #(
     output wire       UART_TX,
     output wire [9:0] LEDR
 );
-    localparam [127:0] TEST_KEY =
-        128'h000102030405060708090a0b0c0d0e0f;
-    localparam [95:0] TEST_NONCE =
-        96'h101112131415161718191a1b;
-    localparam [31:0] TEST_COUNTER = 32'h00000001;
-
     wire rst;
     wire cfg_ready;
     wire cfg_done;
@@ -87,9 +87,9 @@ module de10_lite_uart_ctr_top #(
         .abort_req        (1'b0),
         .cfg_valid        (cfg_pending),
         .cfg_ready        (cfg_ready),
-        .cfg_key          (TEST_KEY),
-        .cfg_nonce        (TEST_NONCE),
-        .cfg_counter      (TEST_COUNTER),
+        .cfg_key          (CONTEXT_KEY),
+        .cfg_nonce        (CONTEXT_NONCE),
+        .cfg_counter      (CONTEXT_COUNTER),
         .cfg_done         (cfg_done),
         .active           (active),
         .exhausted        (exhausted),

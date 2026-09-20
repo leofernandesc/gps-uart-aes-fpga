@@ -2,6 +2,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import stat
 import tempfile
 import unittest
 
@@ -73,6 +74,36 @@ class ContextTests(unittest.TestCase):
             context_tool.create_context("baseline", 1, root / "same.json")
             with self.assertRaises(FileExistsError):
                 context_tool.create_context("baseline", 1, root / "same.json")
+
+    def test_render_secure_context_as_private_systemverilog_package(self):
+        with tempfile.TemporaryDirectory(prefix="uart-context-") as tmp:
+            root = Path(tmp)
+            context_path = root / "secure.json"
+            package_path = root / "context_params.sv"
+            context_tool.create_context(
+                "aes-128-ctr", 32, context_path, root / "registry.json",
+                key_hex="00112233445566778899aabbccddeeff",
+                nonce_hex="101112131415161718191a1b",
+                initial_counter=0x12345678,
+            )
+            rendered = context_tool.render_context_sv(
+                context_path, package_path, expected_mode="aes-128-ctr")
+            self.assertEqual(rendered["mode"], "aes-128-ctr")
+            self.assertEqual(stat.S_IMODE(package_path.stat().st_mode), 0o600)
+            package = package_path.read_text()
+            self.assertIn("128'h00112233445566778899aabbccddeeff", package)
+            self.assertIn("96'h101112131415161718191a1b", package)
+            self.assertIn("32'h12345678", package)
+
+    def test_render_rejects_wrong_build_mode(self):
+        with tempfile.TemporaryDirectory(prefix="uart-context-") as tmp:
+            root = Path(tmp)
+            context_path = root / "baseline.json"
+            context_tool.create_context("baseline", 1, context_path)
+            with self.assertRaises(ValueError):
+                context_tool.render_context_sv(
+                    context_path, root / "context_params.sv",
+                    expected_mode="aes-128-ctr")
 
 
 if __name__ == "__main__":
