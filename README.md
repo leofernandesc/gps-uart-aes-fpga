@@ -40,9 +40,11 @@ integrados continuam pendentes. A comparação exige também a Cyclone IV E
 EP4CE6E22C8; modelo da placa, oscilador e pinagem ainda precisam de confirmação.
 Os 48 MHz são uma hipótese, não uma configuração de bancada aprovada.
 
-A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) confirmou que o secure
-atual não cabe no EP4CE6 em um fit exploratório. Também identificou correções
-necessárias na medição de latência, extração de métricas e captura/contexto.
+A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
+de área no secure anterior. O AES agora calcula chaves durante as rodadas,
+sem armazenar onze chaves, e passou nos testes AES/CTR e no fit exploratório
+do EP4CE6. Isso não valida clock ou pinagem de placa. As correções na medição
+de latência, extração de métricas e captura/contexto seguem em consolidação.
 Há trabalho sem placa antes da comparação final; o prazo até 25/09 está em risco.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`

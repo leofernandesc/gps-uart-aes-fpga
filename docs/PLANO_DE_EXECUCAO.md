@@ -26,9 +26,9 @@ e foram compilados; os dois builds da Cyclone IV dependem da identificação da
 placa.
 
 As duas plataformas são obrigatórias. A [revisão completa de 20/09](revisao-completa-2026-09-20.md)
-identificou um bloqueio de capacidade: o secure existente não coube no EP4CE6
-no fit exploratório. Reduzir área no RTL comum, corrigir métricas e fechar a
-captura antes dos ensaios finais. A hipótese de 48 MHz não autoriza gerar SOF
+identificou excesso de área no secure anterior. A otimização do AES comum
+passou nos testes e no fit exploratório do EP4CE6. Consolidar agora métricas,
+captura e os dois alvos antes dos ensaios finais. A hipótese de 48 MHz não autoriza gerar SOF
 sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
 
 ## Estado atual

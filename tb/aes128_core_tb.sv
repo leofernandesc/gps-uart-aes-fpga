@@ -46,7 +46,6 @@ module aes128_core_tb;
     end
 
     task automatic reset_core;
-        integer i;
         begin
             @(negedge clk);
             #3;
@@ -57,8 +56,8 @@ module aes128_core_tb;
             if (busy !== 0 || done !== 0 || key_done !== 0 || key_valid !== 0 ||
                 key_ready !== 0 || block_ready !== 0 || ciphertext !== 0)
                 $fatal(1, "AES asynchronous reset failed");
-            for (i = 0; i < 11; i = i + 1)
-                if (dut.round_keys[i] !== 0) $fatal(1, "Key storage not cleared on reset");
+            if (dut.master_key !== 0 || dut.schedule_work !== 0)
+                $fatal(1, "Key storage not cleared on reset");
             // Reset storage is checked directly; the encryption oracle uses only ports.
             repeat (2) @(negedge clk);
             rst = 0;
@@ -68,7 +67,7 @@ module aes128_core_tb;
     endtask
 
     task automatic load_key(input reg [127:0] key, input reg collision);
-        integer step, accepted;
+        integer accepted;
         begin
             @(negedge clk);
             if (!key_ready) $fatal(1, "AES not ready for key");
@@ -86,18 +85,16 @@ module aes128_core_tb;
             key_load = 0;
             start = 0;
             key_in = ~key;
-            for (step = 1; step <= 10; step = step + 1) begin
-                @(posedge clk);
-                #1;
-                if (step < 10) begin
-                    if (!busy || key_ready || key_valid || key_done || block_ready || done)
-                        $fatal(1, "AES premature key completion");
-                    @(negedge clk);
-                    key_load = (step == 2);
-                    start = (step == 3);
-                end else if (!key_valid || !key_done || busy || done || cycles-accepted != 10)
-                    $fatal(1, "AES key latency must be 10 cycles");
-            end
+            // A request while the one-cycle preparation is busy is ignored.
+            key_load = 1;
+            start = 1;
+            @(posedge clk);
+            #1;
+            if (!key_valid || !key_done || busy || done || cycles-accepted != 1)
+                $fatal(1, "AES key latency must be 1 cycle");
+            @(negedge clk);
+            key_load = 0;
+            start = 0;
         end
     endtask
 
@@ -177,16 +174,21 @@ module aes128_core_tb;
         if (busy || done) $fatal(1, "Busy requests were queued");
         if (min_interval != 21) $fatal(1, "Earliest initiation interval not covered");
 
-        // Reset every intermediate key-expansion cycle and every cipher stage.
-        for (abort_cycle = 1; abort_cycle < 10; abort_cycle = abort_cycle + 1) begin
+        // Reset before key preparation completes, then every cipher phase.
+        begin
             reset_core();
             @(negedge clk);
             key_load = 1;
             key_in = TEST_KEY;
-            @(negedge clk);
+            @(posedge clk);
+            #3;
+            rst = 1;
             key_load = 0;
-            repeat (abort_cycle-1) @(negedge clk);
-            reset_core();
+            #1;
+            if (dut.master_key !== 0 || dut.schedule_work !== 0 || key_valid || busy)
+                $fatal(1, "Aborted key load retained state");
+            repeat (2) @(negedge clk);
+            rst = 0;
             repeat (24) @(negedge clk);
             if (key_valid || key_done || done || busy) $fatal(1, "Aborted expansion completed");
         end
@@ -224,8 +226,8 @@ module aes128_core_tb;
         repeat (24) @(negedge clk);
         if (completions != before_count + 2 || busy || done)
             $fatal(1, "Held start completion count mismatch");
-        $display("PASS aes128_core: %0d independent vectors; %0d total correct completions; %0d key preparations; reset at 28 stages; priority/busy/rekey/held-start", vector_count, completions, key_completions);
-        $display("METRIC aes128_core clock_ns=20 key_cycles=10 block_cycles=20 initiation_cycles=%0d", min_interval);
+        $display("PASS aes128_core: %0d independent vectors; %0d total correct completions; %0d key preparations; reset at 20 stages; priority/busy/rekey/held-start", vector_count, completions, key_completions);
+        $display("METRIC aes128_core clock_ns=20 key_cycles=1 block_cycles=20 initiation_cycles=%0d", min_interval);
         $finish;
     end
     initial begin

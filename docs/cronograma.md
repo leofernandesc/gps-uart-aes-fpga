@@ -8,9 +8,10 @@ placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
 
 **Revisão técnica:** as duas plataformas são obrigatórias. A segunda FPGA é a
 Cyclone IV E `EP4CE6E22C8`; oscilador provável de 48 MHz, ainda sem confirmação
-do clock/pinagem da placa. O secure atual não coube no fit exploratório desse
-dispositivo. Redução de área, correções nas métricas e preparação da captura
-passam a preceder os experimentos. **Prazo em risco**, mantendo submissão em
+do clock/pinagem da placa. O secure anterior não coube no fit exploratório;
+o AES otimizado já passou em um novo fit de capacidade, ainda sem validar a
+placa. Consolidação dos alvos, métricas e captura precedem os experimentos.
+**Prazo em risco**, mantendo submissão em
 24/09 e contingência até 25/09. Ver [revisão completa](revisao-completa-2026-09-20.md).
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
@@ -41,7 +42,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus |
 | 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Concluído em 18/09 — relatório da bancada |
 | 20–21/09 | Identificar Cyclone IV | Modelo da placa, clock, pinos e esquema confirmados | Em andamento — EP4CE6E22C8 definido em 20/09; clock provável 48 MHz; etapa de 16–17/09 atrasada |
-| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Em andamento — revisão concluída; correções pendentes; fit exploratório reprovado por área |
+| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Em andamento — AES otimizado e fit de capacidade aprovado; consolidar demais correções e alvo físico |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
 | 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
 | 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
@@ -57,6 +58,33 @@ A chamada pública do BTSym consultada em 14/09 informa 30/09/2026 como prazo
 externo. Confirmar modalidade e template no portal antes do envio. O planejamento
 interno termina em 25/09 independentemente dessa folga.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
+
+## Marco em 20/09: redução de área do AES
+
+- Removido o banco de onze chaves. O núcleo armazena a chave original e calcula
+  as chaves de rodada durante cada bloco, mantendo a interface e os 20 ciclos
+  de cifragem. Preparação da chave: um ciclo; intervalo mínimo entre blocos: 21.
+- `make aes`: 866 vetores independentes aprovados, lint e checagem estrutural.
+  `make ctr`: 60 fluxos / 19.009 bytes recuperados, incluindo stalls e resets;
+  inicialização do CTR reduzida de 34 para 25 ciclos.
+- Fit exploratório após essa alteração: 5.623 LE / 915 registradores no
+  EP4CE6E22C8, aprovado. Evidência local:
+  `build/review-2026-09-20/cyclone4-probe/output_files/resource_probe.fit.summary`.
+  O ensaio manteve o wrapper de 50 MHz, sem pinagem/SDC de bancada e sem SOF;
+  não fornece uma validação da placa nem do oscilador provável de 48 MHz.
+- O contrato atualizado está em [AES](aes128.md) e [CTR](ctr.md).
+
+### Ponto de retomada
+
+Esta entrega encerra somente a otimização do AES. Permanecem alterações locais
+em desenvolvimento para proteção de reset do wrapper, ensaio nominal de
+latência, estudo reproduzível da Cyclone IV, rastreabilidade/validação de métricas,
+captura dupla e validação NMEA. Não estão incluídas no commit desta etapa.
+Ao retomar, revisar o diff antes de fazer pull, completar os testes específicos
+da captura/contexto e atualizar as tabelas dos dois manuscritos antes de publicar
+essas correções. Os artefatos de builds locais podem refletir esse trabalho
+adicional; não confundi-los com resultados reproduzíveis apenas pelo commit AES.
+Leonardo confirma modelo da placa, oscilador e pinagem da Cyclone IV em 21/09.
 
 ## Marco em 20/09: revisão completa e identificação do EP4CE6
 

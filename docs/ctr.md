@@ -47,7 +47,7 @@ de reset deve ser sincronizada pelo chamador, como no restante do projeto.
 | `cfg_nonce[95:0]` | Nonce atribuído pelo controlador externo |
 | `cfg_counter[31:0]` | Contador inicial, sem valor implícito |
 | `active` | Existe contexto configurado; permanece ativo até `abort_req` ou reset |
-| `cfg_done` | Pulso de um ciclo ao terminar a expansão da chave; a máscara ainda será calculada |
+| `cfg_done` | Pulso de um ciclo ao terminar a preparação da chave; a máscara ainda será calculada |
 | `abort_req` | Cancela o contexto na próxima borda e bloqueia os handshakes enquanto estiver alto |
 | `exhausted` | Todos os bytes permitidos foram consumidos; exige novo contexto para continuar |
 
@@ -60,7 +60,7 @@ o processamento atual.
 operação AES já iniciada termina internamente, e sua saída é ignorada.
 `cfg_ready` só permite rearmar depois de o núcleo estar livre. Abort não é um
 procedimento de apagamento físico de chaves: o núcleo mantém suas chaves até
-reset ou nova expansão.
+reset ou carregamento de nova chave.
 
 ## Transferência por byte
 
@@ -118,3 +118,8 @@ O conjunto cobre o exemplo público NIST em cifragem e decifragem, comprimentos
 parciais, sequências longas, pausas, carry entre bytes do contador, esgotamento,
 troca de chave e cancelamento/reset durante o processamento. Ver o
 [relatório de validação](validacao-ctr-2026-09-10.md) para resultados medidos.
+
+Com o AES otimizado em 20/09, o ensaio isolado mede **25 ciclos** entre a
+aceitação do contexto e a primeira transferência, com entrada e saída prontas
+(500 ns a 50 MHz). Os 34 ciclos anteriores pertencem ao núcleo com banco de
+onze chaves. Essa inicialização do CTR não é a latência UART ponta a ponta.

@@ -216,7 +216,7 @@ module aes128_ctr_stream_tb;
                 fresh_byte();
             end
         end
-        if (stalls_seen < 100 || cold_latency != 34) $fatal(1, "CTR coverage/startup latency failed");
+        if (stalls_seen < 100 || cold_latency != 25) $fatal(1, "CTR coverage/startup latency failed: cycles=%0d", cold_latency);
         $display("PASS aes128_ctr_stream: %0d streams; %0d bytes; %0d stalled cycles; 140 abort/reset phases; partial blocks; no wrap",
                  count, total_bytes, stalls_seen);
         $display("METRIC ctr_stream clock_ns=20 config_to_first_transfer_cycles=%0d", cold_latency);
