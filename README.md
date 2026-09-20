@@ -216,6 +216,8 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
+- [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
+- [Rascunho do manuscrito BTSym em português](docs/manuscrito-btsym-rascunho-pt.md)
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)
 - [Resultados da primeira etapa](docs/validacao-2026-09-07.md)
 - [Cronograma e critérios de conclusão](docs/cronograma.md)

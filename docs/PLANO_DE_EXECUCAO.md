@@ -37,6 +37,8 @@ placa.
   9600 baud, FIFO máxima de 2 bytes e recuperação sem divergência nos dois modos.
 - Métricas de recursos, Fmax e slacks consolidadas por `make metrics`; potência
   permanece sem estimativa representativa até haver atividade de bancada.
+- Rascunho inicial do manuscrito em inglês criado com os resultados RTL/PC e
+  Quartus; os campos de validação física continuam explicitamente pendentes.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
@@ -56,7 +58,9 @@ Relatórios: [AES](validacao-aes-2026-09-09.md),
 e [integração de 16/09](validacao-integracao-2026-09-16.md),
 [bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md),
 [validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md) e
-[métricas FPGA de 20/09](metricas-fpga-2026-09-20.md).
+[métricas FPGA de 20/09](metricas-fpga-2026-09-20.md) e
+[rascunho do manuscrito BTSym](manuscrito-btsym-draft.md) e
+[versão em português](manuscrito-btsym-rascunho-pt.md).
 
 ## Datas e entregas
 
@@ -73,7 +77,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
 | 20/09 | Replay NMEA | Fixture público validado e integrado ao ensaio RTL/PC; GPS físico continua pendente |
 | 19–20/09 | Experimentos | Três replays físicos por configuração e ensaio GPS contínuo |
-| 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo |
+| 21–22/09 | Resultados / manuscrito | Tabelas, gráficos e texto completo | Rascunho inicial criado; completar após bancada |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
 | 24/09 | Submissão | Arquivos enviados e comprovante salvo |
 | 25/09 | Contingência | Correções de envio/reenvio e confirmação final |

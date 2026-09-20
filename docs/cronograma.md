@@ -148,6 +148,8 @@ secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
   TX; a recuperação no PC não apresentou divergências.
 - `make metrics` consolidou recursos, Fmax e slacks dos builds baseline/secure;
   a tabela está pronta para a seção de resultados do artigo.
+- O rascunho inicial do manuscrito foi criado em inglês, com os resultados
+  atuais e marcação explícita das evidências físicas ainda pendentes.
 - A suíte do PC passou com 16 testes. A evidência está em
   [validação do replay NMEA](validacao-replay-nmea-2026-09-20.md).
 
