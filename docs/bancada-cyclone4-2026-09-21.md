@@ -1,0 +1,191 @@
+# Bancada Cyclone IV — roteiro de identificação e testes
+
+## Identificação atual
+
+| Item | Registro atual | Confirmação restante |
+| --- | --- | --- |
+| Placa | ZRTECH V2.00 / DESIGNED BY WXEDA | Foto da placa e serigrafia dos conectores |
+| FPGA | EP4CE6E22C8N | Confirmado pela marcação do encapsulamento |
+| SDRAM | Winbond W9864G6KH-6, 64 Mbit | Não é usada neste experimento |
+| Clock candidato | 48 MHz, PIN_24 | Confirmar componente ligado ao clock ou medir UART |
+| Reset candidato | PIN_89, ativo baixo | Confirmar botão e polaridade |
+| UART RX candidato | PIN_87 | Confirmar conector/ponte USB–serial |
+| UART TX candidato | PIN_86 | Confirmar conector/ponte USB–serial |
+| LEDs candidatos | PIN_1, PIN_2, PIN_3, PIN_144 | Confirmar ordem e polaridade |
+
+As pinagens candidatas vêm de referências públicas que correspondem ao perfil
+ZRTech/WXEDA, não de uma leitura elétrica desta unidade. O `YXC 12.0...` deve
+ser tratado como um componente nominal de 12 MHz, provavelmente ligado ao
+conversor USB–UART. Não alterar o clock da FPGA para 12 MHz sem confirmar o
+rastreamento da trilha.
+
+## Dados que devem ser enviados antes da programação
+
+1. Foto geral da placa, frente e verso.
+2. Foto aproximada do componente marcado `YXC 12.0...` e de qualquer outro
+   oscilador próximo à FPGA.
+3. Foto dos headers com a serigrafia legível, principalmente `RX`, `TX`, `GND`,
+   `3V3`, `JTAG` e o botão de reset.
+4. Saída de:
+
+   ```bash
+   jtagconfig
+   ```
+
+5. Se o conversor serial onboard aparecer no Linux:
+
+   ```bash
+   dmesg | tail -n 30
+   ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
+   ```
+
+6. Marcações do módulo GPS: `VCC`, `GND`, `TX`, `RX`; tensão da placa do
+   breakout; e uma foto do módulo. O teste usará inicialmente somente o `TX`
+   do GPS para a entrada da FPGA.
+
+## Ligações previstas
+
+Para o teste UART com o conversor serial onboard ou CP2102:
+
+| Origem | Destino | Observação |
+| --- | --- | --- |
+| TX da fonte/USB–UART | `UART_RX` da Cyclone IV | Cruzar TX com RX |
+| `UART_TX` da Cyclone IV | RX da fonte/USB–UART | Saída para captura no PC |
+| GND da fonte | GND da placa | Obrigatório |
+| VCC lógico | Não ligar sem confirmar | Usar somente I/O de 3,3 V |
+
+Para o GPS:
+
+| GPS | Cyclone IV |
+| --- | --- |
+| `TX` | `UART_RX` |
+| `GND` | `GND` |
+| `VCC` | Alimentação especificada no breakout |
+
+O `RX` do GPS não é necessário para a primeira aquisição. Não aplicar 5 V nos
+I/Os da FPGA ou do módulo GPS.
+
+## Sequência de testes físicos
+
+### C0 — segurança e identificação elétrica
+
+- Alimentar a placa pela fonte prevista.
+- Confirmar que o USB-Blaster detecta um dispositivo Cyclone IV.
+- Confirmar GND e a tensão lógica do header com multímetro.
+- Não conectar o GPS até confirmar VCC, GND e nível do UART.
+
+Aceite: placa sem aquecimento anormal, JTAG detectado e sinais identificados.
+
+### P01 — UART autônoma (`uart_scope`)
+
+Com `make cyclone4-uart-fpga` e o SOF programado:
+
+- resetar a placa;
+- medir `UART_TX` no osciloscópio;
+- conferir o byte periódico `0x55`;
+- verificar 9600 baud, 8N1 e aproximadamente `104,17 µs` por bit se o clock
+  for 48 MHz;
+- verificar quadro de aproximadamente `1,042 ms` e período de repetição de
+  aproximadamente `100 ms`.
+
+Se a marcação `YXC 12.0...` fosse erroneamente o clock usado pelo FPGA, um
+bitstream parametrizado a 48 MHz apresentaria aproximadamente `416,7 µs` por
+bit. Esse resultado indica clock efetivo de 12 MHz ou pinagem incorreta e deve
+interromper a sequência até a causa ser resolvida.
+
+### P02 — loopback da UART autônoma
+
+Conectar `UART_TX` a `UART_RX` com jumper e resetar. O LED de recepção deve
+indicar o `0x55` recebido e o indicador de erro deve permanecer inativo.
+
+Aceite: TX observado, RX observado, sem erro de framing e três repetições após
+reset.
+
+### P03/P04 — baseline
+
+1. Compilar e programar `build/cyclone4/baseline/uart_baseline.sof`.
+2. Enviar `55 A5 00 FF 3C` por uma fonte UART independente a 9600/8N1.
+3. Capturar a saída no PC e, se possível, medir simultaneamente RX/TX no
+   osciloscópio.
+4. Fazer loopback externo e repetir três vezes.
+
+Aceite: os cinco bytes saem na mesma ordem, sem framing error/overflow e com
+forma de onda 8N1 correta.
+
+### P05/P06 — secure
+
+1. Criar um contexto privado novo para a captura.
+2. Compilar com `CONTEXT_FILE` e programar
+   `build/cyclone4/secure/uart_secure.sof`.
+3. Enviar exatamente os mesmos bytes do baseline.
+4. Capturar o ciphertext, decifrar no PC e comparar com a entrada.
+5. Repetir após reset e registrar o bloqueio/recarregamento do contexto.
+
+Aceite: ciphertext capturado, recuperação byte a byte, contexto registrado e
+três repetições sem divergência.
+
+### P07 — GPS sem criptografia
+
+- Alimentar o NEO-M8N conforme o breakout.
+- Conectar somente `GPS TX → UART_RX` e GND comum.
+- Capturar uma referência NMEA pelo canal independente disponível.
+- Validar com `scripts/gps_capture.py`.
+- Programar baseline e verificar retransmissão das sentenças.
+
+Aceite: sentenças completas, CRLF preservado, checksum válido, zero overflow e
+comparação byte a byte com a referência.
+
+### P08/P09 — GPS baseline e secure
+
+Executar três repetições em cada configuração. No secure, usar contexto novo,
+capturar o ciphertext e recuperar a mensagem no PC. Registrar o arquivo bruto,
+relatório, hashes, quantidade de bytes, primeira divergência e LEDs de erro.
+
+### P10 — estabilidade contínua
+
+Manter o GPS transmitindo durante uma duração registrada. Contabilizar bytes,
+sentenças, framing errors, overflow, maior nível da FIFO e primeira divergência.
+O ensaio só passa se a saída recuperada coincidir integralmente com a referência.
+
+### P11 — reset e recuperação
+
+Pressionar reset entre duas capturas e confirmar que nenhum byte da captura
+anterior é retransmitido. Depois iniciar uma captura nova com contexto novo no
+secure.
+
+## Comandos
+
+```bash
+make cyclone4-uart-fpga
+make cyclone4-baseline-fpga
+make cyclone4-secure-fpga
+
+# Exemplo seguro; o contexto deve permanecer em data/private/.
+CONTEXT_FILE=data/private/ensaio-cyclone4/contexto.json \
+  make cyclone4-secure-fpga
+```
+
+Programação JTAG, após conferir o nome exibido pelo `jtagconfig`:
+
+```bash
+quartus_pgm -c 'USB-Blaster [cabo]' -m jtag \
+  -o 'p;build/cyclone4/uart_scope/uart_scope.sof'
+```
+
+## Registro de evidência
+
+| Teste | Data/hora | Commit | SOF/hash | Instrumento/captura | Resultado |
+| --- | --- | --- | --- | --- | --- |
+| C0 |  |  |  |  |  |
+| P01 |  |  |  |  |  |
+| P02 |  |  |  |  |  |
+| P03/P04 |  |  |  |  |  |
+| P05/P06 |  |  |  |  |  |
+| P07 |  |  |  |  |  |
+| P08/P09 |  |  |  |  |  |
+| P10 |  |  |  |  |  |
+| P11 |  |  |  |  |  |
+
+Uma compilação ou uma forma de onda correta não substitui a captura serial
+comparada. Resultados físicos devem ser registrados somente depois de a placa
+ser programada e o fluxo elétrico ser observado.

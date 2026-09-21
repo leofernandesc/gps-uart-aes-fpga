@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check manuscript-check metrics fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check manuscript-check metrics cyclone4-metrics fpga baseline-fpga secure-fpga cyclone4-uart-fpga cyclone4-baseline-fpga cyclone4-secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -52,6 +52,15 @@ uart-fpga:
 de10-nano-uart-fpga:
 	bash scripts/quartus_build.sh de10_nano uart_scope
 
+cyclone4-uart-fpga:
+	bash scripts/quartus_build.sh cyclone4 uart_scope
+
+cyclone4-baseline-fpga:
+	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh cyclone4 baseline
+
+cyclone4-secure-fpga:
+	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh cyclone4 secure
+
 aes:
 	bash scripts/hdl.sh aes
 
@@ -84,6 +93,10 @@ manuscript-check:
 
 metrics:
 	python3 scripts/fpga_metrics.py --json build/de10_lite/metrics.json --markdown build/de10_lite/metrics.md
+
+cyclone4-metrics:
+	python3 scripts/fpga_metrics.py --board cyclone4 --build-root build/cyclone4 \
+		--json build/cyclone4/metrics.json --markdown build/cyclone4/metrics.md
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:

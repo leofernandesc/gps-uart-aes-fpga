@@ -35,14 +35,16 @@ def begin(qsf, output, board, design):
         inputs.add((qsf.parent / name.strip('"')).resolve())
     sources = {str(p.relative_to(ROOT)): digest(p) for p in sorted(inputs)}
     shared = {name: value for name, value in sources.items()
-              if name.startswith("rtl/") or name.startswith("fpga/de10_lite/common/")}
+              if name.startswith("rtl/") or name.startswith("fpga/de10_lite/common/")
+              or name.startswith("fpga/cyclone4/common/")}
     device = re.search(r"-name DEVICE (\S+)", contents).group(1)
     seed = int(re.search(r"-name SEED (\d+)", contents).group(1))
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     diff = subprocess.check_output(["git", "diff", "HEAD", "--", "rtl", "fpga"], cwd=ROOT)
     manifest = {
         "schema": 1, "status": "RUNNING", "board": board, "design": design,
-        "device": device, "seed": seed, "clock_hz": 50_000_000,
+        "device": device, "seed": seed,
+        "clock_hz": 50_000_000 if board == "de10_lite" else 48_000_000,
         "baud": 9600, "fifo_depth": 1024,
         "started_utc": datetime.now(timezone.utc).isoformat(),
         "commit": revision, "tracked_rtl_config_dirty": bool(diff),
@@ -96,8 +98,8 @@ def main():
     parser.add_argument("--design")
     args = parser.parse_args()
     if args.action == "begin":
-        if not args.qsf or args.board != "de10_lite" or args.design not in ("baseline", "secure"):
-            parser.error("begin requires a DE10-Lite baseline/secure QSF")
+        if not args.qsf or args.board not in ("de10_lite", "cyclone4") or args.design not in ("baseline", "secure"):
+            parser.error("begin requires a DE10-Lite or Cyclone IV baseline/secure QSF")
         begin(args.qsf, args.output, args.board, args.design)
     else:
         finish(args.output)

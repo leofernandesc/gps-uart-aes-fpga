@@ -5,23 +5,26 @@ com a data, o commit do RTL, a configuração usada, o resultado e a evidência
 correspondente. Simulação, compilação e bancada física são resultados
 diferentes e não devem ser misturados.
 
-Revisão em 20/09: a reconciliação com o remoto foi concluída, as correções de
+Revisão em 21/09: a reconciliação com o remoto foi concluída, as correções de
 área, métricas, contexto/reset e aquisição foram testadas e os resultados foram
-regenerados. A latência nominal abaixo não contém pausas artificiais; a bancada
-física e a Cyclone IV continuam pendentes.
+regenerados. Os projetos Cyclone IV foram preparados e compilados com o perfil
+candidato de 48 MHz; a programação e a confirmação elétrica da placa continuam
+pendentes. A latência nominal abaixo não contém pausas artificiais.
 
 ## Configuração fixa
 
 - Placa principal: DE10-Lite, MAX 10 `10M50DAF484C7G`.
 - Clock: 50 MHz.
-- Segundo alvo obrigatório: Cyclone IV E EP4CE6E22C8; provável 48 MHz, ainda
-  sem confirmação do oscilador e da pinagem da placa.
+- Segundo alvo obrigatório: Cyclone IV E `EP4CE6E22C8N`, placa ZRTECH/WXEDA V2.00;
+  perfil candidato de 48 MHz, com pinagem candidata registrada em
+  [`docs/bancada-cyclone4-2026-09-21.md`](bancada-cyclone4-2026-09-21.md).
 - UART: 9600 baud, 8N1.
 - Caminho baseline: `UART RX -> FIFO -> UART TX`.
 - Caminho secure: `UART RX -> FIFO -> AES-128-CTR -> UART TX`.
 - Entradas e saídas da DE10-Lite: RX em `V10` e TX em `W10`.
 - Variantes FPGA: projetos Quartus separados em `fpga/de10_lite/baseline/` e
-  `fpga/de10_lite/secure/`.
+  `fpga/de10_lite/secure/`; para a Cyclone IV, `fpga/cyclone4/uart_scope/`,
+  `fpga/cyclone4/baseline/` e `fpga/cyclone4/secure/`.
 
 O contexto fixo atualmente presente no wrapper secure é apenas para bring-up:
 
@@ -91,6 +94,9 @@ make check
 | F06 | Recursos secure | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Regenerado em 20/09** — 5.622 LE, 917 FF, 8.192 bits, 14 pinos |
 | F07 | Comparação | `secure - baseline` | Custo absoluto e percentual da inclusão do AES | **Concluído em 20/09** — tabela pós-merge abaixo |
 | F08 | Extração reprodutível | `make metrics` | JSON/Markdown gerados diretamente dos relatórios Quartus | **Concluído em 20/09** — hashes e manifests conferidos; [relatório de métricas](metricas-fpga-2026-09-20.md) |
+| F09 | UART autônoma Cyclone IV | `make cyclone4-uart-fpga` | SOF, dispositivo, clock candidato, pinagem e auditoria temporal | **Concluído em 21/09 no Quartus** — SOF gerado; programação e medição física pendentes |
+| F10 | Baseline/secure Cyclone IV | `make cyclone4-baseline-fpga` e `make cyclone4-secure-fpga` | Quatro builds comparáveis, manifests e SOFs separados | **Concluído em 21/09 no Quartus** — ambos `PASS`; bancada pendente |
+| F11 | Métricas Cyclone IV | `make cyclone4-metrics` | LE, registradores, memória, Fmax e slacks dos dois builds | **Concluído em 21/09** — baseline 302 LE/94,22 MHz; secure 5.576 LE/94,63 MHz |
 
 Os relatórios de F01–F07 devem ficar em `build/` e ser resumidos em uma tabela
 do artigo. Os resultados da UART autônoma não devem ser usados como se fossem
@@ -130,6 +136,31 @@ SHA-256: 5f54cffcc5a5b8ca776b32c067896fb8971d41e3d88155c4913788303e879c89
 O Quartus 25.1 compilou as duas revisões sem erros. Os avisos do fit ficam
 preservados nos logs; incluem o aviso de requisitos elétricos dos pinos de
 3,3 V e a mensagem de licença LogicLock. Eles não produziram violação temporal.
+
+### Resultado dos builds Cyclone IV — 21/09/2026
+
+Perfil compilado: ZRTECH/WXEDA V2.00, `EP4CE6E22C8N`, clock candidato de
+48 MHz, 9600/8N1. Os números abaixo são pós-fit e não representam medição de
+bancada.
+
+| Métrica pós-fit | Baseline | Secure | Diferença secure − baseline |
+| --- | ---: | ---: | ---: |
+| Elementos lógicos | 302 | 5.576 | +5.274 (+1.746,4%) |
+| Registradores | 192 | 892 | +700 (+364,6%) |
+| Memória | 8.192 bits | 8.192 bits | 0 |
+| Fmax mínima nos três cantos | 94,22 MHz | 94,63 MHz | +0,41 MHz |
+
+Os três SOFs estão em `build/cyclone4/` (diretório local e ignorado pelo Git):
+
+```text
+build/cyclone4/uart_scope/uart_scope.sof
+build/cyclone4/baseline/uart_baseline.sof
+build/cyclone4/secure/uart_secure.sof
+```
+
+Antes de conectar GPS ou fonte serial externa, executar C0 e P01 conforme o
+[roteiro da bancada Cyclone IV](bancada-cyclone4-2026-09-21.md). Com 48 MHz,
+o período esperado de cada bit em 9600 baud é aproximadamente `104,17 µs`.
 
 ## Testes físicos — DE10-Lite e Cyclone IV
 
@@ -215,7 +246,8 @@ Quando o NEO-M8N estiver disponível:
 4. Conectar GPS TX ao `V10`.
 5. Confirmar que o LED de recepção alterna sem framing error.
 
-**Situação: pendente — GPS ainda não disponível.**
+**Situação: pendente — módulo disponível; alimentação, referência serial e
+conexão física ainda não foram registrados.**
 
 ### P08 — GPS no baseline
 
@@ -256,10 +288,17 @@ Repetir um ensaio após pressionar KEY0, confirmando que:
 
 ## Testes obrigatórios da Cyclone IV
 
-O dispositivo é EP4CE6E22C8. Confirmar modelo da placa, clock e pinagem,
-adequar a área do secure e repetir F01–F07 e P03–P11 em dois projetos separados:
-`cyclone4/baseline` e `cyclone4/secure`. Não programar pinagem ou clock
-hipotéticos. O fit exploratório reprovado por área não conclui nenhum desses testes.
+A placa disponível é a ZRTECH/WXEDA V2.00 com `EP4CE6E22C8N`. O perfil de
+48 MHz e os pinos candidatos estão documentados em
+[`bancada-cyclone4-2026-09-21.md`](bancada-cyclone4-2026-09-21.md). Os builds
+`uart_scope`, `baseline` e `secure` já passaram no Quartus e geraram SOF, mas
+isso não conclui nenhum teste físico.
+
+Executar C0/P01/P02 primeiro. Só depois de confirmar JTAG, alimentação, pinagem
+e aproximadamente `104,17 µs` por bit em `uart_scope` executar P03–P11 nos
+projetos `cyclone4/baseline` e `cyclone4/secure`. Se a medição indicar cerca de
+`416,7 µs`, interromper e revisar o clock/pinagem antes de continuar. Não
+conectar o GPS enquanto a tensão lógica e o GND não forem confirmados.
 
 ## Diagnósticos da revisão — 20/09/2026
 
@@ -292,12 +331,12 @@ Evidência:
 Observações:
 ```
 
-Última atualização: 20/09/2026. Próximo registro esperado: programação e
-ensaio físico dos projetos `baseline` e `secure` da DE10-Lite e, quando
-confirmados clock/pinos, repetição equivalente na Cyclone IV; a captura GPS
+Última atualização: 21/09/2026. Próximo registro esperado: programação do
+`uart_scope` Cyclone IV, medição do bit time e execução de C0/P01/P02. Depois,
+programar os projetos `baseline` e `secure` nas duas plataformas; a captura GPS
 deverá passar pelo S20 antes da comparação.
 
-## Execuções registradas em 18–20/09/2026
+## Execuções registradas em 18–21/09/2026
 
 | Comando | Resultado | Observação |
 | --- | --- | --- |
@@ -311,6 +350,9 @@ deverá passar pelo S20 antes da comparação.
 | `make pc` | **Passou em 20/09** | 31 testes, incluindo captura, comparação, contexto, replay, métricas e validação NMEA bruta |
 | `make gps-capture-check` | **Pronto em 20/09** | Requer `GPS_CAPTURE=...`; valida um arquivo real quando a captura estiver disponível |
 | `make check` | **Passou em 20/09** | Código 0; 27 simulações, nove configurações de lint, estrutura e 31 testes Python |
+| `make cyclone4-uart-fpga` | **Passou em 21/09** | SOF `build/cyclone4/uart_scope/uart_scope.sof`; programação física pendente |
+| `make cyclone4-baseline-fpga` / `make cyclone4-secure-fpga` | **Passou em 21/09** | SOFs e manifests `PASS`; alvo `EP4CE6E22C8`, clock candidato de 48 MHz |
+| `make cyclone4-metrics` | **Passou em 21/09** | Baseline 302 LE/94,22 MHz; secure 5.576 LE/94,63 MHz; sem evidência física |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
 O erro de espaço registrado na execução histórica de `make uart` ocorreu ao

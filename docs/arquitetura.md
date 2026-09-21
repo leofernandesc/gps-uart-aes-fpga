@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 20/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 21/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -18,6 +18,9 @@ branches temporárias servem para desenvolver e revisar alterações.
 | `make fpga` | `de10_lite_uart_top` → ponte → RX, FIFO, TX | `build/quartus/uart_bridge.sof` |
 | `make baseline-fpga` | `de10_lite_uart_baseline_top` → wrapper comum → `uart_ctr_bridge(ENABLE_AES=0)` | `build/de10_lite/baseline/uart_baseline.sof` |
 | `make secure-fpga` | `de10_lite_uart_secure_top` → wrapper comum → `uart_ctr_bridge(ENABLE_AES=1)` | `build/de10_lite/secure/uart_secure.sof` |
+| `make cyclone4-uart-fpga` | `cyclone4_uart_scope_top` → UART autônoma | `build/cyclone4/uart_scope/uart_scope.sof` |
+| `make cyclone4-baseline-fpga` | `cyclone4_uart_baseline_top` → wrapper comum → `uart_ctr_bridge(ENABLE_AES=0)` | `build/cyclone4/baseline/uart_baseline.sof` |
+| `make cyclone4-secure-fpga` | `cyclone4_uart_secure_top` → wrapper comum → `uart_ctr_bridge(ENABLE_AES=1)` | `build/cyclone4/secure/uart_secure.sof` |
 | `make aes-fpga` | AES e reset, com portas virtuais | `build/quartus_aes/`, somente análise |
 | `make integration` | `uart_ctr_bridge`, com e sem AES | Simulação serial, lint, estrutura e comparação no PC |
 | `make pc` | Gravador/comparador Linux | Testes de software com porta virtual |
@@ -79,12 +82,13 @@ compara arquivos. Não há configuração em tempo de execução.
 | Placa | Baseline integrado | Secure integrado | Clock |
 | --- | --- | --- | --- |
 | DE10-Lite / MAX 10 10M50DAF484C7G | Build concluído | Build concluído | 50 MHz |
-| Cyclone IV E / EP4CE6E22C8 | Pendente da configuração da placa | Redução de área pendente; fit exploratório falhou | Provável 48 MHz; confirmar |
+| Cyclone IV E / EP4CE6E22C8N, ZRTECH/WXEDA V2.00 | Build concluído; programação pendente | Build concluído; programação pendente | Perfil candidato de 48 MHz; confirmar no P01 |
 
 As quatro configurações são obrigatórias. A [revisão de 20/09](revisao-completa-2026-09-20.md)
-identificou que o secure existente excede a capacidade do EP4CE6. A otimização
-deve preservar o RTL comum; depois, atualizar recursos e timing de ambas as
-plataformas. A arquitetura do caminho de dados permanece a mesma.
+identificou que o secure existente excedia a capacidade do EP4CE6; a otimização
+do RTL comum foi aplicada e os dois builds Cyclone IV agora passam no fit e no
+timing. A arquitetura do caminho de dados permanece a mesma. Os resultados
+Quartus ainda não são evidência de programação ou funcionamento elétrico.
 
 Dentro de cada placa, ambos os builds terão a mesma FIFO, interfaces,
 instrumentação, clock e restrições. O AES estará ausente por
@@ -92,8 +96,10 @@ elaboração no baseline, não apenas desativado por um switch. A ponte atual e
 o gerador para osciloscópio são testes preparatórios, não esse comparador final.
 
 Os projetos da DE10-Lite estão em `fpga/de10_lite/baseline/` e
-`fpga/de10_lite/secure/`, com saídas independentes em
-`build/de10_lite/<configuracao>/`. Reutilizar o RTL, evitando cópias por placa.
+`fpga/de10_lite/secure/`; os da Cyclone IV estão em
+`fpga/cyclone4/uart_scope/`, `fpga/cyclone4/baseline/` e
+`fpga/cyclone4/secure/`, com saídas independentes em
+`build/<placa>/<configuracao>/`. Reutilizar o RTL, evitando cópias por placa.
 Dados privados e coordenadas reais ficam fora do Git.
 
 ## Clocks e comparação de desempenho
@@ -101,7 +107,10 @@ Dados privados e coordenadas reais ficam fora do Git.
 RX/TX usam contadores locais no clock do sistema. A ponte aceita `CLK_FREQ` e
 `BAUD_RATE` como parâmetros de elaboração e calcula `CLKS_PER_BIT`. A DE10-Lite
 declara 50.000.000/9.600 explicitamente: 5.208 ciclos por bit, sem clock gerado.
-A frequência de uma placa Cyclone IV só será definida após consultar seu manual.
+O perfil Cyclone IV usa 48.000.000/9.600: 5.000 ciclos por bit, sem clock
+gerado. Esse é o valor de compilação a ser confirmado no P01 pela medição de
+aproximadamente `104,17 µs` por bit; o `create_clock` do SDC não cria clock no
+hardware.
 
 50 MHz é o clock de operação da DE10-Lite, não a frequência máxima da FPGA.
 Fmax é uma estimativa temporal de um circuito específico no dispositivo. Um

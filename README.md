@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 20/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 21/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -41,8 +41,9 @@ implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_FILE` para gerar esse pacote privado a partir do JSON. O valor padrão
 continua sendo apenas o contexto de bring-up. A captura GPS e os ensaios físicos
 integrados continuam pendentes. A comparação exige também a Cyclone IV E
-EP4CE6E22C8; modelo da placa, oscilador e pinagem ainda precisam de confirmação.
-Os 48 MHz são uma hipótese, não uma configuração de bancada aprovada.
+`EP4CE6E22C8N`; a placa foi identificada e o perfil de 48 MHz/pinagem já foi
+preparado, mas a aprovação da bancada depende de JTAG, níveis elétricos e da
+medição do bit time no `uart_scope`.
 
 A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
 de área no secure anterior. O AES agora calcula chaves durante as rodadas,
@@ -52,7 +53,8 @@ capacidade EP4CE6 passaram; os resultados estão em
 [validação das correções](docs/validacao-correcoes-2026-09-20.md). Após o
 primeiro provisionamento, um reset não rearma o mesmo contexto CTR: é preciso
 programar novamente o FPGA antes de um novo ensaio.
-O GPS e os ensaios físicos integrados continuam pendentes.
+O GPS está disponível; a aquisição física e os ensaios integrados continuam
+pendentes.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
@@ -61,12 +63,19 @@ estão em [relatório da bancada](docs/bancada-de10-lite-2026-09-18.md). Os tops
 integrados baseline/secure foram separados em projetos próprios e já foram
 compilados; ainda precisam ser programados e validados fisicamente.
 
+Em 21/09, a Cyclone IV foi identificada como a placa ZRTECH/WXEDA V2.00 com
+FPGA `EP4CE6E22C8N`. Foram preparados e compilados `uart_scope`, baseline e
+secure com perfil candidato de 48 MHz, 9600/8N1 e pinagem registrada em
+[`docs/bancada-cyclone4-2026-09-21.md`](docs/bancada-cyclone4-2026-09-21.md).
+Os SOFs ainda precisam ser programados e verificados na bancada; os resultados
+Quartus não substituem a medição do bit time.
+
 ## Configuração do protótipo
 
 | Item | Decisão |
 | --- | --- |
 | Placa | DE10-Lite, clock de 50 MHz |
-| Segundo alvo | Cyclone IV E EP4CE6E22C8; placa/pinagem pendentes, oscilador provável de 48 MHz |
+| Segundo alvo | Cyclone IV E `EP4CE6E22C8N`, ZRTECH/WXEDA V2.00; perfil candidato de 48 MHz |
 | GPS | NEO-M8N-010; VCC de 3,3 V; conferir conector da placa de suporte na bancada |
 | Serial | 9600 baud, 8N1, sem seleção de taxa em execução |
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
@@ -125,6 +134,10 @@ make gps-capture-check GPS_CAPTURE=arquivo.bin # Valida uma captura NMEA bruta
 make manuscript-check # Confere métricas e limitações declaradas nos manuscritos
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
+make cyclone4-uart-fpga     # SOF UART autônoma Cyclone IV
+make cyclone4-baseline-fpga # SOF Cyclone IV sem AES
+make cyclone4-secure-fpga   # SOF Cyclone IV com AES-128-CTR
+make cyclone4-metrics       # métricas pós-fit Cyclone IV
 # Exemplo de contexto privado aplicado ao build:
 # CONTEXT_FILE=data/private/ensaio01/contexto.json make secure-fpga
 ```
@@ -205,7 +218,7 @@ fpga/de10_lite/uart_scope/   UART autônoma para osciloscópio e loopback por ju
 fpga/de10_lite/common/       wrapper comum e instrumentação dos tops integrados
 fpga/de10_lite/baseline/     projeto Quartus UART + FIFO sem AES
 fpga/de10_lite/secure/       projeto Quartus UART + FIFO + AES-CTR
-fpga/cyclone4/              dados necessários para criar o segundo alvo
+fpga/cyclone4/              wrappers, QSF/SDC e roteiro do alvo Cyclone IV
 fpga/aes_analysis/           análise isolada do AES, sem pinagem de bancada
 tb/                         fontes seriais e verificadores independentes
 scripts/                    execução reproduzível dos testes e checagens
@@ -241,6 +254,8 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação das correções sem hardware](docs/validacao-correcoes-2026-09-20.md)
 - [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
+- [Roteiro de bancada Cyclone IV](docs/bancada-cyclone4-2026-09-21.md)
+- [Alvo Cyclone IV e perfil de compilação](fpga/cyclone4/README.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
 - [Rascunho do manuscrito BTSym em português](docs/manuscrito-btsym-rascunho-pt.md)
 - [Validação CTR e conferência no PC](docs/validacao-ctr-2026-09-10.md)

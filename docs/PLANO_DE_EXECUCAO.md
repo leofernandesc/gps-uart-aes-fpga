@@ -1,6 +1,6 @@
 # Plano de execução e colaboração
 
-Atualizado em 20/09/2026. O [cronograma](cronograma.md) registra o andamento e
+Atualizado em 21/09/2026. O [cronograma](cronograma.md) registra o andamento e
 as evidências; este plano detalha as entregas e como aceitá-las.
 A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
 materiais e datas em quatro telas.
@@ -13,7 +13,7 @@ comparar o custo da cifra em **MAX 10 e Cyclone IV**, com o mesmo RTL.
 | Plataforma | Sem cifra | Com cifra | Clock |
 | --- | --- | --- | --- |
 | DE10-Lite / MAX 10 | UART + FIFO | Mesmo sistema + AES-CTR | 50 MHz |
-| Cyclone IV E / EP4CE6E22C8 | UART + FIFO | Mesmo sistema + AES-CTR | Provável 48 MHz; confirmar oscilador |
+| Cyclone IV E / EP4CE6E22C8N, ZRTECH/WXEDA V2.00 | UART + FIFO | Mesmo sistema + AES-CTR | Perfil candidato de 48 MHz; confirmar no P01 |
 
 UART fixa em 9600/8N1, FIFO de 1.024 bytes, AES iterativo próprio e decifragem
 independente no PC. AES-CTR oferece confidencialidade, sem autenticação.
@@ -21,15 +21,16 @@ A [arquitetura detalhada](arquitetura.md) especifica o fluxo e as fronteiras.
 
 As duas placas permanecem na `main`. O código de UART/FIFO/AES/CTR é único;
 cada alvo tem wrapper, QSF/SDC e saídas próprias. Usar branches temporárias para
-suporte e integração. Os dois builds da DE10-Lite já possuem projetos próprios
-e foram compilados; os dois builds da Cyclone IV dependem da identificação da
-placa.
+suporte e integração. Os dois builds da DE10-Lite e os três alvos Cyclone IV
+(`uart_scope`, baseline e secure) possuem projetos próprios e foram compilados;
+a programação e a confirmação elétrica da Cyclone IV continuam pendentes.
 
 As duas plataformas são obrigatórias. A [revisão completa de 20/09](revisao-completa-2026-09-20.md)
 identificou excesso de área no secure anterior. A otimização do AES comum
-passou nos testes e no fit exploratório do EP4CE6. Consolidar agora métricas,
-captura e os dois alvos antes dos ensaios finais. A hipótese de 48 MHz não autoriza gerar SOF
-sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
+passou nos testes e no fit exploratório do EP4CE6. Os projetos de bancada com
+clock candidato de 48 MHz agora estão preparados e passaram no Quartus. Isso
+não substitui confirmar oscilador, pinos, bancos, JTAG e período do TX antes de
+conectar sinais externos. O prazo até 25/09 continua concentrado na bancada.
 
 ## Estado atual
 
@@ -56,12 +57,16 @@ sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
 - Tops baseline/secure da DE10-Lite compilados com recursos e timing registrados.
 - Tops parametrizados para substituir contexto de elaboração; `CONTEXT_FILE` gera
   o pacote privado usado pelos builds Quartus.
-- Sem GPS físico; geração/registro persistente de contexto no PC concluídos.
+- NEO-M8N disponível; geração/registro persistente de contexto no PC concluídos,
+  mas a aquisição física ainda não foi registrada.
 - Provisionamento estático no wrapper/bitstream concluído; configuração em tempo
-  de execução, GPS físico e Cyclone IV permanecem pendentes.
-- Cyclone IV definida como EP4CE6E22C8; faltam modelo da placa, oscilador e pinagem.
-- ESP32 disponível; dois adaptadores CP2102 são recomendados para captura dupla,
-  com lógica de 3,3 V confirmada. A compra/disponibilidade não está confirmada.
+  de execução e aquisição GPS física permanecem pendentes.
+- Cyclone IV identificada como `EP4CE6E22C8N` na placa ZRTECH/WXEDA V2.00.
+  O perfil de 48 MHz e os pinos candidatos foram preparados; C0/P01/P02 ainda
+  precisam ser executados na placa.
+- ESP32 disponível; dois adaptadores CP2102 podem ser usados para captura dupla,
+  com lógica de 3,3 V. A interface física ainda deve ser escolhida e registrada
+  no ensaio.
 - O replay nominal sem pausas artificiais foi medido nos dois modos: 80 ns de
   RX válido até início do TX, 1.041.680 ns até o fim do TX e 989.643 ns do
   início do quadro de entrada ao início do TX.
@@ -89,15 +94,15 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
 | 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper registrados |
-| 20–21/09 | Identificação Cyclone IV | EP4CE6 definido; confirmar placa, clock e pinagem; etapa de 16–17/09 atrasada |
-| 20–21/09 | Adequação e revisão | Reduzir área do AES comum; corrigir métricas, validação e início das capturas |
+| 20–21/09 | Identificação Cyclone IV | Placa ZRTECH/WXEDA V2.00 e `EP4CE6E22C8N` identificadas; confirmar clock/pinagem no P01 |
+| 20–21/09 | Adequação e revisão | Wrappers, QSF/SDC e builds Cyclone IV preparados; métricas comparáveis aprovadas |
 | 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
 | 17/09 | Contexto / preparação FPGA | Estrutura do wrapper e contexto de bring-up |
-| 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal; Cyclone pendente |
+| 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal |
 | 19/09 | Contexto / registro no PC | Gerador privado, registro persistente e wrapper parametrizado; `make check` aprovado |
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao RTL/PC e validador de captura bruta pronto; GPS físico continua pendente |
-| 21/09 | Preparação física | Confirmar Cyclone IV, pinagem, clock, JTAG, alimentação e UART isolada nas duas plataformas |
+| 21/09 | Preparação física | SOFs das duas plataformas preparados; executar C0/P01/P02 e confirmar pinagem, clock, JTAG e alimentação |
 | 22/09 | Baseline físico | P03/P04 nas duas plataformas: bytes conhecidos, waveform, loopback e comparação no PC |
 | 23/09 | Secure físico | P05/P06 nas duas plataformas: ciphertext, decifragem, latência e reset/contexto |
 | 24/09 | GPS físico | P07–P09 nos quatro casos e início da estabilidade contínua P10 |
@@ -136,9 +141,10 @@ Não é necessário USB–UART para observar o TX desse gerador. Para comparaç�
 fluxos no PC, prever dois canais de captura serial: saída da FPGA e referência
 GPS; podem usar USB–UART ou microcontrolador com ponte validada.
 
-Na Cyclone IV, preencher [dados do alvo](../fpga/cyclone4/README.md), criar
-wrapper/QSF/SDC somente com a identificação confirmada e repetir a verificação
-UART. A compilação de exemplo usada na instalação do pacote não define essa placa.
+Na Cyclone IV, consultar os [dados do alvo](../fpga/cyclone4/README.md) e o
+[roteiro de bancada](bancada-cyclone4-2026-09-21.md). Os wrappers/QSF/SDC e o
+`uart_scope` já estão preparados com o perfil candidato; a compilação passou,
+mas a programação só deve ocorrer depois de confirmar JTAG, I/O e alimentação.
 
 ## 2. Integração do fluxo por byte — 16–17/09
 
@@ -194,7 +200,7 @@ Aceite: nenhuma reutilização acidental de contexto, comparação do PC aprovad
 em fluxo vindo da simulação e build privado reproduzível. A programação do
 bitstream e a comparação física ainda dependem da bancada.
 
-## 4. Builds comparáveis — DE10-Lite em 18/09; Cyclone IV pendente
+## 4. Builds comparáveis — DE10-Lite e Cyclone IV preparados em 21/09
 
 Os projetos seguem `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`; saídas em
 `build/<placa>/<configuracao>/`. Cada projeto seleciona suas fontes e top,
@@ -212,13 +218,19 @@ sem precisar excluir outros módulos do repositório.
 Resultado DE10-Lite: baseline e secure compilados no commit reconciliado, com
 timing positivo. O baseline usou 347 LE/216 registradores/8.192 bits de memória
 e Fmax mínima de 123,00 MHz; o secure usou 5.622 LE/917 registradores/8.192 bits
-e Fmax mínima de 98,23 MHz. Os dois operam a 50 MHz sem violação. A matriz
-completa continua pendente até confirmar a Cyclone IV; não apresentar esse
-resultado parcial como quatro builds concluídos.
+e Fmax mínima de 98,23 MHz. Os dois operam a 50 MHz sem violação.
+
+Resultado Cyclone IV: `make cyclone4-baseline-fpga` e
+`make cyclone4-secure-fpga` passaram no `EP4CE6E22C8`, usando o perfil candidato
+de 48 MHz. O baseline usou 302 LE/192 registradores/8.192 bits e Fmax mínima
+de 94,22 MHz; o secure usou 5.576 LE/892 registradores/8.192 bits e Fmax
+mínima de 94,63 MHz. O `uart_scope` também gerou SOF. Esses quatro builds
+estão prontos para programação, mas a matriz física só será concluída após
+JTAG, pinagem, clock e P03–P11 serem observados na bancada.
 
 ## 5. GPS real e experimentos — 21–25/09
 
-Enquanto a placa e o módulo GPS não estão disponíveis, o fluxo de aplicação usa
+Enquanto a aquisição física não for registrada, o fluxo de aplicação usa
 `reference/gps/neo-m8n-nmea-sample.txt`. O script `scripts/gps_fixture.py`
 confere ASCII, checksum NMEA e o limite de 82 caracteres e transforma cada
 linha em uma transmissão CRLF. Esse replay é consumido pelo mesmo vetor usado
@@ -301,6 +313,10 @@ make uart-fpga     # SOF UART autônoma DE10-Lite
 make fpga          # ponte UART + FIFO DE10-Lite
 make baseline-fpga # build integrado sem AES na DE10-Lite
 make secure-fpga   # build integrado com AES-128-CTR na DE10-Lite
+make cyclone4-uart-fpga     # SOF UART autônoma Cyclone IV
+make cyclone4-baseline-fpga # build integrado sem AES na Cyclone IV
+make cyclone4-secure-fpga   # build integrado com AES-128-CTR na Cyclone IV
+make cyclone4-metrics       # métricas pós-fit dos dois builds Cyclone IV
 make aes
 make ctr
 make integration

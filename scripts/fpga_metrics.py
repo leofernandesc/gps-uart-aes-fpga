@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract comparable DE10-Lite baseline/secure metrics from Quartus reports."""
+"""Extract comparable baseline/secure metrics from Quartus reports."""
 import argparse
 import json
 import math
@@ -94,8 +94,9 @@ def _timing_metrics(path: Path) -> dict[str, object]:
     }
 
 
-def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT) -> dict[str, object]:
-    result: dict[str, object] = {"build_root": str(build_root), "designs": {}}
+def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT,
+            board: str = "de10_lite") -> dict[str, object]:
+    result: dict[str, object] = {"board": board, "build_root": str(build_root), "designs": {}}
     for design in ("baseline", "secure"):
         path = build_root / design
         if not path.is_dir():
@@ -103,7 +104,7 @@ def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT) -> dict[
         if (path / "build-status.txt").read_text().strip() != BUILD_PASS:
             raise ValueError(f"{path}: build did not pass")
         provenance = verify_manifest(path, source_root=source_root)
-        if provenance["board"] != "de10_lite" or provenance["design"] != design:
+        if provenance["board"] != board or provenance["design"] != design:
             raise ValueError(f"{path}: wrong build target in manifest")
         metrics = _fit_metrics(path)
         metrics.update(_timing_metrics(path))
@@ -134,10 +135,12 @@ def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT) -> dict[
 
 
 def markdown(result: dict[str, object]) -> str:
+    board = result["board"]
+    board_label = {"de10_lite": "DE10-Lite", "cyclone4": "Cyclone IV"}.get(board, board)
     designs = result["designs"]
     comparison = result["comparison"]
     lines = [
-        "# Métricas FPGA — DE10-Lite",
+        f"# Métricas FPGA — {board_label}",
         "",
         "Relatórios pós-fit aprovados, com cobertura temporal completa e hashes conferidos; não são medições de bancada.",
         "",
@@ -158,7 +161,7 @@ def markdown(result: dict[str, object]) -> str:
         f"- Registradores: +{comparison['registers_delta']:,} ({comparison['registers_delta_pct']:.2f}%).",
         f"- Fmax: {comparison['fmax_delta_mhz']:.2f} MHz ({comparison['fmax_delta_pct']:.2f}%).",
         "",
-        "O clock de operação continua sendo 50 MHz nos dois projetos; Fmax é a margem estimada pelo Quartus.",
+        f"O clock de operação deste alvo é {designs['baseline']['provenance']['clock_hz'] / 1_000_000:.0f} MHz nos dois projetos; Fmax é a margem estimada pelo Quartus.",
         "O JSON acompanha revisão, estado das fontes, seed e hashes de entradas/artefatos de cada build.",
         "",
     ]
@@ -167,11 +170,12 @@ def markdown(result: dict[str, object]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--board", choices=("de10_lite", "cyclone4"), default="de10_lite")
     parser.add_argument("--build-root", type=Path, default=DEFAULT_BUILD)
     parser.add_argument("--json", type=Path)
     parser.add_argument("--markdown", type=Path)
     args = parser.parse_args()
-    result = collect(args.build_root.resolve())
+    result = collect(args.build_root.resolve(), board=args.board)
     serialized = json.dumps(result, indent=2) + "\n"
     if args.json:
         args.json.write_text(serialized, encoding="utf-8")

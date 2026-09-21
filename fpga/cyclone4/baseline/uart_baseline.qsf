@@ -1,0 +1,49 @@
+# ZRTech/WXEDA V2.00 candidate profile for EP4CE6E22C8N.
+# Confirm the oscillator marking and connector wiring before programming.
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE6E22C8
+set_global_assignment -name TOP_LEVEL_ENTITY cyclone4_uart_baseline_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ../../../build/cyclone4/baseline
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+set_global_assignment -name SEED 1
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/reset_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/sync_fifo.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes_sbox.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes_sub_shift.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes_mix_columns.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes128_next_key.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/aes/aes128_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/ctr/aes128_ctr_mask.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/ctr/aes128_ctr_stream.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/bridge/uart_ctr_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../fpga/de10_lite/common/de10_lite_uart_ctr_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../build/cyclone4/baseline/context_params.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../common/cyclone4_uart_ctr_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE cyclone4_uart_baseline_top.sv
+set_global_assignment -name SDC_FILE uart_baseline.sdc
+
+# Candidate map for the matching ZRTech/WXEDA V2.00 board.
+set_location_assignment PIN_24 -to CLOCK_48
+set_location_assignment PIN_89 -to RESET_N
+set_location_assignment PIN_87 -to UART_RX
+set_location_assignment PIN_86 -to UART_TX
+set_location_assignment PIN_1 -to LED[0]
+set_location_assignment PIN_2 -to LED[1]
+set_location_assignment PIN_3 -to LED[2]
+set_location_assignment PIN_144 -to LED[3]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK_48
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to RESET_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_TX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LED[*]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to UART_TX
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to LED[*]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to UART_RX
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
