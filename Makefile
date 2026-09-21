@@ -55,7 +55,7 @@ de10-nano-uart-fpga:
 cyclone4-uart-fpga:
 	bash scripts/quartus_build.sh cyclone4 uart_scope
 
-# UART scope test with TX routed to the accessible J3 PIN_125.
+# UART scope test with TX/RX routed to accessible J3 PIN_100/PIN_103.
 cyclone4-j3-uart-fpga:
 	bash scripts/quartus_build.sh cyclone4 j3_scope
 
