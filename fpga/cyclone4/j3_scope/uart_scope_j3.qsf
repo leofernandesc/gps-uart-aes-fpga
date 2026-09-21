@@ -1,6 +1,7 @@
 # J3 bench variant for the ZRTech/WXEDA EP4CE6E22C8N board.
-# UART_TX is intentionally routed to PIN_100, an accessible J3 sync pin
-# identified by the user, for oscilloscope validation. Do not connect VGA.
+# UART_TX and UART_RX are intentionally routed to accessible J3 sync pins
+# identified by the user, for oscilloscope and loopback validation.
+# Do not connect VGA during this bench test.
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE6E22C8
 set_global_assignment -name TOP_LEVEL_ENTITY cyclone4_uart_scope_top
@@ -18,7 +19,7 @@ set_global_assignment -name SDC_FILE uart_scope_j3.sdc
 
 set_location_assignment PIN_24 -to CLOCK_48
 set_location_assignment PIN_89 -to RESET_N
-set_location_assignment PIN_87 -to UART_RX
+set_location_assignment PIN_103 -to UART_RX
 set_location_assignment PIN_100 -to UART_TX
 set_location_assignment PIN_1 -to LED[0]
 set_location_assignment PIN_2 -to LED[1]

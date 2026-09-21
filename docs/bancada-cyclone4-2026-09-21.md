@@ -114,7 +114,7 @@ A variante foi então alterada para:
 
 ```text
 UART_TX -> PIN_100 do J3
-UART_RX -> PIN_87
+UART_RX -> PIN_103 do J3
 ```
 
 O SOF foi recompilado, passou na auditoria temporal e foi programado com
@@ -132,6 +132,11 @@ O intervalo de `904 µs` não inclui o final do bit de parada, que permanece no
 mesmo nível lógico do repouso. O ensaio valida a temporização e o nível
 elétrico do TX no `PIN_100`. Não conectar monitor ou cabo VGA durante esse
 ensaio; usar somente o osciloscópio e GND.
+
+Para o próximo ensaio, o loopback da variante `j3_scope` será feito com um
+jumper entre `PIN_100` (TX) e `PIN_103` (RX). O RX deixa de depender do
+`PIN_87`, que não está acessível no header utilizado. O `PIN_101` não foi usado
+porque o Quartus o reserva como `nCEO` nessa configuração de Active Serial.
 
 ### P03/P04 — baseline
 
