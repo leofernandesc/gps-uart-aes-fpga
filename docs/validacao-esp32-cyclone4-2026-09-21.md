@@ -289,6 +289,8 @@ relatados os seguintes valores no sinal TX da FPGA:
 | Distância entre picos na visualização afastada | aproximadamente `30 µs` | ainda não representa o bit time validado |
 | Distância entre pico negativo e pico positivo na visualização aproximada | `680 ns` | provável transitório/ringing da borda |
 | Início da descida até estabilização observada | de aproximadamente `−32 ns` até `800 ns` | acomodação aproximada de `0,83 µs` |
+| Pico negativo observado | `−1,52 V` | valor preliminar; pode ser artefato de medição |
+| Pico positivo observado | `4,92 V` | valor preliminar; pode ser artefato de medição |
 | Forma geral | pico negativo, nível baixo, pico positivo e estabilização | compatível com bordas de um sinal digital medido com sonda/cabo de massa longo |
 
 Para 9600 baud com o clock de 48 MHz, o bit time esperado continua sendo
@@ -301,6 +303,16 @@ A acomodação observada de aproximadamente `0,83 µs` corresponde a cerca de
 `0,8%` do bit time de `104,17 µs`. Isoladamente, esse valor não indica perda de
 bits; ainda é necessário registrar as amplitudes mínima e máxima do transitório
 e medir o espaçamento entre cruzamentos lógicos.
+
+Os picos de `−1,52 V` e `4,92 V` não podem ser aceitos como níveis elétricos
+reais sem uma nova captura. Se forem reais, excedem os trilhos de um I/O de
+3,3 V e podem estressar a saída da FPGA e a entrada do ESP32. Como os valores
+aparecem somente na borda e o nível estável permanece correto, a primeira
+suspeita é a indutância do cabo de massa e a configuração da ponta. A bancada
+deve ser desligada antes de reposicionar a ponta; a repetição deve usar ponta
+×10, entrada de 1 MΩ, massa curta/mola de terra e, se disponível, limitador de
+banda de 20 MHz. Até essa repetição, o resultado elétrico fica classificado
+como **preliminar**.
 
 Essa observação não fecha o P04. A medição deve ser repetida com a ponta em
 ×10, acoplamento DC e o menor caminho possível de massa, preferencialmente uma

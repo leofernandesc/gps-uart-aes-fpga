@@ -172,6 +172,10 @@ uma borda na visão aproximada. Esses valores ainda não fecham o bit time: para
 `−32 ns` e a estabilização em aproximadamente `800 ns`, uma acomodação de
 `0,83 µs`. O registro orienta repetir a medida com sonda ×10 e massa curta em
 [`docs/validacao-esp32-cyclone4-2026-09-21.md`](validacao-esp32-cyclone4-2026-09-21.md).
+Também foram anotados pico negativo de `−1,52 V` e pico positivo de `4,92 V`.
+Como esses valores ultrapassam os trilhos nominais de 3,3 V, eles permanecem
+preliminares até serem repetidos com ponta ×10 e massa curta; não devem ser
+usados como resultado elétrico final do artigo.
 
 ### P03/P04 — baseline
 

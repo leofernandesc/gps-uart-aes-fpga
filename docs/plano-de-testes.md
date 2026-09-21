@@ -229,7 +229,10 @@ com o enlace externo. Na primeira observação foram vistos aproximadamente
 visão aproximada; a descida foi de cerca de `−32 ns` até a estabilização em
 `800 ns`, isto é, aproximadamente `0,83 µs` de acomodação. Esses números ainda
 não são o bit time. Repetir com ponta ×10 e massa curta, medindo as bordas
-lógicas estáveis até obter aproximadamente `104,17 µs`.
+lógicas estáveis até obter aproximadamente `104,17 µs`. Também foram observados
+picos preliminares de `−1,52 V` e `4,92 V`; como excedem os trilhos de 3,3 V,
+devem ser tratados como possível artefato da sonda até a repetição com massa
+curta.
 
 ### P05 — Secure na placa
 
