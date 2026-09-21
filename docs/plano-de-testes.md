@@ -8,9 +8,11 @@ diferentes e não devem ser misturados.
 Revisão em 21/09: a reconciliação com o remoto foi concluída, as correções de
 área, métricas, contexto/reset e aquisição foram testadas e os resultados foram
 regenerados. Na Cyclone IV, a variante de bancada foi programada e os ensaios
-físicos de TX e loopback foram aprovados com o acesso J3. A validação física
-dos caminhos baseline, secure e GPS continua pendente. A latência nominal
-abaixo não contém pausas artificiais.
+físicos de TX e loopback foram aprovados com o acesso J3. O host ESP32/ESP-IDF
+foi compilado, gravado e usado para validar o baseline por um caminho externo,
+sem jumper entre `PIN_100` e `PIN_103`, com GND comum conectado. A validação
+física do secure, a medição do baseline no osciloscópio e o GPS continuam
+pendentes. A latência nominal abaixo não contém pausas artificiais.
 
 ## Configuração fixa
 
@@ -97,7 +99,7 @@ make check
 | F08 | Extração reprodutível | `make metrics` | JSON/Markdown gerados diretamente dos relatórios Quartus | **Concluído em 20/09** — hashes e manifests conferidos; [relatório de métricas](metricas-fpga-2026-09-20.md) |
 | F09 | UART autônoma Cyclone IV | `make cyclone4-uart-fpga` / `make cyclone4-j3-uart-fpga` | SOF, dispositivo, clock, pinagem e auditoria temporal | **P01/P02 aprovados em 21/09** — TX em `PIN_100`, RX em `PIN_103`, 48 MHz/9600 baud, loopback físico aprovado |
 | F10 | Baseline/secure Cyclone IV | `make cyclone4-baseline-fpga` e `make cyclone4-secure-fpga` | Quatro builds comparáveis, manifests e SOFs separados | **Concluído em 21/09 no Quartus** — ambos `PASS`; bancada pendente |
-| F11 | Métricas Cyclone IV | `make cyclone4-metrics` | LE, registradores, memória, Fmax e slacks dos dois builds | **Concluído em 21/09** — baseline 302 LE/94,22 MHz; secure 5.576 LE/94,63 MHz |
+| F11 | Métricas Cyclone IV | `make cyclone4-metrics` | LE, registradores, memória, Fmax e slacks dos dois builds | **Concluído em 21/09** — baseline 302 LE/105,72 MHz; secure 5.576 LE/85,76 MHz; dados em `build/cyclone4/metrics.md` |
 
 Os relatórios de F01–F07 devem ficar em `build/` e ser resumidos em uma tabela
 do artigo. Os resultados da UART autônoma não devem ser usados como se fossem
@@ -149,7 +151,7 @@ bancada.
 | Elementos lógicos | 302 | 5.576 | +5.274 (+1.746,4%) |
 | Registradores | 192 | 892 | +700 (+364,6%) |
 | Memória | 8.192 bits | 8.192 bits | 0 |
-| Fmax mínima nos três cantos | 94,22 MHz | 94,63 MHz | +0,41 MHz |
+| Fmax mínima nos três cantos | 105,72 MHz | 85,76 MHz | −19,96 MHz |
 
 Os três SOFs estão em `build/cyclone4/` (diretório local e ignorado pelo Git):
 
@@ -198,14 +200,18 @@ autônoma; não valida ainda FIFO, AES ou GPS.
 1. Compilar e programar `uart_baseline.sof`.
 2. Pressionar e soltar KEY0.
 3. Confirmar LED de configuração/atividade.
-4. Apresentar bytes por uma fonte UART em `V10`.
-5. Observar a retransmissão em `W10`.
+4. Apresentar bytes por uma fonte UART independente em J3 `PIN_103`.
+5. Observar a retransmissão em J3 `PIN_100` com o host ESP32.
 6. Registrar erros, eventos, ocupação e comportamento após reset.
 
-Sem GPS ou outra fonte serial externa, somente a configuração e o estado ocioso
-podem ser observados; o baseline não gera dados sozinho.
+No ensaio de 21/09, o ESP32 enviou `55 A5 00 FF 3C` pela GPIO17 e o monitor
+recebeu o mesmo vetor com cinco bytes. A configuração usada foi ESP32 UART2,
+9600/8N1, GPIO17→J3 `PIN_103`, J3 `PIN_100`→GPIO16 e GND comum.
 
-**Situação: pendente.**
+**Situação: aprovado para o caminho externo.** Não havia jumper entre J3
+`PIN_100` e `PIN_103`; o vetor retornou pelo enlace ESP32 → FPGA → ESP32.
+Registro completo:
+[`validacao-esp32-cyclone4-2026-09-21.md`](validacao-esp32-cyclone4-2026-09-21.md).
 
 ### P04 — Baseline no osciloscópio
 
@@ -217,7 +223,8 @@ Com o baseline recebendo uma sentença de teste, medir em `W10`:
 - vários bytes consecutivos sem quadro truncado;
 - intervalo entre RX e TX, se os dois canais estiverem disponíveis.
 
-**Situação: pendente.**
+**Situação: pendente.** Falta medir a forma de onda do baseline no osciloscópio
+com o enlace externo.
 
 ### P05 — Secure na placa
 

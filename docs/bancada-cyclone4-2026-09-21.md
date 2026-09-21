@@ -9,8 +9,8 @@
 | SDRAM | Winbond W9864G6KH-6, 64 Mbit | Não é usada neste experimento |
 | Clock candidato | 48 MHz, PIN_24 | Confirmar componente ligado ao clock ou medir UART |
 | Reset candidato | PIN_89, ativo baixo | Confirmar botão e polaridade |
-| UART RX candidato | PIN_87 | Confirmar conector/ponte USB–serial |
-| UART TX candidato | PIN_86 | Confirmar conector/ponte USB–serial |
+| UART RX da referência pública | PIN_87 | Não acessível no header usado; bancada usa PIN_103 |
+| UART TX da referência pública | PIN_86 | Não acessível no header usado; bancada usa PIN_100 |
 | LEDs candidatos | PIN_1, PIN_2, PIN_3, PIN_144 | Confirmar ordem e polaridade |
 
 As pinagens candidatas vêm de referências públicas que correspondem ao perfil
@@ -138,6 +138,32 @@ O loopback da variante `j3_scope` foi então executado com um jumper entre
 está acessível no header utilizado. O `PIN_101` não foi usado
 porque o Quartus o reserva como `nCEO` nessa configuração de Active Serial.
 
+### Registro P03 aprovado — ESP32 como fonte e capturador
+
+Em 21/09/2026, o projeto `baseline` foi programado e um ESP32 clássico foi
+usado como fonte serial e capturador, por meio do CP2102 da própria placa. O
+ESP32 foi identificado como `ESP32-D0WD-V3`, revisão 3.1, e executou o host
+ESP-IDF 6.0.2 em UART2, 9600/8N1. A ligação usada foi GPIO17/TX2 → J3
+`PIN_103`/RX, J3 `PIN_100`/TX → GPIO16/RX e GND comum.
+
+O host enviou repetidamente `55 A5 00 FF 3C` a cada 1000 ms. No monitor USB a
+sequência retornou exatamente com cinco bytes, sem divergência visível, em
+amostras desde `I (271)` até pelo menos `I (243471)`. O GND foi conectado antes
+da captura considerada válida; a observação anterior sem GND não foi usada
+como evidência.
+
+Não havia jumper entre `PIN_100` e `PIN_103` durante este ensaio. Portanto, o
+retorno observado veio pelo caminho externo ESP32 TX → FPGA RX → FPGA TX →
+ESP32 RX. O registro completo, incluindo a programação do ESP32 e a
+interpretação correta do intervalo TX–RX, está em
+[`docs/validacao-esp32-cyclone4-2026-09-21.md`](validacao-esp32-cyclone4-2026-09-21.md).
+
+O intervalo de 260–270 ms entre as linhas `TX` e `RX` do monitor não é tratado
+como latência da UART: o firmware faz uma leitura bloqueante de até 250 ms e
+imprime `TX` antes da escrita. Uma medição de latência será feita somente com
+um host/captura específico. O P04, que exige medição da forma de onda no
+osciloscópio nessa configuração, continua pendente.
+
 ### P03/P04 — baseline
 
 1. Compilar e programar `build/cyclone4/baseline/uart_baseline.sof`.
@@ -216,7 +242,8 @@ quartus_pgm -c 'USB-Blaster [cabo]' -m jtag \
 | C0 |  |  |  |  |  |
 | P01 | 21/09/2026 | `e6ea4ff` | `build/cyclone4/j3_scope/uart_scope_j3.sof` | Osciloscópio, J3 `PIN_100` | **Aprovado** — 104 µs/bit, 3,32 V |
 | P02 | 21/09/2026 | `e6ea4ff` | `build/cyclone4/j3_scope/uart_scope_j3.sof` | Jumper J3 `PIN_100` ↔ `PIN_103`, LEDs | **Aprovado** — loopback `0x55`, sem erro |
-| P03/P04 |  |  |  |  |  |
+| P03 | 21/09/2026 | `4d8b40c` | `build/cyclone4/baseline/uart_baseline.sof`, checksum `0x000BC41F` | ESP32 D0WD-V3/CP2102, ESP-IDF 6.0.2, 9600/8N1, sem jumper local | **Aprovado** — `55 A5 00 FF 3C` retornou com 5 bytes pelo caminho externo |
+| P04 | 21/09/2026 |  |  | Osciloscópio ainda não usado nesta configuração | **Pendente** — falta medir os quadros do baseline |
 | P05/P06 |  |  |  |  |  |
 | P07 |  |  |  |  |  |
 | P08/P09 |  |  |  |  |  |
