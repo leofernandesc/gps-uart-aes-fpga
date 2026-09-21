@@ -133,9 +133,9 @@ mesmo nível lógico do repouso. O ensaio valida a temporização e o nível
 elétrico do TX no `PIN_100`. Não conectar monitor ou cabo VGA durante esse
 ensaio; usar somente o osciloscópio e GND.
 
-Para o próximo ensaio, o loopback da variante `j3_scope` será feito com um
-jumper entre `PIN_100` (TX) e `PIN_103` (RX). O RX deixa de depender do
-`PIN_87`, que não está acessível no header utilizado. O `PIN_101` não foi usado
+O loopback da variante `j3_scope` foi então executado com um jumper entre
+`PIN_100` (TX) e `PIN_103` (RX). O RX deixou de depender do `PIN_87`, que não
+está acessível no header utilizado. O `PIN_101` não foi usado
 porque o Quartus o reserva como `nCEO` nessa configuração de Active Serial.
 
 ### P03/P04 — baseline
@@ -214,8 +214,8 @@ quartus_pgm -c 'USB-Blaster [cabo]' -m jtag \
 | Teste | Data/hora | Commit | SOF/hash | Instrumento/captura | Resultado |
 | --- | --- | --- | --- | --- | --- |
 | C0 |  |  |  |  |  |
-| P01 |  |  |  |  |  |
-| P02 |  |  |  |  |  |
+| P01 | 21/09/2026 | `e6ea4ff` | `build/cyclone4/j3_scope/uart_scope_j3.sof` | Osciloscópio, J3 `PIN_100` | **Aprovado** — 104 µs/bit, 3,32 V |
+| P02 | 21/09/2026 | `e6ea4ff` | `build/cyclone4/j3_scope/uart_scope_j3.sof` | Jumper J3 `PIN_100` ↔ `PIN_103`, LEDs | **Aprovado** — loopback `0x55`, sem erro |
 | P03/P04 |  |  |  |  |  |
 | P05/P06 |  |  |  |  |  |
 | P07 |  |  |  |  |  |

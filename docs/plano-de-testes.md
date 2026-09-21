@@ -7,16 +7,17 @@ diferentes e não devem ser misturados.
 
 Revisão em 21/09: a reconciliação com o remoto foi concluída, as correções de
 área, métricas, contexto/reset e aquisição foram testadas e os resultados foram
-regenerados. Os projetos Cyclone IV foram preparados e compilados com o perfil
-candidato de 48 MHz; a programação e a confirmação elétrica da placa continuam
-pendentes. A latência nominal abaixo não contém pausas artificiais.
+regenerados. Na Cyclone IV, a variante de bancada foi programada e os ensaios
+físicos de TX e loopback foram aprovados com o acesso J3. A validação física
+dos caminhos baseline, secure e GPS continua pendente. A latência nominal
+abaixo não contém pausas artificiais.
 
 ## Configuração fixa
 
 - Placa principal: DE10-Lite, MAX 10 `10M50DAF484C7G`.
 - Clock: 50 MHz.
 - Segundo alvo obrigatório: Cyclone IV E `EP4CE6E22C8N`, placa ZRTECH/WXEDA V2.00;
-  perfil candidato de 48 MHz, com pinagem candidata registrada em
+  perfil de 48 MHz, com pinagem de bancada registrada em
   [`docs/bancada-cyclone4-2026-09-21.md`](bancada-cyclone4-2026-09-21.md).
 - UART: 9600 baud, 8N1.
 - Caminho baseline: `UART RX -> FIFO -> UART TX`.
@@ -94,7 +95,7 @@ make check
 | F06 | Recursos secure | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Regenerado em 20/09** — 5.622 LE, 917 FF, 8.192 bits, 14 pinos |
 | F07 | Comparação | `secure - baseline` | Custo absoluto e percentual da inclusão do AES | **Concluído em 20/09** — tabela pós-merge abaixo |
 | F08 | Extração reprodutível | `make metrics` | JSON/Markdown gerados diretamente dos relatórios Quartus | **Concluído em 20/09** — hashes e manifests conferidos; [relatório de métricas](metricas-fpga-2026-09-20.md) |
-| F09 | UART autônoma Cyclone IV | `make cyclone4-uart-fpga` | SOF, dispositivo, clock candidato, pinagem e auditoria temporal | **Concluído em 21/09 no Quartus** — SOF gerado; programação e medição física pendentes |
+| F09 | UART autônoma Cyclone IV | `make cyclone4-uart-fpga` / `make cyclone4-j3-uart-fpga` | SOF, dispositivo, clock, pinagem e auditoria temporal | **P01/P02 aprovados em 21/09** — TX em `PIN_100`, RX em `PIN_103`, 48 MHz/9600 baud, loopback físico aprovado |
 | F10 | Baseline/secure Cyclone IV | `make cyclone4-baseline-fpga` e `make cyclone4-secure-fpga` | Quatro builds comparáveis, manifests e SOFs separados | **Concluído em 21/09 no Quartus** — ambos `PASS`; bancada pendente |
 | F11 | Métricas Cyclone IV | `make cyclone4-metrics` | LE, registradores, memória, Fmax e slacks dos dois builds | **Concluído em 21/09** — baseline 302 LE/94,22 MHz; secure 5.576 LE/94,63 MHz |
 
@@ -185,11 +186,12 @@ completa em [`bancada-de10-lite-2026-09-18.md`](bancada-de10-lite-2026-09-18.md)
 
 ### P02 — Loopback da UART autônoma
 
-TX foi ligado ao RX por jumper. O heartbeat, o início de TX, a recepção de
-`0x55` e a ausência de erro foram confirmados pelos LEDs.
+Na variante Cyclone IV `j3_scope`, TX foi ligado ao RX por jumper entre
+`PIN_100` e `PIN_103`. O heartbeat, o início de TX, a recepção de `0x55` e a
+ausência de erro foram confirmados pelos LEDs.
 
-**Resultado: concluído.** Esse ensaio valida os pinos e a UART autônoma; não
-valida ainda FIFO, AES ou GPS.
+**Resultado: concluído em 21/09/2026.** Esse ensaio valida os pinos e a UART
+autônoma; não valida ainda FIFO, AES ou GPS.
 
 ### P03 — Baseline na placa
 
