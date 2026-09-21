@@ -26,11 +26,12 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../common/cyclone4_uart_ctr_top.s
 set_global_assignment -name SYSTEMVERILOG_FILE cyclone4_uart_secure_top.sv
 set_global_assignment -name SDC_FILE uart_secure.sdc
 
-# Candidate map for the matching ZRTech/WXEDA V2.00 board.
+# Bench map for the accessible J3 header on the ZRTech/WXEDA V2.00 board.
+# TX/RX are cross-connected to an external 3.3 V UART source for physical tests.
 set_location_assignment PIN_24 -to CLOCK_48
 set_location_assignment PIN_89 -to RESET_N
-set_location_assignment PIN_87 -to UART_RX
-set_location_assignment PIN_86 -to UART_TX
+set_location_assignment PIN_103 -to UART_RX
+set_location_assignment PIN_100 -to UART_TX
 set_location_assignment PIN_1 -to LED[0]
 set_location_assignment PIN_2 -to LED[1]
 set_location_assignment PIN_3 -to LED[2]

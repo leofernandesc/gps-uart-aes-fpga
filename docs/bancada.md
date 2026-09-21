@@ -63,7 +63,7 @@ FPGA / UART TX ────────> canal A / RX (dados para o PC)
 terras compatíveis ────> GND comum
 ```
 
-Os números dos pinos do carrier M8 dependem da conferência do conector físico. O QSF
+Como alternativa aos adaptadores, o [ESP32 pode atuar como fonte e captura UART](bancada-esp32-uart.md), usando dois GPIOs de 3,3 V e o USB da própria placa. Os números dos pinos do carrier M8 dependem da conferência do conector físico. O QSF
 do primeiro teste já escolhe GPIO[0]/JP1-1 para entrada e GPIO[1]/JP1-2 para
 saída, conforme o manual da DE10-Lite. Conferir a orientação do conector na
 placa antes de ligar.
