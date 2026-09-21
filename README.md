@@ -44,7 +44,11 @@ A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
 de área no secure anterior. O AES agora calcula chaves durante as rodadas,
 sem armazenar onze chaves, e passou nos testes AES/CTR e no fit exploratório
 do EP4CE6. Isso não valida clock ou pinagem de placa. As correções na medição
-de latência, extração de métricas e captura/contexto seguem em consolidação.
+de latência, extração de métricas e captura/contexto seguem em consolidação;
+as correções sem hardware estão registradas em
+[validação das correções](docs/validacao-correcoes-2026-09-20.md). Após o
+primeiro provisionamento, um reset não rearma o mesmo contexto CTR: é preciso
+programar novamente o FPGA antes de um novo ensaio.
 Há trabalho sem placa antes da comparação final; o prazo até 25/09 está em risco.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
@@ -231,6 +235,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)
 - [Validação da captura NMEA](docs/validacao-captura-nmea-2026-09-20.md)
+- [Validação das correções sem hardware](docs/validacao-correcoes-2026-09-20.md)
 - [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)

@@ -24,6 +24,10 @@ from context import claim_capture, validate_context
 def private_file(path, binary=False):
     """Create exclusively with private permissions; never overwrite captures."""
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
     return os.fdopen(fd, "wb" if binary else "w", **({} if binary else {"encoding": "utf-8"}))
 
 

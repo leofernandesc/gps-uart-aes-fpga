@@ -61,6 +61,8 @@ def _timing_metrics(path: Path) -> dict[str, object]:
         raise ValueError(f"{path}: no fmax_corner*.rpt reports")
 
     audit = path / "timing-audit.log"
+    if not audit.is_file():
+        raise ValueError(f"{audit}: missing timing audit log")
     contents = audit.read_text(encoding="utf-8", errors="replace")
     final = re.findall(r"^PASS: ([1-9]\d*) timing corners audited$", contents, re.M)
     if len(final) != 1 or re.search(r"^Error\b|^FAIL\b", contents, re.M):

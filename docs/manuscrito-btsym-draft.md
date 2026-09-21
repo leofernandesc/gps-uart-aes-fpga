@@ -179,8 +179,8 @@ output was recovered with the independent AES-CTR context and matched the same
 | --- | ---: | ---: |
 | Replayed bytes | 309 | 309 |
 | FIFO maximum occupancy | 2 bytes | 2 bytes |
-| First RX to first TX | 169,269 cycles / 3.385 ms | 169,269 cycles / 3.385 ms |
-| First RX to last TX | 16,236,274 cycles / 324.725 ms | 16,236,274 cycles / 324.725 ms |
+| First RX to first TX | 169,269 cycles / 3.385 ms* | 169,269 cycles / 3.385 ms* |
+| First RX to last TX | 16,236,274 cycles / 324.725 ms* | 16,236,274 cycles / 324.725 ms* |
 | Byte divergences | 0 | 0 after recovery |
 | FIFO overflow | 0 | 0 |
 
@@ -188,6 +188,10 @@ The small FIFO occupancy in the production-clock replay indicates that the
 serial source, rather than the AES stage, dominates the transfer rate for this
 workload. This conclusion is limited to the tested fixed-rate RTL model and
 must be checked again with a physical GPS stream.
+
+*These latency values come from the historical stimulus with deliberate TX
+stalls. The testbench now separates the nominal replay; the replacement
+measurement must be generated in Linux before submission.*
 
 ### 4.2 FPGA post-fit comparison
 
@@ -205,8 +209,9 @@ must be checked again with a physical GPS stream.
 
 Both configurations meet the 50 MHz clock constraint in all audited corners.
 The secure variant has a substantial logic/register cost because the current
-AES implementation stores round-key state and uses an iterative round
-datapath. Its minimum Fmax remains above the selected operating frequency.
+AES implementation uses on-demand round-key expansion and an iterative round
+datapath. The post-area-reduction DE10-Lite metrics must be regenerated before
+the final comparison; the existing table is the earlier build evidence.
 
 ## 5. Discussion and limitations
 
@@ -221,7 +226,7 @@ used in RTL is a public synthetic replay and not a live NEO-M8N capture. Second,
 the integrated baseline and secure designs have been compiled but still need a
 physical DE10-Lite programming and serial-output test. Third, the Cyclone IV
 comparison is not part of the current quantitative table: the EP4CE6E22C8 is
-identified, but the secure design requires area reduction and the board clock
+identified, and an exploratory post-reduction fit passed, but the board clock
 and pinout still need confirmation. Finally, AES-CTR alone does
 not authenticate the data; an authenticated mode or a separate integrity
 mechanism would be required for a complete secure telemetry protocol.

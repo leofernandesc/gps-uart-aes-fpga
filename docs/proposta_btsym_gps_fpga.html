@@ -187,7 +187,7 @@
       </figure>
       <div class="architecture-footer">
         <table class="architecture-table" aria-label="Configurações arquiteturais"><thead><tr><th>Configuração</th><th>Fluxo</th><th>Finalidade</th></tr></thead><tbody><tr><td>Baseline</td><td><code>UART RX → FIFO → UART TX</code></td><td>Referência sem cifra</td></tr><tr><td>Secure</td><td><code>UART RX → FIFO → AES-128-CTR → UART TX</code></td><td>Confidencialidade do fluxo</td></tr></tbody></table>
-        <p class="architecture-note"><strong>Comparação:</strong> baseline e secure usam a mesma UART, FIFO e interface. A única diferença arquitetural é a inclusão do AES-128-CTR no caminho secure.</p>
+        <p class="architecture-note"><strong>Comparação:</strong> baseline e secure usam a mesma UART, FIFO e interface. A única diferença arquitetural é a inclusão do AES-128-CTR no caminho secure. O contexto estático de bring-up é carregado uma vez após a programação; um reset posterior invalida o ensaio e exige nova programação, evitando reutilização acidental do nonce.</p>
       </div>
     </section>
     <section class="slide" id="3" data-label="Materiais e testes" aria-labelledby="title-3">

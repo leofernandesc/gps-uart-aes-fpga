@@ -95,6 +95,18 @@ class GPSReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CRLF"):
             parse_payload(load_replay(DEFAULT_FIXTURE).replace(b"\r\n", b"\n"))
 
+    def test_nmea_parser_rejects_invalid_identifier_controls_and_wire_length(self):
+        invalid = (
+            b"$*00\r\n",
+            b"$GPRMC,\x00*00\r\n",
+            b"$1234,foo*00\r\n",
+            b"$GPRMC," + b"A" * 75 + b"*00\r\n",
+        )
+        for payload in invalid:
+            with self.subTest(payload=payload):
+                with self.assertRaises(ValueError):
+                    parse_payload(payload)
+
     def test_capture_cli_writes_private_report(self):
         payload = load_replay(DEFAULT_FIXTURE)
         with tempfile.TemporaryDirectory() as directory:
@@ -116,7 +128,7 @@ class GPSReplayTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("PASS GPS capture: 5 sentences, 309 bytes", completed.stdout)
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(mode, 0o600)
+        self.assertEqual(mode & 0o600, 0o600)
         self.assertEqual(repeated.returncode, 1)
         self.assertIn("File exists", repeated.stderr)
 

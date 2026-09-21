@@ -43,8 +43,11 @@ def _parse_sentence(line: str, line_number: int, max_sentence_bytes: int = 82) -
 
 def sentences(path: Path = DEFAULT_FIXTURE) -> list[str]:
     raw = path.read_bytes()
+    # Git may materialize the checked-in LF fixture as CRLF on Windows.  Treat
+    # that checkout conversion as equivalent, while still rejecting bare CR.
+    raw = raw.replace(b"\r\n", b"\n")
     if b"\r" in raw:
-        raise ValueError(f"{path}: source fixture must use one LF-delimited sentence per line")
+        raise ValueError(f"{path}: source fixture must use LF-delimited sentences")
     try:
         text = raw.decode("ascii")
     except UnicodeDecodeError as exc:

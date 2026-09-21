@@ -12,7 +12,10 @@ make metrics
 O script `scripts/fpga_metrics.py` lê os relatórios dos projetos separados
 `build/de10_lite/baseline/` e `build/de10_lite/secure/`, seleciona a menor Fmax
 dos três cantos e calcula a diferença absoluta e percentual do secure em relação
-ao baseline. Os arquivos JSON e Markdown gerados permanecem em `build/`.
+ao baseline. Desde a correção de 20/09, também exige status PASS do build,
+auditoria completa dos quatro checks em todos os cantos e um relatório Fmax por
+canto; slack negativo ou artefato incompleto é rejeitado. Os arquivos JSON e
+Markdown gerados permanecem em `build/`.
 
 ## Resultado
 

@@ -16,6 +16,12 @@ def private_report(path: Path, result: dict[str, object]) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             json.dump(result, stream, indent=2, sort_keys=True)
             stream.write("\n")
+        # Windows does not apply POSIX creation modes through os.open; keep
+        # the explicit permission intent for platforms that expose it.
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
     except Exception:
         try:
             os.close(fd)
