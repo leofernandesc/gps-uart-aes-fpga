@@ -348,10 +348,11 @@ Evidência:
 Observações:
 ```
 
-Última atualização: 21/09/2026. Próximo registro esperado: programação do
-`uart_scope` Cyclone IV, medição do bit time e execução de C0/P01/P02. Depois,
-programar os projetos `baseline` e `secure` nas duas plataformas; a captura GPS
-deverá passar pelo S20 antes da comparação.
+Última atualização: 21/09/2026. P01/P02 da Cyclone IV e P03 do baseline externo
+foram registrados. O próximo registro esperado é a repetição do P04 com ponta
+×10/massa curta e medição do bit time; depois serão executados os projetos
+`secure` nas duas plataformas. A captura GPS deverá passar pelo S20 antes da
+comparação.
 
 ## Execuções registradas em 18–21/09/2026
 
@@ -367,9 +368,9 @@ deverá passar pelo S20 antes da comparação.
 | `make pc` | **Passou em 20/09** | 31 testes, incluindo captura, comparação, contexto, replay, métricas e validação NMEA bruta |
 | `make gps-capture-check` | **Pronto em 20/09** | Requer `GPS_CAPTURE=...`; valida um arquivo real quando a captura estiver disponível |
 | `make check` | **Passou em 20/09** | Código 0; 27 simulações, nove configurações de lint, estrutura e 31 testes Python |
-| `make cyclone4-uart-fpga` | **Passou em 21/09** | SOF `build/cyclone4/uart_scope/uart_scope.sof`; programação física pendente |
+| `make cyclone4-uart-fpga` | **Passou em 21/09** | SOF `build/cyclone4/uart_scope/uart_scope.sof`; programação física e P01/P02 registrados |
 | `make cyclone4-baseline-fpga` / `make cyclone4-secure-fpga` | **Passou em 21/09** | SOFs e manifests `PASS`; alvo `EP4CE6E22C8`, clock candidato de 48 MHz |
-| `make cyclone4-metrics` | **Passou em 21/09** | Baseline 302 LE/94,22 MHz; secure 5.576 LE/94,63 MHz; sem evidência física |
+| `make cyclone4-metrics` | **Passou em 21/09** | Baseline 302 LE/105,72 MHz; secure 5.576 LE/85,76 MHz; P03 externo do baseline registrado |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
 O erro de espaço registrado na execução histórica de `make uart` ocorreu ao
