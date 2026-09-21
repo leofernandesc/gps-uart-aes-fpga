@@ -226,9 +226,10 @@ Com o baseline recebendo uma sentença de teste, medir em `W10`:
 **Situação: pendente.** Falta medir a forma de onda do baseline no osciloscópio
 com o enlace externo. Na primeira observação foram vistos aproximadamente
 `30 µs` entre picos na visão afastada e `680 ns` entre picos de uma borda na
-visão aproximada; esses números ainda não são o bit time. Repetir com ponta
-×10 e massa curta, medindo as bordas lógicas estáveis até obter aproximadamente
-`104,17 µs`.
+visão aproximada; a descida foi de cerca de `−32 ns` até a estabilização em
+`800 ns`, isto é, aproximadamente `0,83 µs` de acomodação. Esses números ainda
+não são o bit time. Repetir com ponta ×10 e massa curta, medindo as bordas
+lógicas estáveis até obter aproximadamente `104,17 µs`.
 
 ### P05 — Secure na placa
 

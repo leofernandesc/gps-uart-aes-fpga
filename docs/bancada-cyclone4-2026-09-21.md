@@ -168,8 +168,9 @@ Na primeira observação do P04, foram relatados espaçamento aproximado de `30 
 entre picos na visão afastada e `680 ns` entre os picos negativo e positivo de
 uma borda na visão aproximada. Esses valores ainda não fecham o bit time: para
 9600 baud o valor esperado é `104,17 µs`. O registro detalhado classifica os
-`680 ns` como possível transitório/ringing e orienta repetir a medida com
-sonda ×10 e massa curta em
+`680 ns` como possível transitório/ringing. A descida foi observada em cerca de
+`−32 ns` e a estabilização em aproximadamente `800 ns`, uma acomodação de
+`0,83 µs`. O registro orienta repetir a medida com sonda ×10 e massa curta em
 [`docs/validacao-esp32-cyclone4-2026-09-21.md`](validacao-esp32-cyclone4-2026-09-21.md).
 
 ### P03/P04 — baseline

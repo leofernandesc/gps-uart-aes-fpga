@@ -288,6 +288,7 @@ relatados os seguintes valores no sinal TX da FPGA:
 | --- | ---: | --- |
 | Distância entre picos na visualização afastada | aproximadamente `30 µs` | ainda não representa o bit time validado |
 | Distância entre pico negativo e pico positivo na visualização aproximada | `680 ns` | provável transitório/ringing da borda |
+| Início da descida até estabilização observada | de aproximadamente `−32 ns` até `800 ns` | acomodação aproximada de `0,83 µs` |
 | Forma geral | pico negativo, nível baixo, pico positivo e estabilização | compatível com bordas de um sinal digital medido com sonda/cabo de massa longo |
 
 Para 9600 baud com o clock de 48 MHz, o bit time esperado continua sendo
@@ -295,6 +296,11 @@ aproximadamente `104,17 µs`. Os `680 ns` devem ser tratados como duração de
 um transitório elétrico, não como duração de um bit. O bit time deve ser medido
 entre bordas lógicas equivalentes ou entre os centros dos níveis estáveis,
 ignorando os picos de overshoot/undershoot.
+
+A acomodação observada de aproximadamente `0,83 µs` corresponde a cerca de
+`0,8%` do bit time de `104,17 µs`. Isoladamente, esse valor não indica perda de
+bits; ainda é necessário registrar as amplitudes mínima e máxima do transitório
+e medir o espaçamento entre cruzamentos lógicos.
 
 Essa observação não fecha o P04. A medição deve ser repetida com a ponta em
 ×10, acoplamento DC e o menor caminho possível de massa, preferencialmente uma
