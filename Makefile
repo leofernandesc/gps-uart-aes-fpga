@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check manuscript-check metrics cyclone4-metrics fpga baseline-fpga secure-fpga cyclone4-uart-fpga cyclone4-baseline-fpga cyclone4-secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check manuscript-check metrics cyclone4-metrics fpga baseline-fpga secure-fpga cyclone4-uart-fpga cyclone4-j3-uart-fpga cyclone4-baseline-fpga cyclone4-secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -54,6 +54,10 @@ de10-nano-uart-fpga:
 
 cyclone4-uart-fpga:
 	bash scripts/quartus_build.sh cyclone4 uart_scope
+
+# UART scope test with TX routed to the accessible J3 PIN_125.
+cyclone4-j3-uart-fpga:
+	bash scripts/quartus_build.sh cyclone4 j3_scope
 
 cyclone4-baseline-fpga:
 	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh cyclone4 baseline

@@ -1,0 +1,38 @@
+# J3 bench variant for the ZRTech/WXEDA EP4CE6E22C8N board.
+# UART_TX is intentionally routed to PIN_100, an accessible J3 sync pin
+# identified by the user, for oscilloscope validation. Do not connect VGA.
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE6E22C8
+set_global_assignment -name TOP_LEVEL_ENTITY cyclone4_uart_scope_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ../../../build/cyclone4/j3_scope
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+set_global_assignment -name SEED 1
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/reset_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/uart/uart_scope.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../uart_scope/cyclone4_uart_scope_top.sv
+set_global_assignment -name SDC_FILE uart_scope_j3.sdc
+
+set_location_assignment PIN_24 -to CLOCK_48
+set_location_assignment PIN_89 -to RESET_N
+set_location_assignment PIN_87 -to UART_RX
+set_location_assignment PIN_100 -to UART_TX
+set_location_assignment PIN_1 -to LED[0]
+set_location_assignment PIN_2 -to LED[1]
+set_location_assignment PIN_3 -to LED[2]
+set_location_assignment PIN_144 -to LED[3]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK_48
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to RESET_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_TX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LED[*]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to UART_TX
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to LED[*]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to UART_RX
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"

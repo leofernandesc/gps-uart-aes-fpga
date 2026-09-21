@@ -54,6 +54,7 @@ Os alvos abaixo já foram acrescentados ao fluxo:
 | Alvo | Função | Comando | Saída |
 | --- | --- | --- | --- |
 | `uart_scope` | `0x55` periódico, osciloscópio e loopback | `make cyclone4-uart-fpga` | `build/cyclone4/uart_scope/uart_scope.sof` |
+| `j3_scope` | `0x55` periódico com TX no J3 `PIN_100` | `make cyclone4-j3-uart-fpga` | `build/cyclone4/j3_scope/uart_scope_j3.sof` |
 | `baseline` | UART RX → FIFO → UART TX, sem AES | `make cyclone4-baseline-fpga` | `build/cyclone4/baseline/uart_baseline.sof` |
 | `secure` | UART RX → FIFO → AES-CTR → UART TX | `make cyclone4-secure-fpga` | `build/cyclone4/secure/uart_secure.sof` |
 

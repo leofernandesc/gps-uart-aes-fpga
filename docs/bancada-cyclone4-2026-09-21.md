@@ -101,6 +101,38 @@ indicar o `0x55` recebido e o indicador de erro deve permanecer inativo.
 Aceite: TX observado, RX observado, sem erro de framing e três repetições após
 reset.
 
+### Registro adicional do P01 — Ensaio físico com os pinos acessíveis do J3
+
+Como `PIN_86` não está disponível no header utilizado, foi criada a variante
+`j3_scope`, mantendo o RTL da UART e roteando temporariamente `UART_TX` para um
+pino acessível do J3. O primeiro ponto testado foi `PIN_125`, mas apresentou
+nível alto estável de aproximadamente `2,2 V`, apesar do pino `3V3` medir
+`3,3 V`. Esse ponto corresponde a uma linha de vídeo na referência da placa e
+foi descartado para a validação elétrica da UART.
+
+A variante foi então alterada para:
+
+```text
+UART_TX -> PIN_100 do J3
+UART_RX -> PIN_87
+```
+
+O SOF foi recompilado, passou na auditoria temporal e foi programado com
+sucesso no EP4CE6E22C8.
+
+| Medida | Resultado |
+| --- | ---: |
+| Bit time | aproximadamente `104 µs` |
+| Distância observada entre o início e a última borda visível | `904 µs` |
+| Nível alto estável em `PIN_100` | `3,32 V` |
+| Alimentação do header `3V3` | `3,3 V` |
+| Programação JTAG | sucesso, zero erros |
+
+O intervalo de `904 µs` não inclui o final do bit de parada, que permanece no
+mesmo nível lógico do repouso. O ensaio valida a temporização e o nível
+elétrico do TX no `PIN_100`. Não conectar monitor ou cabo VGA durante esse
+ensaio; usar somente o osciloscópio e GND.
+
 ### P03/P04 — baseline
 
 1. Compilar e programar `build/cyclone4/baseline/uart_baseline.sof`.
