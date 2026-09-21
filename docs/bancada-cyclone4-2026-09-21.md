@@ -164,6 +164,14 @@ imprime `TX` antes da escrita. Uma medição de latência será feita somente co
 um host/captura específico. O P04, que exige medição da forma de onda no
 osciloscópio nessa configuração, continua pendente.
 
+Na primeira observação do P04, foram relatados espaçamento aproximado de `30 µs`
+entre picos na visão afastada e `680 ns` entre os picos negativo e positivo de
+uma borda na visão aproximada. Esses valores ainda não fecham o bit time: para
+9600 baud o valor esperado é `104,17 µs`. O registro detalhado classifica os
+`680 ns` como possível transitório/ringing e orienta repetir a medida com
+sonda ×10 e massa curta em
+[`docs/validacao-esp32-cyclone4-2026-09-21.md`](validacao-esp32-cyclone4-2026-09-21.md).
+
 ### P03/P04 — baseline
 
 1. Compilar e programar `build/cyclone4/baseline/uart_baseline.sof`.

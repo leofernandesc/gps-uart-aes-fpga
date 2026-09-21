@@ -224,7 +224,11 @@ Com o baseline recebendo uma sentença de teste, medir em `W10`:
 - intervalo entre RX e TX, se os dois canais estiverem disponíveis.
 
 **Situação: pendente.** Falta medir a forma de onda do baseline no osciloscópio
-com o enlace externo.
+com o enlace externo. Na primeira observação foram vistos aproximadamente
+`30 µs` entre picos na visão afastada e `680 ns` entre picos de uma borda na
+visão aproximada; esses números ainda não são o bit time. Repetir com ponta
+×10 e massa curta, medindo as bordas lógicas estáveis até obter aproximadamente
+`104,17 µs`.
 
 ### P05 — Secure na placa
 

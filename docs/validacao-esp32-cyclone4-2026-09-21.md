@@ -279,7 +279,32 @@ retransmitiu o vetor por um caminho externo independente. O intervalo de
 260–270 ms do monitor continua sem valor de latência física; a medição de
 desempenho será feita separadamente.
 
-## 6. Próxima execução física
+## 6. Observação preliminar no osciloscópio
+
+Durante a primeira tentativa do P04, com o ESP32 e a FPGA conectados, foram
+relatados os seguintes valores no sinal TX da FPGA:
+
+| Observação | Valor relatado | Interpretação inicial |
+| --- | ---: | --- |
+| Distância entre picos na visualização afastada | aproximadamente `30 µs` | ainda não representa o bit time validado |
+| Distância entre pico negativo e pico positivo na visualização aproximada | `680 ns` | provável transitório/ringing da borda |
+| Forma geral | pico negativo, nível baixo, pico positivo e estabilização | compatível com bordas de um sinal digital medido com sonda/cabo de massa longo |
+
+Para 9600 baud com o clock de 48 MHz, o bit time esperado continua sendo
+aproximadamente `104,17 µs`. Os `680 ns` devem ser tratados como duração de
+um transitório elétrico, não como duração de um bit. O bit time deve ser medido
+entre bordas lógicas equivalentes ou entre os centros dos níveis estáveis,
+ignorando os picos de overshoot/undershoot.
+
+Essa observação não fecha o P04. A medição deve ser repetida com a ponta em
+×10, acoplamento DC e o menor caminho possível de massa, preferencialmente uma
+mola de terra ou um fio curto ligado ao GND mais próximo. Se o osciloscópio
+possuir limitador de banda, pode-se habilitar inicialmente 20 MHz para separar
+o quadro UART do ringing de alta frequência. Se o intervalo entre transições
+lógicas estáveis continuar próximo de `30 µs` depois desse ajuste, o ensaio
+deve ser interrompido para revisar pinagem e divisor de baud.
+
+## 7. Próxima execução física
 
 1. Manter o GND comum conectado.
 2. Conferir exclusivamente as três ligações: GPIO17→`PIN_103`,
