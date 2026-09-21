@@ -72,7 +72,7 @@ compilados; ainda precisam ser programados e validados fisicamente.
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
 | Avaliação | Quatro builds: baseline/secure em cada FPGA, com o mesmo RTL |
-| Datas de trabalho | Submissão em 24/09; contingência e encerramento em 25/09; prazo externo até 30/09/2026 |
+| Datas de trabalho | Freeze físico em 25/09; artigo em 26–27/09; submissão até 30/09/2026 |
 
 AES-CTR fornecerá **confidencialidade**, não autenticação, proteção contra
 alteração/replay do tráfego ou contra falsificação do sinal GNSS. O protótipo
@@ -251,7 +251,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Primeira bancada e materiais](docs/bancada.md)
 
 A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
-versionada, com quatro telas e cronograma até 25/09. A cópia local em
+versionada, com quatro telas, freeze físico em 25/09 e escrita no fim de semana. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
 Próximo passo da bancada: programar os tops baseline/secure e executar os

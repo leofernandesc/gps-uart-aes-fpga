@@ -84,7 +84,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 
 ## Datas e entregas
 
-**Submissão em 24/09. Contingência e encerramento em 25/09.**
+**Freeze físico em 25/09. Redação em 26–27/09. Submissão até 30/09.**
 
 | Data | Frente | Entrega verificável |
 | --- | --- | --- |
@@ -97,11 +97,14 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | 19/09 | Contexto / registro no PC | Gerador privado, registro persistente e wrapper parametrizado; `make check` aprovado |
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao RTL/PC e validador de captura bruta pronto; GPS físico continua pendente |
-| 21–22/09 | Experimentos | Reagendado de 19–20/09; três replays por configuração e GPS contínuo, após os quatro builds |
-| 21–22/09 | Resultados / manuscrito | Incorporar métricas pós-merge, latência nominal e resultados físicos disponíveis |
-| 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
-| 24/09 | Submissão | Arquivos enviados e comprovante salvo |
-| 25/09 | Contingência | Correções de envio/reenvio e confirmação final |
+| 21/09 | Preparação física | Confirmar Cyclone IV, pinagem, clock, JTAG, alimentação e UART isolada nas duas plataformas |
+| 22/09 | Baseline físico | P03/P04 nas duas plataformas: bytes conhecidos, waveform, loopback e comparação no PC |
+| 23/09 | Secure físico | P05/P06 nas duas plataformas: ciphertext, decifragem, latência e reset/contexto |
+| 24/09 | GPS físico | P07–P09 nos quatro casos e início da estabilidade contínua P10 |
+| 25/09 | Fechamento de bancada | P10/P11, repetição dos casos instáveis, matriz de evidências e freeze físico |
+| 26–27/09 | Artigo | Tabelas, gráficos, resultados, discussão, referências e versões PT/EN |
+| 28/09 | Revisão com orientador | Comentários incorporados e versão congelada |
+| 29–30/09 | Submissão e contingência | Template, envio, comprovante e eventual correção |
 
 Introdução, trabalhos relacionados e metodologia avançam junto da implementação.
 A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
@@ -109,7 +112,7 @@ A bancada prevista para 15/09 foi reagendada para 18/09; a placa foi
 identificada, programada e validada no TX/loopback. Os novos tops integrados
 foram então compilados para iniciar a etapa de comparação.
 Definir colaboradores para RTL, PC e bancada em paralelo. Registrar atrasos e
-ajustar as dependências no cronograma sem deslocar entregas necessárias após 25/09.
+ajustar as dependências no cronograma sem alterar o freeze físico de 25/09.
 
 ## 1. UART isolada e identificação da segunda placa — 16–18/09
 
@@ -213,7 +216,7 @@ e Fmax mínima de 98,23 MHz. Os dois operam a 50 MHz sem violação. A matriz
 completa continua pendente até confirmar a Cyclone IV; não apresentar esse
 resultado parcial como quatro builds concluídos.
 
-## 5. GPS real e experimentos — 21–22/09 (reagendado de 19–20/09)
+## 5. GPS real e experimentos — 21–25/09
 
 Enquanto a placa e o módulo GPS não estão disponíveis, o fluxo de aplicação usa
 `reference/gps/neo-m8n-nmea-sample.txt`. O script `scripts/gps_fixture.py`
@@ -249,7 +252,7 @@ forma de onda correta é evidência temporal/elétrica; não prova ausência de
 perdas em uma aquisição longa. Um eco visual no terminal também não substitui
 a comparação automática de todos os bytes.
 
-## 6. Resultados e escrita — 21–23/09
+## 6. Resultados e escrita — 26–28/09
 
 Comparar primeiro o acréscimo `secure − baseline` em cada FPGA; depois,
 discutir diferenças entre plataformas.
@@ -309,9 +312,11 @@ make check
 git diff --check
 ```
 
-## Encerramento em 25/09
+## Freeze físico e encerramento
 
-Concluir os builds disponíveis e seus resultados, comparar o fluxo recuperado,
-revisar o manuscrito, submeter em 24/09 e guardar o comprovante. O dia 25/09
-fica para eventual correção/reenvio e confirmação final. Relatar limitações
-de hardware explicitamente, sem transformar planos ou simulação em medições.
+Até 25/09, concluir P01–P11 nas duas plataformas ou registrar cada caso como
+aprovado, reprovado ou bloqueado com causa objetiva. Em 26–27/09, concentrar o
+trabalho exclusivamente no manuscrito e nas tabelas. Em 28/09 revisar com o
+orientador e em 29–30/09 preparar a submissão e a contingência. Relatar
+limitações de hardware explicitamente, sem transformar planos ou simulação em
+medições.

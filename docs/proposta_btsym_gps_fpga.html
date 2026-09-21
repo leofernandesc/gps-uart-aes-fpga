@@ -215,22 +215,24 @@
     </section>
     <section class="slide" id="4" data-label="Cronograma" aria-labelledby="title-4">
       <p class="eyebrow">04 / Planejamento · atualizado em 20/09/2026</p>
-      <h2 id="title-4">Submissão e contingência até <em>25/09.</em></h2>
+      <h2 id="title-4">Bancada até <em>25/09.</em> Artigo no fim de semana.</h2>
       <table class="schedule-table" aria-label="Cronograma de setembro de 2026">
         <thead><tr><th>Data</th><th>Etapa</th><th>Situação</th><th>Observação / entrega</th></tr></thead>
         <tbody>
           <tr><td>07–14/09</td><td>Base RTL</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>UART, FIFO, AES e CTR implementados; testes unitários e referências independentes.</td></tr>
-          <tr><td>15–20/09</td><td>Integração e PC</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Regressão aprovada: 27 simulações e 31 testes Python. Contexto, wrapper, replay NMEA e auditoria de métricas conferidos; bancada integrada ainda pendente.</td></tr>
+          <tr><td>15–20/09</td><td>Integração e PC</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Regressão aprovada: 27 simulações e 31 testes Python. Contexto, wrapper, replay NMEA e auditoria de métricas conferidos.</td></tr>
           <tr><td>18/09</td><td>DE10-Lite</td><td class="schedule-status"><span class="status-mark check" aria-label="Concluído">✓</span></td><td>Dois builds Quartus concluídos, recursos/timing registrados; UART autônoma validada no osciloscópio e em loopback.</td></tr>
-          <tr><td>20–21/09</td><td>Cyclone IV e revisão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Fit de capacidade baseline/secure aprovado; métricas DE10-Lite e latência nominal atualizadas. Faltam confirmar clock/pinos e validar fisicamente.</td></tr>
-          <tr><td>21–22/09</td><td>Bancada integrada</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Reagendado de 19–20/09. Após os quatro builds, testar replay e GPS nas duas placas, com comparação no PC.</td></tr>
-          <tr><td>21–22/09</td><td>Resultados e artigo</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Métricas pós-merge e latência nominal já registradas; completar resultados físicos, Cyclone IV e bibliografia.</td></tr>
-          <tr><td>23/09</td><td>Revisão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Manuscrito completo com o orientador; incorporar correções e congelar a versão.</td></tr>
-          <tr><td>24/09</td><td>Submissão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Enviar os arquivos finais e salvar o comprovante.</td></tr>
-          <tr class="final-date"><td>25/09</td><td>Contingência</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Resolver eventual problema de envio, confirmar a submissão e encerrar a execução.</td></tr>
+          <tr><td>21/09</td><td>Preparação física</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Confirmar Cyclone IV, pinagem, clock, JTAG e UART isolada nas duas plataformas.</td></tr>
+          <tr><td>22/09</td><td>Baseline físico</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Bytes conhecidos, waveform, loopback e comparação no PC nas duas placas.</td></tr>
+          <tr><td>23/09</td><td>Secure físico</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Ciphertext, decifragem, latência e reset/contexto nas duas placas.</td></tr>
+          <tr><td>24/09</td><td>GPS físico</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>P07–P09 nos quatro casos e início da estabilidade contínua.</td></tr>
+          <tr class="final-date"><td>25/09</td><td>Freeze físico</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>P10/P11, repetição dos casos instáveis e matriz final de evidências.</td></tr>
+          <tr><td>26–27/09</td><td>Artigo</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Fim de semana reservado para tabelas, gráficos, discussão e versões PT/EN.</td></tr>
+          <tr><td>28/09</td><td>Revisão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Revisão com o orientador e congelamento do manuscrito.</td></tr>
+          <tr><td>29–30/09</td><td>Submissão</td><td class="schedule-status status-pending"><span class="status-mark cross" aria-label="Pendente">✕</span></td><td>Template, envio, comprovante e contingência.</td></tr>
         </tbody>
       </table>
-      <p class="schedule-note"><span class="status-mark check" aria-label="Concluído">✓</span> Concluído <span class="status-mark cross" aria-label="Pendente">✕</span> Pendente. As duas plataformas são obrigatórias. Base RTL, regressão, builds DE10-Lite, capacidade Cyclone e replay NMEA estão registrados; GPS e os ensaios físicos integrados ainda estão pendentes.</p>
+      <p class="schedule-note"><span class="status-mark check" aria-label="Concluído">✓</span> Concluído <span class="status-mark cross" aria-label="Pendente">✕</span> Pendente. As duas plataformas são obrigatórias. Base RTL, regressão, builds DE10-Lite, capacidade Cyclone e replay NMEA estão registrados; a bancada física deve ser encerrada em 25/09 e o fim de semana fica reservado ao artigo.</p>
       <div class="closing-foot"><p class="sources">Planejamento interno. Andamento e evidências: <code>docs/cronograma.md</code>.</p><button class="reference-button only-js" id="open-references" type="button">Referências técnicas ↗</button></div>
     </section>
   </main>

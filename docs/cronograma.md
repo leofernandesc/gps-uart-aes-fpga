@@ -1,8 +1,9 @@
-# Execução e submissão até 25/09 — setembro de 2026
+# Testes físicos até 25/09 e artigo no fim de semana — setembro de 2026
 
 Objetivo: adquirir GPS NEO-M8N-010 por UART e medir o custo do AES-128-CTR em
 DE10-Lite/MAX 10 e Cyclone IV, com um build sem cifra e outro com cifra por
-placa. **Submissão em 24/09; contingência e encerramento em 25/09.**
+placa. **Freeze dos testes físicos em 25/09; redação em 26–27/09; submissão
+até 30/09.**
 
 ## Situação em 20/09/2026
 
@@ -48,15 +49,59 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 18–20/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs regenerados, manifests `PASS`, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
-| 21–22/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — reagendado de 19–20/09; depende dos quatro builds, interfaces e GPS |
-| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Em andamento — métricas e latência nominal atualizadas; resultados físicos e Cyclone IV de bancada pendentes |
-| 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
-| 24/09 | Submissão principal | Envio e comprovante preservados | Pendente |
-| **25/09** | **Contingência e encerramento** | **Correções de envio, eventual reenvio e confirmação final** | **Pendente** |
+| 21/09 | Preparação física das duas plataformas | Pinagem/clock/JTAG confirmados; bitstreams de bancada programáveis; UART isolada validada | Pendente — Cyclone IV e materiais são o gate do dia |
+| 22/09 | Baseline nas duas plataformas | P03/P04 executados na DE10-Lite e Cyclone IV; bytes conhecidos, waveform, loopback e comparação no PC | Pendente |
+| 23/09 | Secure nas duas plataformas | P05/P06 executados; ciphertext capturado, decifrado no PC e contexto/reset registrados | Pendente |
+| 24/09 | GPS real e ensaio contínuo | P07–P10 executados nos quatro pares placa/configuração; três repetições e captura contínua | Pendente — depende do NEO-M8N e das interfaces seriais |
+| **25/09** | **Falhas, reset e fechamento físico** | **P11, repetição de qualquer caso instável, matriz de evidências completa e freeze** | **Pendente — último dia de bancada** |
+| 26–27/09 | Artigo | Tabelas, gráficos, resultados físicos, discussão, referências e versões PT/EN | Pendente — foco exclusivo na escrita |
+| 28/09 | Revisão técnica | Conferência do orientador e incorporação de comentários | Pendente |
+| 29–30/09 | Submissão e contingência | Template, arquivos finais, envio, comprovante e eventual correção | Pendente |
+
+## Plano fechado de testes físicos — 21 a 25/09
+
+O objetivo desta semana é encerrar toda a bancada na sexta-feira. Cada ensaio
+deve gerar uma evidência no mesmo dia: log de programação, captura serial,
+foto/arquivo da forma de onda, relatório do comparador e registro da placa,
+clock, pinos, contexto e horário. Um teste só entra como concluído quando os
+bytes forem comparados automaticamente; LED ou forma de onda isolada não basta.
+
+| Dia | Manhã | Tarde | Fechamento obrigatório |
+| --- | --- | --- | --- |
+| **Seg 21/09** | Confirmar Cyclone IV: código EP4CE6E22C8, oscilador, pinagem, alimentação, GND e JTAG. Preparar QSF/SDC e identificar os pinos RX/TX. | Programar um bitstream mínimo/`uart_scope` em cada placa. Repetir UART autônoma e loopback na Cyclone IV; na DE10-Lite, repetir somente se a montagem tiver sido alterada. | P01/P02 registrados nas duas plataformas; bit time de 9600 baud, quadro 8N1, níveis de 3,3 V e programação comprovados. |
+| **Ter 22/09** | Programar o baseline DE10-Lite e Cyclone IV. Enviar bytes conhecidos (`55 A5 00 FF 3C`) por fonte independente. | Executar P03/P04 nas duas placas: retransmissão, captura no PC, TX no osciloscópio, loopback e três repetições por placa. | Comparação byte a byte aprovada, zero framing/overflow e waveform de RX/TX arquivada para cada baseline. |
+| **Qua 23/09** | Programar o secure nas duas placas e carregar o contexto do ensaio. Repetir os bytes conhecidos. | Executar P05/P06: capturar ciphertext no PC, decifrar com o contexto registrado e medir RX→TX no osciloscópio quando possível. Testar reset antes do primeiro byte e bloqueio após o primeiro byte. | Ciphertext recuperado exatamente, contexto/nonce registrados sem chave em claro, três repetições secure por placa e evidência de reset. |
+| **Qui 24/09** | Validar o NEO-M8N: VCC, GND, nível elétrico, atividade TX e 9600/8N1. Capturar a referência NMEA independente. | Executar P07–P09 nos quatro casos: DE10-Lite baseline/secure e Cyclone IV baseline/secure. Fazer três repetições, validar NMEA e comparar a entrada com a saída recuperada. | GPS físico comprovado, zero divergência, framing/overflow registrados e arquivos brutos/hash preservados. Se possível, iniciar P10 contínuo. |
+| **Sex 25/09** | Completar P10: captura contínua por duração registrada nos quatro casos, com perdas, primeira divergência, FIFO e erros contabilizados. | Completar P11 em cada placa/configuração; repetir qualquer ensaio instável, salvar SOFs/logs/capturas e preencher a matriz final de evidências. | **Freeze físico:** P01–P11 classificados como aprovado, reprovado ou bloqueado com causa objetiva. Nenhuma nova alteração de RTL depois deste ponto. |
+
+### Matriz de cobertura física
+
+- **P01–P02:** UART autônoma, níveis, temporização, TX e loopback nas duas
+  plataformas.
+- **P03–P04:** baseline, retransmissão de bytes conhecidos, waveform e
+  comparação no PC nas duas plataformas.
+- **P05–P06:** secure, ciphertext, decifragem independente, latência e reset
+  do contexto nas duas plataformas.
+- **P07:** alimentação, terra, nível e formato serial do GPS.
+- **P08–P09:** GPS real no baseline e no secure, três repetições por plataforma.
+- **P10:** estabilidade contínua e contagem de perdas/erros/overflow/FIFO.
+- **P11:** reset, descarte da captura anterior e recuperação com contexto novo.
+
+O NEO-M8N, a Cyclone IV com pinagem confirmada, o osciloscópio, USB-Blaster,
+cabos/jumpers e uma fonte/captura UART independente precisam estar disponíveis
+antes do início de 21/09. O ESP32 pode atuar como fonte ou registrador auxiliar;
+dois CP2102 simplificam a captura simultânea de referência e saída. Sem GPS ou
+sem a identificação elétrica da Cyclone IV, o caso correspondente deve ser
+marcado como **bloqueado**, nunca como aprovado por replay RTL.
+
+Os testes de contador esgotado, overflow forçado e falhas internas permanecem
+na validação RTL; fisicamente serão verificados apenas os efeitos observáveis
+de framing, reset, perda de dados e estabilidade da comunicação.
 
 A chamada pública do BTSym consultada em 14/09 informa 30/09/2026 como prazo
 externo. Confirmar modalidade e template no portal antes do envio. O planejamento
-interno termina em 25/09 independentemente dessa folga.
+de bancada termina em 25/09; o fim de semana fica reservado para a redação e a
+submissão deve ocorrer até 30/09.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
 
 ## Marco em 20/09: endurecimento da validação e preparação da Cyclone IV
@@ -436,4 +481,5 @@ A contribuição é a avaliação experimental reprodutível da integração.
 A Cyclone IV depende da confirmação de placa/clock e de acesso ao hardware.
 Se esses dados não chegarem ou uma etapa atrasar, registrar o impedimento e
 revisar a execução com o orientador; não tratar um alvo genérico ou replay
-sintético como bancada real. Submissão e contingência permanecem até 25/09.
+sintético como bancada real. A bancada fecha em 25/09; a redação ocorre em
+26–27/09 e a submissão/contingência fica em 29–30/09.

@@ -131,7 +131,11 @@ O Quartus 25.1 compilou as duas revisões sem erros. Os avisos do fit ficam
 preservados nos logs; incluem o aviso de requisitos elétricos dos pinos de
 3,3 V e a mensagem de licença LogicLock. Eles não produziram violação temporal.
 
-## Testes físicos na DE10-Lite
+## Testes físicos — DE10-Lite e Cyclone IV
+
+O cronograma fechado para executar P01–P11 nas duas plataformas entre 21 e
+25/09 está em [`docs/cronograma.md`](cronograma.md). O freeze físico ocorre na
+sexta-feira; o fim de semana fica reservado à redação do artigo.
 
 ### P01 — UART autônoma
 
