@@ -142,6 +142,7 @@ test_integration() {
     run_test uart_ctr_bridge_tb integration_secure_50mhz -Puart_ctr_bridge_tb.CLK_FREQ=50000000 -Puart_ctr_bridge_tb.FIFO_DEPTH=1024
     run_test uart_ctr_bridge_tb integration_baseline_50mhz -Puart_ctr_bridge_tb.ENABLE_AES=0 -Puart_ctr_bridge_tb.CLK_FREQ=50000000 -Puart_ctr_bridge_tb.FIFO_DEPTH=1024
     run_test de10_lite_uart_ctr_top_tb de10_context_wrapper
+    run_test de10_lite_uart_ctr_top_tb de10_baseline_wrapper -Pde10_lite_uart_ctr_top_tb.ENABLE_AES=0
 }
 
 test_integration_gps() {

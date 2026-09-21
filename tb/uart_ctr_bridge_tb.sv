@@ -33,6 +33,42 @@ module uart_ctr_bridge_tb;
     integer gps_rx_to_first_tx_cycles = 0, gps_rx_to_last_tx_cycles = 0;
     reg checking = 0;
     string run_name, run_speed;
+    integer latency_file, gps_sent = 0, gps_valid = 0, gps_done = 0;
+    time input_start_ns [0:4095], rx_valid_ns [0:4095], tx_start_ns [0:4095];
+    time rx_start_min = '1, rx_start_max = 0, rx_start_sum = 0;
+    time rx_done_min = '1, rx_done_max = 0, rx_done_sum = 0;
+    time wire_start_min = '1, wire_start_max = 0, wire_start_sum = 0;
+
+    // Nominal metrics use signal transitions, not USB timestamps or stimulus
+    // pauses. RX-valid is the complete byte; TX-done is the end of its stop bit.
+    always @(posedge rx_event) begin
+        if (GPS_ONLY && checking) begin
+            rx_valid_ns[gps_valid] = $time;
+            gps_valid = gps_valid + 1;
+        end
+    end
+
+    always @(posedge tx_event) begin : nominal_done
+        time start_delay, done_delay, wire_delay;
+        if (GPS_ONLY && checking) begin
+            start_delay = tx_start_ns[gps_done] - rx_valid_ns[gps_done];
+            done_delay = $time - rx_valid_ns[gps_done];
+            wire_delay = tx_start_ns[gps_done] - input_start_ns[gps_done];
+            if (start_delay < rx_start_min) rx_start_min = start_delay;
+            if (start_delay > rx_start_max) rx_start_max = start_delay;
+            if (done_delay < rx_done_min) rx_done_min = done_delay;
+            if (done_delay > rx_done_max) rx_done_max = done_delay;
+            if (wire_delay < wire_start_min) wire_start_min = wire_delay;
+            if (wire_delay > wire_start_max) wire_start_max = wire_delay;
+            rx_start_sum = rx_start_sum + start_delay;
+            rx_done_sum = rx_done_sum + done_delay;
+            wire_start_sum = wire_start_sum + wire_delay;
+            $fdisplay(latency_file, "%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d",
+                gps_done, input_start_ns[gps_done], rx_valid_ns[gps_done],
+                tx_start_ns[gps_done], $time, start_delay, wire_delay, done_delay);
+            gps_done = gps_done + 1;
+        end
+    end
 
     always @(posedge clk) begin
         sim_cycle = sim_cycle + 1;
@@ -55,6 +91,7 @@ module uart_ctr_bridge_tb;
         reg [7:0] value;
         forever begin
             @(negedge tx);
+            if (GPS_ONLY && checking) tx_start_ns[decoded] = $time;
             seen_epoch = epoch;
             #(BIT_NS / 2);
             if (checking && seen_epoch == epoch) begin
@@ -116,6 +153,10 @@ module uart_ctr_bridge_tb;
         // fabricated infinite, 100%-duty source in the accelerated long test.
         @(negedge clk);
         #7 rx = 0;
+        if (GPS_ONLY && checking) begin
+            input_start_ns[gps_sent] = $time;
+            gps_sent = gps_sent + 1;
+        end
         #(BIT_NS);
         for (bit_index = 0; bit_index < 8; bit_index = bit_index + 1) begin
             rx = value[bit_index];
@@ -153,6 +194,11 @@ module uart_ctr_bridge_tb;
         else run_speed = "fast";
         capture = $fopen($sformatf("build/integration/%s-%s.txt", run_name, run_speed), "w");
         if (!fixtures || !capture) $fatal(1, "Cannot open integration fixtures/output");
+        if (GPS_ONLY) begin
+            latency_file = $fopen($sformatf("build/integration/%s-%s-latency.csv", run_name, run_speed), "w");
+            if (!latency_file) $fatal(1, "Cannot open latency output");
+            $fdisplay(latency_file, "byte_index,input_start_ns,rx_valid_ns,tx_start_ns,tx_done_ns,rx_valid_to_tx_start_ns,input_start_to_tx_start_ns,rx_valid_to_tx_done_ns");
+        end
         fields = $fscanf(fixtures, "%d\n", count);
         if (fields != 1) $fatal(1, "Missing fixture count");
         // The final fixture is reserved for byte-exact recovery after faults.
@@ -207,14 +253,15 @@ module uart_ctr_bridge_tb;
             for (i = 0; i < length; i = i + 1) begin
                 // Hold the first three bytes across FIFO synchronous reads,
                 // then pause a later byte while TX is already in progress.
-                if (i == 0) tx_enable = 0;
+                // GPS_ONLY is the nominal workload: no artificial stalls.
+                if (!GPS_ONLY && i == 0) tx_enable = 0;
                 send_frame(plain[i], 0);
-                if (i == 2 || i == length - 1) begin
+                if (!GPS_ONLY && (i == 2 || i == length - 1)) begin
                     ticks(2 * CPB);
                     if (decoded != 0 && i <= 2) $fatal(1, "TX ignored pause");
                     tx_enable = 1;
                 end
-                if (i == 8) begin
+                if (!GPS_ONLY && i == 8) begin
                     tx_enable = 0;
                     ticks(13 * CPB);
                     if (tx_busy) $fatal(1, "TX started another byte while paused");
@@ -342,10 +389,19 @@ module uart_ctr_bridge_tb;
         $fclose(capture);
         $display("PASS UART integration AES=%0d clock=%0d cases=%0d serial_bytes=%0d faults=%0d cancellations=%0d",
                  ENABLE_AES, CLK_FREQ, cases_run, total_decoded, fault_checks, cancel_checks);
-        if (GPS_ONLY)
-            $display("METRIC GPS AES=%0d bytes=%0d fifo_high_water=%0d rx_to_first_tx_cycles=%0d rx_to_last_tx_cycles=%0d",
-                     ENABLE_AES, total_decoded, gps_fifo_high_water,
-                     gps_rx_to_first_tx_cycles, gps_rx_to_last_tx_cycles);
+        if (GPS_ONLY) begin
+            if (gps_sent != length || gps_valid != length || gps_done != length)
+                $fatal(1, "Nominal metric sample count mismatch");
+            $fclose(latency_file);
+            $display("METRIC GPS NOMINAL AES=%0d bytes=%0d fifo_high_water=%0d injected_stalls=0",
+                     ENABLE_AES, total_decoded, gps_fifo_high_water);
+            $display("METRIC GPS rx_valid_to_tx_start_ns min=%0d max=%0d mean=%.2f",
+                     rx_start_min, rx_start_max, real'(rx_start_sum) / gps_done);
+            $display("METRIC GPS rx_valid_to_tx_done_ns min=%0d max=%0d mean=%.2f",
+                     rx_done_min, rx_done_max, real'(rx_done_sum) / gps_done);
+            $display("METRIC GPS input_start_to_tx_start_ns min=%0d max=%0d mean=%.2f",
+                     wire_start_min, wire_start_max, real'(wire_start_sum) / gps_done);
+        end
         $finish;
     end
 

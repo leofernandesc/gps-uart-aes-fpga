@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 board="${1:-de10_lite}"
 design="${2:-bridge}"
@@ -85,7 +86,14 @@ fi
 cd "$target_dir"
 printf 'RUNNING: Quartus %s/%s (no board programming)\n' "$board" "$design" >"$output_dir/build-status.txt"
 "$quartus_shell" --version >"$output_dir/tool-version.txt"
+if [[ "$design" == baseline || "$design" == secure ]]; then
+    python3 "$project_dir/scripts/build_manifest.py" begin --output "$output_dir" \
+        --qsf "$target_dir/$quartus_project.qsf" --board "$board" --design "$design"
+fi
 "$quartus_shell" --flow compile "$quartus_project" 2>&1 | tee "$output_dir/compile.log"
 "$quartus_sta" -t "$project_dir/scripts/quartus_timing.tcl" "$quartus_project" "$output_dir" 2>&1 | tee "$output_dir/timing-audit.log"
 test -s "$output_dir/$quartus_project.sof"
+if [[ "$design" == baseline || "$design" == secure ]]; then
+    python3 "$project_dir/scripts/build_manifest.py" finish --output "$output_dir"
+fi
 echo 'PASS: Quartus compilation and timing audit; SOF generated, not programmed' | tee "$output_dir/build-status.txt"

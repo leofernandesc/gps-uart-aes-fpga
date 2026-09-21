@@ -6,6 +6,7 @@ recorders before enabling a replay with matching FPGA configuration.
 Private context files and GPS captures must stay outside version control.
 """
 import argparse
+from contextlib import ExitStack
 import hashlib
 import json
 import math
@@ -17,6 +18,7 @@ import termios
 import time
 
 from ctr_vectors import crypt
+from context import claim_capture, validate_context
 
 
 def private_file(path, binary=False):
@@ -127,6 +129,81 @@ def record_serial(port, output, count, timeout, ready=None):
     }
 
 
+def record_pair(reference_port, received_port, reference_output, received_output,
+                count, timeout, ready=None, before_ready=None):
+    """Arm both raw ports before a single READY; source MUST start afterwards.
+
+    No bytes are removed to align streams, and no automatic GPS/CTR framing is
+    inferred. This does not measure physical latency or establish FPGA state.
+    """
+    if type(count) is not int or count <= 0 or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("Capture length and timeout must be positive")
+    if os.path.samefile(reference_port, received_port):
+        raise ValueError("reference and received ports must be different devices")
+    started = time.monotonic()
+    error, claimed = None, None
+    channels = []
+    with ExitStack() as stack:
+        # Reserve BOTH files before any serial setting or queue changes.
+        streams = [stack.enter_context(private_file(path, binary=True))
+                   for path in (reference_output, received_output)]
+        for label, port, stream in zip(("reference", "received"), (reference_port, received_port), streams):
+            fd = os.open(port, os.O_RDONLY | os.O_NOCTTY | os.O_NONBLOCK)
+            stack.callback(os.close, fd)
+            previous = termios.tcgetattr(fd)
+            stack.callback(termios.tcsetattr, fd, termios.TCSANOW, previous)
+            config = termios.tcgetattr(fd)
+            config[0] = config[1] = config[3] = 0
+            config[2] = termios.CS8 | termios.CREAD | termios.CLOCAL
+            config[4] = config[5] = termios.B9600
+            config[6][termios.VMIN] = config[6][termios.VTIME] = 0
+            termios.tcsetattr(fd, termios.TCSANOW, config)
+            channels.append({"label": label, "port": str(port), "fd": fd, "stream": stream,
+                             "received_bytes": 0, "digest": hashlib.sha256()})
+        for channel in channels:
+            termios.tcflush(channel["fd"], termios.TCIFLUSH)
+        if before_ready:
+            claimed = before_ready()
+        started = time.monotonic()
+        deadline = started + timeout
+        if ready:
+            ready()
+        while any(channel["received_bytes"] < count for channel in channels):
+            remaining = deadline - time.monotonic()
+            pending = {c["fd"]: c for c in channels if c["received_bytes"] < count}
+            if remaining <= 0:
+                error = "timeout"
+                break
+            readable = select.select(list(pending), [], [], remaining)[0]
+            if not readable:
+                error = "timeout"
+                break
+            for fd in readable:
+                channel = pending[fd]
+                try:
+                    chunk = os.read(fd, min(4096, count - channel["received_bytes"]))
+                except BlockingIOError:
+                    continue
+                if not chunk:
+                    error = f"{channel['label']} serial input closed"
+                    break
+                channel["stream"].write(chunk)
+                channel["digest"].update(chunk)
+                channel["received_bytes"] += len(chunk)
+            if error:
+                break
+        for channel in channels:
+            channel["stream"].flush()
+            os.fsync(channel["stream"].fileno())
+    return {
+        "status": "CAPTURED" if all(c["received_bytes"] == count for c in channels) else "INCOMPLETE",
+        "format": "9600/8N1", "expected_bytes_per_port": count, "error": error,
+        "context_claim": claimed, "host_elapsed_seconds": time.monotonic() - started,
+        "channels": {c["label"]: {"port": c["port"], "received_bytes": c["received_bytes"], "sha256": c["digest"].hexdigest()} for c in channels},
+        "note": "Source inactive until READY is an operator precondition, not measured. CAPTURED is not comparison or FPGA latency.",
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -136,6 +213,16 @@ def main():
     record.add_argument("--bytes", type=int, required=True)
     record.add_argument("--timeout", type=float, required=True, help="Overall deadline in seconds")
     record.add_argument("--report", type=Path, required=True)
+    pair = commands.add_parser("record-pair", help="Arm reference and FPGA output together; release source only after READY")
+    pair.add_argument("--reference-port", required=True)
+    pair.add_argument("--received-port", required=True)
+    pair.add_argument("--reference-output", type=Path, required=True)
+    pair.add_argument("--received-output", type=Path, required=True)
+    pair.add_argument("--context", type=Path, required=True)
+    pair.add_argument("--registry", type=Path, help="original nonce registry; required for secure")
+    pair.add_argument("--timeout", type=float, required=True)
+    pair.add_argument("--report", type=Path, required=True)
+    pair.add_argument("--source-inactive", action="store_true", required=True, help="confirm source is not transmitting and will be released only after READY")
     verify = commands.add_parser("compare", help="Compare previously captured binary files")
     verify.add_argument("--reference", type=Path, required=True)
     verify.add_argument("--received", type=Path, required=True)
@@ -145,6 +232,21 @@ def main():
     verify.add_argument("--invalid", action="append", default=[], help="Invalidate for observed reset/framing/overflow etc.")
     args = parser.parse_args()
     try:
+        if args.command == "record-pair":
+            context = json.loads(args.context.read_text(encoding="utf-8"))
+            validate_context(context)
+            with private_file(args.report) as report_file:
+                try:
+                    result = record_pair(args.reference_port, args.received_port,
+                        args.reference_output, args.received_output, context["bytes"], args.timeout,
+                        ready=lambda: print("READY: both ports armed; release the previously inactive source now", flush=True),
+                        before_ready=lambda: claim_capture(context, args.registry))
+                except Exception as exc:
+                    json.dump({"status": "ERROR", "error": str(exc)}, report_file, indent=2)
+                    raise
+                json.dump(result, report_file, indent=2)
+            print(json.dumps(result, indent=2))
+            return 0 if result["status"] == "CAPTURED" else 1
         if args.command == "record":
             # Reserve the report before touching the serial port or capture.
             with private_file(args.report) as report_file:

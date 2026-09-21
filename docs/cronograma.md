@@ -59,6 +59,35 @@ externo. Confirmar modalidade e template no portal antes do envio. O planejament
 interno termina em 25/09 independentemente dessa folga.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
 
+## Marco em 20/09: endurecimento da validação e preparação da Cyclone IV
+
+- O wrapper integrado da DE10-Lite passou a tratar o contexto provisionado como
+  de uso único: KEY0 ainda pode rearmar um ensaio antes do primeiro byte, mas
+  não recarrega a mesma chave/nonce depois do início da recepção. A guarda é
+  reiniciada somente por novo carregamento do bitstream, e o reset de
+  inicialização do FPGA ficou determinístico mesmo sem pressionar KEY0.
+- A validação de métricas passou a exigir os manifests dos builds, hashes de
+  fontes e artefatos, commit, dispositivo, clock, baud rate e status final.
+  Falhas de fit, Fmax ausente/duplicado, slack negativo, arquivo obsoleto ou
+  build incompleto agora interrompem a coleta em vez de produzir uma tabela
+  parcial.
+- Foi adicionado o estudo reproduzível de capacidade para o alvo
+  `EP4CE6E22C8`. Ele gera projetos baseline/secure para síntese e fit, sem
+  declarar pinagem, clock de bancada, SOF ou validação da placa Cyclone IV.
+  A execução atual registrou 351 LE/216 registradores no baseline e
+  5.626 LE/917 registradores no secure; esses números são apenas capacidade
+  exploratória e serão substituídos pelos resultados da placa quando o modelo,
+  pinagem e oscilador forem confirmados.
+- A captura do experimento recebeu um modo pareado para armar fonte e saída
+  antes do READY, reservar arquivos privados e registrar a captura uma única
+  vez. O validador NMEA passou a analisar janelas brutas sem alterar os bytes,
+  aceitar identificadores padrão e proprietários válidos e relatar prefixos ou
+  sufixos parciais explicitamente.
+- A suíte Python local passou a 30 testes aprovados. Simulação RTL, builds
+  Quartus e ensaios físicos continuam sendo verificados após a reconciliação
+  com o remoto; nada deste marco representa validação física da Cyclone IV ou
+  do GPS.
+
 ## Marco em 20/09: redução de área do AES
 
 - Removido o banco de onze chaves. O núcleo armazena a chave original e calcula
@@ -76,15 +105,12 @@ interno termina em 25/09 independentemente dessa folga.
 
 ### Ponto de retomada
 
-Esta entrega encerra somente a otimização do AES. Permanecem alterações locais
-em desenvolvimento para proteção de reset do wrapper, ensaio nominal de
-latência, estudo reproduzível da Cyclone IV, rastreabilidade/validação de métricas,
-captura dupla e validação NMEA. Não estão incluídas no commit desta etapa.
-Ao retomar, revisar o diff antes de fazer pull, completar os testes específicos
-da captura/contexto e atualizar as tabelas dos dois manuscritos antes de publicar
-essas correções. Os artefatos de builds locais podem refletir esse trabalho
-adicional; não confundi-los com resultados reproduzíveis apenas pelo commit AES.
-Leonardo confirma modelo da placa, oscilador e pinagem da Cyclone IV em 21/09.
+As correções de wrapper, reset, métricas, captura, validação NMEA e o estudo de
+capacidade da Cyclone IV estão sendo integrados ao histórico remoto após revisão
+do diff recebido. Depois do merge, repetir a regressão completa, os builds
+baseline/secure e a auditoria de métricas antes de publicar as tabelas dos dois
+manuscritos. Os artefatos locais não substituem a confirmação de modelo,
+oscilador e pinagem da Cyclone IV nem os ensaios físicos do GPS.
 
 ## Marco em 20/09: revisão completa e identificação do EP4CE6
 

@@ -7,7 +7,8 @@ module reset_sync (
     input  wire arst,
     output wire rst
 );
-    (* preserve *) reg [1:0] release_pipe;
+    // FPGA power-up value also guarantees reset when KEY0 is never pressed.
+    (* preserve *) reg [1:0] release_pipe = 2'b11;
 
     always @(posedge clk or posedge arst) begin
         if (arst)

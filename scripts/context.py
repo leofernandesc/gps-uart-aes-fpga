@@ -153,6 +153,11 @@ def _load_context(path):
         context = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"cannot read context: {path}") from exc
+    return validate_context(context)
+
+
+def validate_context(context):
+    """Validate an already-loaded immutable acquisition manifest."""
     if not isinstance(context, dict) or context.get("schema") != SCHEMA:
         raise ValueError("unsupported or malformed context")
     mode = context.get("mode")
@@ -172,6 +177,37 @@ def _load_context(path):
     if context.get("key_sha256") != expected_key_id:
         raise ValueError("context key fingerprint does not match key_hex")
     return mode, key, nonce, counter
+
+
+def claim_capture(context, registry):
+    """Consume a registered secure context BEFORE READY, even if capture fails.
+
+    This is a PC-side guard. It does not prove which SOF is programmed and does
+    not provide persistence inside the FPGA; do not delete/share stale ledgers.
+    """
+    mode, key, nonce, counter = validate_context(context)
+    context_id = context.get("context_id")
+    if not isinstance(context_id, str) or not context_id:
+        raise ValueError("capture requires a context_id from context.py new")
+    if mode == "baseline":
+        return {"context_id": context_id, "mode": mode}
+    if registry is None:
+        raise ValueError("secure capture requires the original nonce registry")
+    with _registry_lock(registry):
+        current = _read_registry(registry)
+        matches = [entry for entry in current["contexts"] if entry.get("context_id") == context_id]
+        if len(matches) != 1:
+            raise ValueError("context is not uniquely present in the original registry")
+        entry = matches[0]
+        expected = {"key_sha256": hashlib.sha256(key).hexdigest(), "nonce_hex": nonce.hex(),
+                    "initial_counter": counter, "bytes": context["bytes"]}
+        if any(entry.get(field) != value for field, value in expected.items()):
+            raise ValueError("capture context does not match the registry")
+        if entry.get("capture_started_utc"):
+            raise ValueError("context already claimed for capture; create and program a new context")
+        entry["capture_started_utc"] = _timestamp()
+        _write_registry(registry, current)
+    return {"context_id": context_id, "mode": mode, "capture_started_utc": entry["capture_started_utc"]}
 
 
 def render_context_sv(context_path, output, expected_mode=None):

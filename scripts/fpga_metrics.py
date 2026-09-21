@@ -2,8 +2,10 @@
 """Extract comparable DE10-Lite baseline/secure metrics from Quartus reports."""
 import argparse
 import json
+import math
 import re
 from pathlib import Path
+from build_manifest import verify as verify_manifest
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -18,8 +20,10 @@ FIT_FIELDS = {
     "device": r"Device\s*:\s*(\S+)",
     "quartus_version": r"Quartus Prime Version\s*:\s*(.+)",
 }
-SLACK_RE = re.compile(r"AUDIT corner=(\d+) check=(\w+) slack_ns=([\d.]+)")
-FMAX_RE = re.compile(r";\s*([\d.]+) MHz\s*;\s*([\d.]+) MHz\s*;")
+NUMBER = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
+SLACK_RE = re.compile(rf"AUDIT corner=(\d+) check=(\w+) slack_ns=({NUMBER})")
+FMAX_RE = re.compile(rf";\s*({NUMBER}) MHz\s*;\s*({NUMBER}) MHz\s*;")
+BUILD_PASS = "PASS: Quartus compilation and timing audit; SOF generated, not programmed"
 
 
 def _number(value: str) -> int:
@@ -31,6 +35,8 @@ def _fit_metrics(path: Path) -> dict[str, object]:
     if len(reports) != 1:
         raise ValueError(f"{path}: expected one *.fit.summary, found {len(reports)}")
     text = reports[0].read_text(encoding="utf-8", errors="replace")
+    if not re.search(r"^Fitter Status\s*:\s*Successful\b", text, re.M):
+        raise ValueError(f"{reports[0]}: fitter did not succeed")
     result: dict[str, object] = {}
     for name, expression in FIT_FIELDS.items():
         match = re.search(expression, text)
@@ -41,41 +47,79 @@ def _fit_metrics(path: Path) -> dict[str, object]:
 
 
 def _timing_metrics(path: Path) -> dict[str, object]:
-    fmax_values = []
+    fmax_by_corner = {}
     for report in sorted(path.glob("fmax_corner*.rpt")):
-        match = FMAX_RE.search(report.read_text(encoding="utf-8", errors="replace"))
-        if not match:
-            raise ValueError(f"{report}: missing Fmax row")
-        fmax_values.append(float(match.group(1)))
-    if not fmax_values:
+        name = re.fullmatch(r"fmax_corner([1-9]\d*)\.rpt", report.name)
+        rows = FMAX_RE.findall(report.read_text(encoding="utf-8", errors="replace"))
+        if not name or len(rows) != 1:
+            raise ValueError(f"{report}: expected one valid Fmax row and corner")
+        values = [float(value) for value in rows[0]]
+        if any(not math.isfinite(value) or value <= 0 for value in values):
+            raise ValueError(f"{report}: invalid Fmax")
+        fmax_by_corner[int(name.group(1))] = values[0]
+    if not fmax_by_corner:
         raise ValueError(f"{path}: no fmax_corner*.rpt reports")
 
     audit = path / "timing-audit.log"
-    checks: dict[str, list[float]] = {}
-    for corner, check, value in SLACK_RE.findall(audit.read_text(encoding="utf-8", errors="replace")):
-        checks.setdefault(check, []).append(float(value))
+    contents = audit.read_text(encoding="utf-8", errors="replace")
+    final = re.findall(r"^PASS: ([1-9]\d*) timing corners audited$", contents, re.M)
+    if len(final) != 1 or re.search(r"^Error\b|^FAIL\b", contents, re.M):
+        raise ValueError(f"{audit}: timing audit did not succeed")
+    corners = set(range(1, int(final[0]) + 1))
+    if set(fmax_by_corner) != corners:
+        raise ValueError(f"{audit}: Fmax/timing corner mismatch")
+    checks = {}
+    for line in contents.splitlines():
+        if not line.startswith("AUDIT"):
+            continue
+        match = SLACK_RE.fullmatch(line)
+        if not match:
+            raise ValueError(f"{audit}: malformed or failed AUDIT record")
+        corner, check, raw = match.groups()
+        key = (int(corner), check)
+        value = float(raw)
+        if key in checks or not math.isfinite(value) or value < 0:
+            raise ValueError(f"{audit}: duplicate, non-finite or negative slack: {line}")
+        checks[key] = value
     required = {"setup", "hold", "recovery", "removal"}
-    if set(checks) != required:
-        raise ValueError(f"{audit}: expected {sorted(required)}, found {sorted(checks)}")
+    if set(checks) != {(corner, check) for corner in corners for check in required}:
+        raise ValueError(f"{audit}: missing/extra per-corner checks")
+    fmax_values = [fmax_by_corner[corner] for corner in sorted(corners)]
     return {
         "fmax_mhz_by_corner": fmax_values,
         "fmax_mhz_min": min(fmax_values),
-        "slack_ns_min": {check: min(values) for check, values in checks.items()},
+        "slack_ns_min": {check: min(checks[(corner, check)] for corner in corners) for check in sorted(required)},
     }
 
 
-def collect(build_root: Path = DEFAULT_BUILD) -> dict[str, object]:
+def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT) -> dict[str, object]:
     result: dict[str, object] = {"build_root": str(build_root), "designs": {}}
     for design in ("baseline", "secure"):
         path = build_root / design
         if not path.is_dir():
             raise ValueError(f"missing build directory: {path}")
+        if (path / "build-status.txt").read_text().strip() != BUILD_PASS:
+            raise ValueError(f"{path}: build did not pass")
+        provenance = verify_manifest(path, source_root=source_root)
+        if provenance["board"] != "de10_lite" or provenance["design"] != design:
+            raise ValueError(f"{path}: wrong build target in manifest")
         metrics = _fit_metrics(path)
         metrics.update(_timing_metrics(path))
+        if metrics["device"] != provenance["device"]:
+            raise ValueError(f"{path}: report/manifest device mismatch")
+        metrics["provenance"] = provenance
         result["designs"][design] = metrics
 
     baseline = result["designs"]["baseline"]
     secure = result["designs"]["secure"]
+    for field in ("device", "quartus_version", "memory_bits", "pins", "plls"):
+        if baseline[field] != secure[field]:
+            raise ValueError(f"baseline/secure configuration mismatch: {field}")
+    for field in ("seed", "clock_hz", "baud", "fifo_depth", "shared_rtl_sha256"):
+        if baseline["provenance"][field] != secure["provenance"][field]:
+            raise ValueError(f"baseline/secure provenance mismatch: {field}")
+    if not baseline["logic_elements"] or not baseline["registers"]:
+        raise ValueError("baseline resource counts must be nonzero")
     result["comparison"] = {
         "logic_elements_delta": secure["logic_elements"] - baseline["logic_elements"],
         "logic_elements_delta_pct": (secure["logic_elements"] / baseline["logic_elements"] - 1) * 100,
@@ -93,7 +137,7 @@ def markdown(result: dict[str, object]) -> str:
     lines = [
         "# Métricas FPGA — DE10-Lite",
         "",
-        "Dados extraídos automaticamente dos relatórios pós-fit do Quartus; não são medições de bancada.",
+        "Relatórios pós-fit aprovados, com cobertura temporal completa e hashes conferidos; não são medições de bancada.",
         "",
         "| Métrica | Baseline | Secure |",
         "| --- | ---: | ---: |",
@@ -113,6 +157,7 @@ def markdown(result: dict[str, object]) -> str:
         f"- Fmax: {comparison['fmax_delta_mhz']:.2f} MHz ({comparison['fmax_delta_pct']:.2f}%).",
         "",
         "O clock de operação continua sendo 50 MHz nos dois projetos; Fmax é a margem estimada pelo Quartus.",
+        "O JSON acompanha revisão, estado das fontes, seed e hashes de entradas/artefatos de cada build.",
         "",
     ]
     return "\n".join(lines)

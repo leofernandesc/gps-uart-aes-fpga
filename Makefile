@@ -3,6 +3,11 @@
 BOARD ?= de10_lite
 DESIGN ?= bridge
 
+.PHONY: cyclone4-capacity
+# Provisional EP4CE6 / 48 MHz resource study, NOT a board/programming target.
+cyclone4-capacity:
+	python3 scripts/cyclone4_capacity.py
+
 # HDL_RUNNER=auto (default), native, or docker.
 check:
 	bash scripts/hdl.sh all

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a complete raw GPS/NMEA capture before an experiment."""
+"""Validate complete NMEA sentences without modifying the raw GPS capture."""
 import argparse
 import json
 import os
@@ -28,9 +28,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="raw binary GPS capture")
     parser.add_argument("--report", type=Path, help="optional new JSON report")
+    parser.add_argument("--allow-partial-edges", action="store_true", help="validate complete interior sentences and report boundary offsets")
+    parser.add_argument("--max-sentence-bytes", type=int, default=82, help="declared NMEA profile limit INCLUDING CRLF (default 82)")
     args = parser.parse_args()
     try:
-        result = capture_metadata(args.input)
+        result = capture_metadata(args.input, args.allow_partial_edges, args.max_sentence_bytes)
         if args.report:
             private_report(args.report, result)
     except (OSError, ValueError) as exc:
@@ -45,6 +47,8 @@ def main() -> int:
     )
     if args.report:
         print(f"Report: {args.report}")
+    if args.allow_partial_edges:
+        print(f"Boundary fragments (raw bytes preserved): {result['boundary_fragments']}")
     return 0
 
 

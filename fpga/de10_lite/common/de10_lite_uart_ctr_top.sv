@@ -6,11 +6,12 @@
 // The baseline and secure projects instantiate this wrapper with different
 // ENABLE_AES values.  The parameter is fixed during elaboration, so the
 // baseline does not contain a runtime AES bypass or an AES datapath.
-// Fixed context values are only for the first FPGA bring-up.  They are not a
-// key-management protocol and must be replaced by the experiment controller
-// before any real deployment.
+// A provisioned context is single-use: KEY0 cannot reload it after reception
+// has started. This volatile guard does NOT survive reprogramming/power loss;
+// each new acquisition still requires a fresh context and corresponding SOF.
 module de10_lite_uart_ctr_top #(
     parameter integer ENABLE_AES = 1,
+    parameter integer CLK_FREQ = 50_000_000,
     parameter [127:0] CONTEXT_KEY =
         de10_lite_context_pkg::CONTEXT_KEY,
     parameter [95:0] CONTEXT_NONCE =
@@ -42,6 +43,13 @@ module de10_lite_uart_ctr_top #(
     reg rx_toggle;
     reg tx_toggle;
     reg [25:0] heartbeat_counter;
+    // Intentionally no KEY0 reset. Both elaborations use the same guard.
+    reg context_used = 1'b0;
+    wire context_locked = context_used && !active;
+
+    always @(posedge MAX10_CLK1_50) begin
+        if (rx_event) context_used <= 1'b1;
+    end
 
     reset_sync reset_inst (
         .clk  (MAX10_CLK1_50),
@@ -49,12 +57,12 @@ module de10_lite_uart_ctr_top #(
         .rst  (rst)
     );
 
-    // Hold configuration valid until the bridge accepts it.  KEY0 resets the
-    // context and causes the same fixed test context to be loaded again.
+    // Reset before the first received byte is safe. After reception begins,
+    // reset aborts the experiment and requires a new provisioned bitstream.
     always @(posedge MAX10_CLK1_50 or posedge rst) begin
         if (rst) begin
             cfg_pending <= 1'b1;
-        end else if (cfg_pending && cfg_ready) begin
+        end else if (cfg_pending && cfg_ready && !context_used) begin
             cfg_pending <= 1'b0;
         end
     end
@@ -75,7 +83,7 @@ module de10_lite_uart_ctr_top #(
 
     uart_ctr_bridge #(
         .ENABLE_AES (ENABLE_AES),
-        .CLK_FREQ  (50_000_000),
+        .CLK_FREQ  (CLK_FREQ),
         .BAUD_RATE (9600),
         .FIFO_DEPTH (1024)
     ) bridge_inst (
@@ -85,7 +93,7 @@ module de10_lite_uart_ctr_top #(
         .tx               (UART_TX),
         .tx_enable        (1'b1),
         .abort_req        (1'b0),
-        .cfg_valid        (cfg_pending),
+        .cfg_valid        (cfg_pending && !context_used),
         .cfg_ready        (cfg_ready),
         .cfg_key          (CONTEXT_KEY),
         .cfg_nonce        (CONTEXT_NONCE),
@@ -105,7 +113,7 @@ module de10_lite_uart_ctr_top #(
     // LED meanings are identical in both builds:
     // 0 heartbeat, 1 configured/active, 2 RX event toggle, 3 TX event toggle,
     // 4 TX busy, 5 configuration completed, 6 FIFO overflow, 7 framing error,
-    // 8 FIFO has data, 9 FIFO high-water mark or context exhaustion.
+    // 8 FIFO has data, 9 FIFO high-water, exhaustion or used-context lockout.
     assign LEDR[0] = heartbeat_counter[25];
     assign LEDR[1] = active;
     assign LEDR[2] = rx_toggle;
@@ -115,7 +123,7 @@ module de10_lite_uart_ctr_top #(
     assign LEDR[6] = overflow_sticky;
     assign LEDR[7] = framing_sticky;
     assign LEDR[8] = (fifo_level != 11'd0);
-    assign LEDR[9] = (fifo_high_water >= 11'd512) || exhausted;
+    assign LEDR[9] = (fifo_high_water >= 11'd512) || exhausted || context_locked;
 
 endmodule
 

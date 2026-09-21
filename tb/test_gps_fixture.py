@@ -11,10 +11,57 @@ from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS))
-from gps_fixture import DEFAULT_FIXTURE, capture_metadata, load_replay, metadata, parse_payload
+from gps_fixture import DEFAULT_FIXTURE, capture_metadata, load_replay, metadata, parse_payload, parse_window
 
 
 class GPSReplayTests(unittest.TestCase):
+    @staticmethod
+    def sentence(body):
+        checksum = 0
+        for byte in body:
+            checksum ^= byte
+        return b"$" + body + f"*{checksum:02X}\r\n".encode()
+
+    def test_identifier_printable_ascii_and_checksum_syntax(self):
+        for payload in (b"$*00\r\n", self.sentence(b"GPTXT,\x00"), self.sentence(b"G,123"),
+                        b"$GPTXT,*+1\r\n", b"$GPTXT,* 1\r\n"):
+            with self.subTest(payload=payload):
+                with self.assertRaises(ValueError):
+                    parse_payload(payload)
+        self.assertEqual(len(parse_payload(self.sentence(b"PUBX,00,1"))), 1)
+
+    def test_length_includes_crlf_and_extended_profile_is_explicit(self):
+        exact = self.sentence(b"GPTXT," + b"A" * 70)
+        self.assertEqual(len(exact), 82)
+        self.assertEqual(len(parse_payload(exact)), 1)
+        longer = self.sentence(b"GPTXT," + b"A" * 72)
+        with self.assertRaisesRegex(ValueError, "including CRLF"):
+            parse_payload(longer)
+        self.assertEqual(len(parse_payload(longer, max_sentence_bytes=128)), 1)
+
+    def test_window_reports_offsets_without_modifying_raw_data(self):
+        replay = load_replay()
+        window = replay[7:-11]
+        parsed, start, end = parse_window(window)
+        self.assertEqual(len(parsed), 3)
+        self.assertEqual(start, window.find(b"\r\n") + 2)
+        self.assertEqual(end, window.rfind(b"\r\n") + 2)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "raw.bin"
+            path.write_bytes(window)
+            result = capture_metadata(path, allow_partial_edges=True)
+            self.assertEqual(path.read_bytes(), window)
+            self.assertEqual(result["bytes"], len(window))
+            self.assertEqual(result["boundary_fragments"], {"prefix_bytes": start, "suffix_bytes": len(window) - end})
+
+    def test_window_rejects_corrupt_interior_and_no_complete_sentence(self):
+        with self.assertRaisesRegex(ValueError, "no complete"):
+            parse_window(b"$GPRMC,fragment")
+        valid = self.sentence(b"GPTXT,valid")
+        corrupt = self.sentence(b"GPTXT,invalid").replace(b"invalid", b"Invalid")
+        with self.assertRaisesRegex(ValueError, "checksum"):
+            parse_window(b"fragment\r\n" + valid + corrupt + b"$GPRMC,tail")
+
     def test_public_m8_nmea_replay_is_well_formed(self):
         result = metadata(DEFAULT_FIXTURE)
         payload = load_replay(DEFAULT_FIXTURE)
