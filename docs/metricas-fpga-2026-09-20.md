@@ -1,5 +1,8 @@
 # Métricas FPGA — DE10-Lite — 20/09/2026
 
+Resultado regenerado após a reconciliação com `origin/main`, no commit
+`b065ba8e9cb16a10e0903d054e7927e0b22846a1`.
+
 ## Método
 
 As métricas foram extraídas automaticamente dos relatórios pós-fit do Quartus
@@ -21,15 +24,15 @@ Markdown gerados permanecem em `build/`.
 
 | Métrica pós-fit | Baseline | Secure | Secure − baseline |
 | --- | ---: | ---: | ---: |
-| Elementos lógicos | 342 | 6.984 | +6.642 (+1.942,11%) |
-| Registradores | 215 | 2.196 | +1.981 (+921,40%) |
+| Elementos lógicos | 347 | 5.622 | +5.275 (+1.520,17%) |
+| Registradores | 216 | 917 | +701 (+324,54%) |
 | Memória | 8.192 bits | 8.192 bits | 0 |
 | Pinos | 14 | 14 | 0 |
-| Fmax mínima | 132,61 MHz | 82,19 MHz | −50,42 MHz (−38,02%) |
-| Pior setup | 12,459 ns | 7,833 ns | — |
-| Pior hold | 0,102 ns | 0,111 ns | — |
-| Pior recovery | 15,341 ns | 12,724 ns | — |
-| Pior removal | 0,424 ns | 2,332 ns | — |
+| Fmax mínima | 123,00 MHz | 98,23 MHz | −24,77 MHz (−20,14%) |
+| Pior setup | 11,870 ns | 9,820 ns | — |
+| Pior hold | 0,102 ns | 0,101 ns | — |
+| Pior recovery | 14,454 ns | 13,688 ns | — |
+| Pior removal | 0,439 ns | 2,256 ns | — |
 
 As duas variantes operam a 50 MHz com slack positivo nos quatro tipos de
 análise. A inclusão do AES aumenta significativamente a lógica e os

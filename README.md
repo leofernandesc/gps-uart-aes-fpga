@@ -26,6 +26,10 @@ PC passaram em testes com porta virtual Linux. Ver
 O contrato do replay está em [validação NMEA](docs/validacao-replay-nmea-2026-09-20.md).
 As métricas baseline/secure foram extraídas automaticamente dos relatórios
 pós-fit; ver [métricas FPGA](docs/metricas-fpga-2026-09-20.md).
+No commit reconciliado, a DE10-Lite apresentou 347 LE/216 registradores e
+Fmax mínima de 123,00 MHz no baseline, contra 5.622 LE/917 registradores e
+98,23 MHz no secure. O replay NMEA nominal apresentou 80 ns de RX válido até
+início do TX e 1.041.680 ns até o fim do TX em ambos os modos.
 O validador de captura bruta do GPS já está pronto: ele verifica CRLF, ASCII,
 checksum NMEA, sentenças completas e gera um hash do arquivo antes do ensaio
 físico. Isso prepara a captura real, mas não a substitui.
@@ -42,14 +46,13 @@ Os 48 MHz são uma hipótese, não uma configuração de bancada aprovada.
 
 A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
 de área no secure anterior. O AES agora calcula chaves durante as rodadas,
-sem armazenar onze chaves, e passou nos testes AES/CTR e no fit exploratório
-do EP4CE6. Isso não valida clock ou pinagem de placa. As correções na medição
-de latência, extração de métricas e captura/contexto seguem em consolidação;
-as correções sem hardware estão registradas em
+sem armazenar onze chaves. Após a reconciliação com o remoto, a regressão,
+o replay nominal, os builds DE10-Lite, a extração de métricas e o estudo de
+capacidade EP4CE6 passaram; os resultados estão em
 [validação das correções](docs/validacao-correcoes-2026-09-20.md). Após o
 primeiro provisionamento, um reset não rearma o mesmo contexto CTR: é preciso
 programar novamente o FPGA antes de um novo ensaio.
-Há trabalho sem placa antes da comparação final; o prazo até 25/09 está em risco.
+O GPS e os ensaios físicos integrados continuam pendentes.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
@@ -86,7 +89,7 @@ make check
 Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e cinco da integração/wrapper.
 Inclui nove configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 19 testes do software de captura, contexto,
+bytes CTR e do TX integrado, além de 31 testes Python de captura, contexto,
 replay e validação NMEA.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.

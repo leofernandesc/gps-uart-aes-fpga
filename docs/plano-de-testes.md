@@ -5,10 +5,10 @@ com a data, o commit do RTL, a configuração usada, o resultado e a evidência
 correspondente. Simulação, compilação e bancada física são resultados
 diferentes e não devem ser misturados.
 
-Revisão em 20/09: a regressão voltou a passar, mas há correções pendentes de
-área, métricas, contexto/reset e aquisição. Os ensaios extras e seus resultados
-estão na [revisão completa](revisao-completa-2026-09-20.md). A latência do replay
-com pausas não deve ser apresentada como latência nominal.
+Revisão em 20/09: a reconciliação com o remoto foi concluída, as correções de
+área, métricas, contexto/reset e aquisição foram testadas e os resultados foram
+regenerados. A latência nominal abaixo não contém pausas artificiais; a bancada
+física e a Cyclone IV continuam pendentes.
 
 ## Configuração fixa
 
@@ -59,13 +59,13 @@ substitui um resultado físico.
 | S11 | Replay NMEA sintético | Sentença NMEA incluída no vetor de integração | Bytes de uma sentença são preservados no baseline e recuperados no secure | **Concluído no núcleo** — replay de 70 bytes; wrapper físico ainda pendente |
 | S12 | Wrapper baseline | Lint e síntese estrutural do top DE10-Lite | Top elabora sem AES e sem latch/problema estrutural | **Concluído em 18/09** — `make integration`; AES ausente na hierarquia baseline |
 | S13 | Wrapper secure | Lint e síntese estrutural do top DE10-Lite | Top elabora com AES-CTR e sem latch/problema estrutural | **Concluído em 18/09** — `make integration` |
-| S14 | Regressão final | `make check` após a criação dos tops | Nenhuma regressão nos módulos já aprovados | **Concluído em 19/09** — código 0; 27 simulações, lint, estrutura e PC |
+| S14 | Regressão final | `make check` após a reconciliação | Nenhuma regressão nos módulos já aprovados | **Concluído em 20/09** — código 0; 27 simulações, lint, estrutura e PC |
 | S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto; a suíte atual tem 19 testes PC |
 | S16 | Contexto no wrapper | Testbench do top DE10-Lite com parâmetros substituídos | Ciphertext observado no TX corresponde ao contexto de elaboração | **Concluído em 19/09** — `make integration`, `0x55 -> 0xe2` |
 | S17 | Contexto no build Quartus | `CONTEXT_FILE=... make secure-fpga` e validação do pacote gerado | O JSON é validado, o modo é conferido e o pacote privado entra no SOF | **Concluído em 20/09** — baseline/secure compilados; programação física pendente |
 | S18 | Replay NMEA estruturado | `make gps-replay`, `make integration` e testes PC | Sentenças ASCII com checksum válido são convertidas para CRLF e preservadas nos modos baseline/secure | **Concluído em 20/09** — 5 sentenças, replay sintético de 309 bytes, RTL/PC; GPS físico pendente |
-| S19 | Replay GPS em clock de produção | `make integration-gps` e `--verify-gps` | Os 309 bytes do replay atravessam baseline e secure em 50 MHz/9600 sem perda, overflow ou divergência | **Concluído em 20/09** — FIFO máxima de 2 bytes; 169.269 ciclos até o primeiro TX; físico pendente |
-| S20 | Validação de captura NMEA | `scripts/gps_capture.py` e `make pc` | Captura bruta completa, ASCII, CRLF, checksum e limite NMEA aprovados antes do experimento | **Concluído em 20/09** — 19 testes PC; captura física ainda pendente |
+| S19 | Replay GPS em clock de produção | `make integration-gps` e `--verify-gps` | Os 309 bytes do replay atravessam baseline e secure em 50 MHz/9600 sem perda, overflow ou divergência | **Concluído em 20/09** — FIFO máxima de 1 byte; 80 ns de RX válido até início do TX e 1.041.680 ns até fim; físico pendente |
+| S20 | Validação de captura NMEA | `scripts/gps_capture.py` e `make pc` | Captura bruta completa, ASCII, CRLF, checksum e limite NMEA aprovados antes do experimento | **Concluído em 20/09** — 31 testes Python; captura física ainda pendente |
 
 Comandos principais:
 
@@ -83,38 +83,38 @@ make check
 
 | ID | Teste | Método | Dados registrados | Situação |
 | --- | --- | --- | --- | --- |
-| F01 | Compilação baseline | `make baseline-fpga` | Versão Quartus, SHA, SOF, warnings e status | **Concluído em 18/09** — sem erros; SOF gerado |
-| F02 | Compilação secure | `make secure-fpga` | Versão Quartus, SHA, SOF, warnings e status | **Concluído em 18/09** — sem erros; SOF gerado |
+| F01 | Compilação baseline | `make baseline-fpga` | Versão Quartus, SHA, SOF, warnings e status | **Regenerado em 20/09** — sem erros; manifest `PASS` no commit reconciliado |
+| F02 | Compilação secure | `make secure-fpga` | Versão Quartus, SHA, SOF, warnings e status | **Regenerado em 20/09** — sem erros; manifest `PASS` no commit reconciliado |
 | F03 | Timing baseline | Auditoria Quartus em todos os cantos | Setup, hold, recovery, removal, Fmax e caminhos não cobertos | **Concluído em 18/09** — todos os slacks positivos |
 | F04 | Timing secure | Auditoria Quartus em todos os cantos | Setup, hold, recovery, removal, Fmax e caminhos não cobertos | **Concluído em 18/09** — todos os slacks positivos |
-| F05 | Recursos baseline | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Concluído em 18/09** — 342 LE, 215 FF, 8.192 bits, 14 pinos |
-| F06 | Recursos secure | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Concluído em 18/09** — 6.984 LE, 2.196 FF, 8.192 bits, 14 pinos |
-| F07 | Comparação | `secure - baseline` | Custo absoluto e percentual da inclusão do AES | **Concluído em 18/09** — tabela abaixo |
-| F08 | Extração reprodutível | `make metrics` | JSON/Markdown gerados diretamente dos relatórios Quartus | **Concluído em 20/09** — [relatório de métricas](metricas-fpga-2026-09-20.md) |
+| F05 | Recursos baseline | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Regenerado em 20/09** — 347 LE, 216 FF, 8.192 bits, 14 pinos |
+| F06 | Recursos secure | Relatório pós-fit | Elementos lógicos, registradores, memória e pinos | **Regenerado em 20/09** — 5.622 LE, 917 FF, 8.192 bits, 14 pinos |
+| F07 | Comparação | `secure - baseline` | Custo absoluto e percentual da inclusão do AES | **Concluído em 20/09** — tabela pós-merge abaixo |
+| F08 | Extração reprodutível | `make metrics` | JSON/Markdown gerados diretamente dos relatórios Quartus | **Concluído em 20/09** — hashes e manifests conferidos; [relatório de métricas](metricas-fpga-2026-09-20.md) |
 
 Os relatórios de F01–F07 devem ficar em `build/` e ser resumidos em uma tabela
 do artigo. Os resultados da UART autônoma não devem ser usados como se fossem
 os resultados do sistema GPS integrado.
 
-### Resultado dos builds DE10-Lite — 18/09/2026
+### Resultado dos builds DE10-Lite — 20/09/2026
 
 | Métrica pós-fit | Baseline | Secure | Diferença secure − baseline |
 | --- | ---: | ---: | ---: |
-| Elementos lógicos | 342 | 6.984 | +6.642 (+1.942,1%) |
-| Registradores | 215 | 2.196 | +1.981 (+921,4%) |
+| Elementos lógicos | 347 | 5.622 | +5.275 (+1.520,2%) |
+| Registradores | 216 | 917 | +701 (+324,5%) |
 | Memória | 8.192 bits | 8.192 bits | 0 |
 | Pinos | 14 | 14 | 0 |
-| Fmax — slow 1200 mV, 85 °C | 132,61 MHz | 82,19 MHz | −50,42 MHz |
+| Fmax mínima nos três cantos | 123,00 MHz | 98,23 MHz | −24,77 MHz |
 
 As duas variantes operam a 50 MHz com margem positiva. Piores margens
 registradas:
 
 | Análise | Baseline | Secure |
 | --- | ---: | ---: |
-| Setup | 12,459 ns | 7,833 ns |
-| Hold | 0,102 ns | 0,111 ns |
-| Recovery | 15,341 ns | 12,724 ns |
-| Removal | 0,424 ns | 2,332 ns |
+| Setup | 11,870 ns | 9,820 ns |
+| Hold | 0,102 ns | 0,101 ns |
+| Recovery | 14,454 ns | 13,688 ns |
+| Removal | 0,439 ns | 2,256 ns |
 
 Os SOFs e relatórios estão em `build/de10_lite/baseline/` e
 `build/de10_lite/secure/` (o diretório `build/` não é versionado):
@@ -261,12 +261,12 @@ hipotéticos. O fit exploratório reprovado por área não conclui nenhum desses
 
 | Ensaio | Resultado | Limite |
 | --- | --- | --- |
-| `make check` | PASS: 27 simulações, 9 configurações de lint, 19 testes PC | Não comprova GPS/bancada integrada |
-| Fit exploratório EP4CE6E22C8 | FAIL: 6.520 funções combinacionais / 6.272 disponíveis | Sem pinagem, SDC de bancada ou SOF; reduzir área |
-| Latência sem pausa, máscara pronta | RX válido → início TX: 80 ns; → fim TX: 1.041.680 ns, nos dois modos | Duas transferências de diagnóstico; não substitui o replay completo |
-| Reset do contexto estático | Reutilização de máscara reproduzida | Corrigir procedimento/controle antes do GPS real |
-| Relatório temporal negativo injetado | Extrator aceitou −0,125 ns e reportou +8,698 ns | Cópias de diagnóstico; relatórios reais preservados |
-| Entradas NMEA inválidas | Corpo vazio, NUL e 84 bytes aceitos | Correção do validador pendente |
+| `make check` | PASS: 27 simulações, 9 configurações de lint, 31 testes Python | Não comprova GPS/bancada integrada |
+| Estudo de capacidade EP4CE6E22C8 | PASS: 351/6.272 LE baseline; 5.626/6.272 LE secure | Sem pinagem, SDC de bancada, SOF ou timing físico |
+| Latência nominal GPS | RX válido → início TX: 80 ns; → fim TX: 1.041.680 ns; quadro → TX: 989.643 ns | RTL em 50 MHz/9600; não substitui o replay físico |
+| Reset do contexto estático | Wrapper aceitou contexto inicial e bloqueou reuso após RX | Proteção validada em RTL; não é gerenciamento de chaves |
+| Relatório temporal negativo injetado | Extrator rejeitou slack negativo e registros incompletos | Cópias de diagnóstico; relatórios reais preservados |
+| Entradas NMEA inválidas | Identificador, controles ASCII, checksum e limite rejeitados | Validador corrigido; origem física ainda pendente |
 
 Artefatos locais em `build/review-2026-09-20/`; referências às linhas de código
 e próximos passos na [revisão](revisao-completa-2026-09-20.md).
@@ -289,7 +289,8 @@ Observações:
 ```
 
 Última atualização: 20/09/2026. Próximo registro esperado: programação e
-ensaio físico dos projetos `baseline` e `secure` da DE10-Lite; a captura GPS
+ensaio físico dos projetos `baseline` e `secure` da DE10-Lite e, quando
+confirmados clock/pinos, repetição equivalente na Cyclone IV; a captura GPS
 deverá passar pelo S20 antes da comparação.
 
 ## Execuções registradas em 18–20/09/2026
@@ -303,9 +304,9 @@ deverá passar pelo S20 antes da comparação.
 | `make baseline-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make secure-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make context` | **Passou** | 7 testes de criação, permissões, limites, renderização e reutilização de nonce |
-| `make pc` | **Passou em 20/09** | 19 testes, incluindo captura, comparação, contexto, replay e validação NMEA bruta |
+| `make pc` | **Passou em 20/09** | 31 testes, incluindo captura, comparação, contexto, replay, métricas e validação NMEA bruta |
 | `make gps-capture-check` | **Pronto em 20/09** | Requer `GPS_CAPTURE=...`; valida um arquivo real quando a captura estiver disponível |
-| `make check` | **Passou em 20/09** | Código 0; 27 simulações, sete configurações de lint, estrutura e 19 testes PC |
+| `make check` | **Passou em 20/09** | Código 0; 27 simulações, nove configurações de lint, estrutura e 31 testes Python |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
 O erro de espaço registrado na execução histórica de `make uart` ocorreu ao

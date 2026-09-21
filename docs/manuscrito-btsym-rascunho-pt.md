@@ -5,10 +5,10 @@ Rascunho de trabalho para o BTSym’26. Os resultados de GPS físico e da
 integração em bancada são identificados explicitamente como pendentes quando
 aplicável.
 
-Revisão editorial de 20/09: a tabela de latência RX–TX inclui pausas deliberadas
-do TX e não mede latência nominal. Refazer a medição antes da submissão. O
-segundo alvo obrigatório é o EP4CE6E22C8; o secure atual não coube no fit
-exploratório. Ver [revisão técnica](revisao-completa-2026-09-20.md).
+Revisão editorial de 20/09: o replay nominal foi regenerado sem pausas
+artificiais do TX após a reconciliação da validação. O segundo alvo obrigatório é
+o EP4CE6E22C8; o resultado atual é apenas de capacidade até que o clock e a
+pinagem da placa sejam confirmados. Ver [revisão técnica](revisao-completa-2026-09-20.md).
 
 ## Resumo
 
@@ -24,10 +24,10 @@ sintetizadas e ajustadas para um alvo DE10-Lite/MAX 10 com clock de 50 MHz.
 A verificação independente no PC foi usada para comparar os bytes observados na
 saída serial e recuperar o fluxo cifrado. Um replay NMEA público de 309 bytes
 também foi executado no clock de produção de 50 MHz/9600 baud, sem divergência
-de bytes ou overflow da FIFO. Os relatórios pós-fit do Quartus indicam 342
-elementos lógicos e 215 registradores para a baseline, contra 6.984 elementos
-lógicos e 2.196 registradores para a secure; a menor Fmax reportada diminui de
-132,61 MHz para 82,19 MHz, enquanto as duas variantes permanecem acima do
+de bytes ou overflow da FIFO. Os relatórios pós-fit do Quartus indicam 347
+elementos lógicos e 216 registradores para a baseline, contra 5.622 elementos
+lógicos e 917 registradores para a secure; a menor Fmax reportada diminui de
+123,00 MHz para 98,23 MHz, enquanto as duas variantes permanecem acima do
 clock de operação de 50 MHz. A aquisição física de dados do NEO-M8N e o ensaio
 integrado na placa permanecem como etapa final de validação.
 
@@ -141,7 +141,7 @@ A avaliação separa três tipos de evidência:
    temporais são coletados dos relatórios pós-fit.
 
 As evidências atuais de software/RTL compreendem 27 simulações HDL, nove
-configurações de lint e 19 testes no PC. Essas contagens incluem o replay
+configurações de lint e 31 testes Python. Essas contagens incluem o replay
 público e o contrato de validação da captura bruta; não representam um ensaio
 físico de GPS.
 
@@ -182,15 +182,15 @@ coincidiu com os mesmos 309 bytes de entrada.
 | Métrica | Baseline | Secure |
 | --- | ---: | ---: |
 | Bytes reproduzidos | 309 | 309 |
-| Ocupação máxima da FIFO | 2 bytes | 2 bytes |
-| Primeiro RX até primeiro TX | 169.269 ciclos / 3,385 ms* | 169.269 ciclos / 3,385 ms* |
-| Primeiro RX até último TX | 16.236.274 ciclos / 324,725 ms* | 16.236.274 ciclos / 324,725 ms* |
+| Ocupação máxima da FIFO | 1 byte | 1 byte |
+| RX válido até início do TX | 80 ns | 80 ns |
+| RX válido até fim do TX | 1.041.680 ns | 1.041.680 ns |
+| Início do quadro de entrada até início do TX | 989.643 ns | 989.643 ns |
 | Divergências de bytes | 0 | 0 após recuperação |
 | Overflow da FIFO | 0 | 0 |
 
-*Valores históricos do estímulo com pausas artificiais no TX; a medição nominal
-foi separada no testbench e ainda precisa ser regenerada em Linux antes da
-submissão.*
+Os valores nominais vêm do replay RTL em clock de produção, sem pausas
+artificiais no TX. Eles não são medições elétricas do GPS ou da placa.
 
 A pequena ocupação da FIFO no replay em clock de produção indica que a fonte
 serial, e não o estágio AES, domina a taxa de transferência nessa carga. Essa
@@ -201,20 +201,20 @@ verificada com um fluxo GPS físico.
 
 | Métrica | Baseline | Secure | Secure − baseline |
 | --- | ---: | ---: | ---: |
-| Elementos lógicos | 342 | 6.984 | +6.642 (+1.942,11%) |
-| Registradores | 215 | 2.196 | +1.981 (+921,40%) |
+| Elementos lógicos | 347 | 5.622 | +5.275 (+1.520,17%) |
+| Registradores | 216 | 917 | +701 (+324,54%) |
 | Bits de memória | 8.192 | 8.192 | 0 |
 | Pinos | 14 | 14 | 0 |
-| Fmax mínima | 132,61 MHz | 82,19 MHz | −50,42 MHz (−38,02%) |
-| Pior slack de setup | 12,459 ns | 7,833 ns | positivo |
-| Pior slack de hold | 0,102 ns | 0,111 ns | positivo |
-| Pior slack de recovery | 15,341 ns | 12,724 ns | positivo |
-| Pior slack de removal | 0,424 ns | 2,332 ns | positivo |
+| Fmax mínima | 123,00 MHz | 98,23 MHz | −24,77 MHz (−20,14%) |
+| Pior slack de setup | 11,870 ns | 9,820 ns | positivo |
+| Pior slack de hold | 0,102 ns | 0,101 ns | positivo |
+| Pior slack de recovery | 14,454 ns | 13,688 ns | positivo |
+| Pior slack de removal | 0,439 ns | 2,256 ns | positivo |
 
 As duas configurações atendem à restrição de clock de 50 MHz nos três cantos
 auditados. A variante secure apresenta um custo significativo de lógica e
-registradores porque a implementação atual do AES armazena o estado das chaves
-de rodada e usa um datapath iterativo. Sua menor Fmax continua acima da
+registradores porque a implementação atual do AES calcula as chaves de rodada
+sob demanda e usa um datapath iterativo. Sua menor Fmax continua acima da
 frequência de operação selecionada.
 
 ## 5. Discussão e limitações
@@ -230,8 +230,9 @@ NMEA usada no RTL é um replay público/sintético, e não uma captura ao vivo d
 NEO-M8N. Segundo, os designs integrados baseline e secure foram compilados, mas
 ainda precisam ser programados e testados fisicamente na DE10-Lite. Terceiro, a
 comparação com a Cyclone IV ainda não faz parte da tabela quantitativa: o
-EP4CE6E22C8 está identificado; o fit exploratório após a redução de área passou,
-mas faltam confirmar clock e pinagem da placa. Por fim,
+estudo de capacidade do EP4CE6E22C8 passou (351 LE/216 registradores na
+baseline e 5.626 LE/917 registradores na secure), mas faltam confirmar clock e
+pinagem da placa. Por fim,
 AES-CTR sozinho não autentica os dados; um modo autenticado ou mecanismo de
 integridade separado seria necessário para um protocolo completo de telemetria
 segura.

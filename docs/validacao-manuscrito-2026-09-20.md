@@ -9,8 +9,8 @@ simulação, análise pós-fit e captura sintética como validação física.
 
 - Os rascunhos em inglês e português passaram a documentar o validador de
   captura NMEA e o procedimento para preservar seu relatório/hash.
-- A seção de método registra as evidências atuais: 27 simulações HDL, sete
-  configurações de lint e 19 testes no PC.
+- A seção de método registra as evidências atuais: 27 simulações HDL, nove
+  configurações de lint e 31 testes Python.
 - O plano de validação final foi atualizado para validar a referência bruta
   antes da comparação baseline/secure.
 - `scripts/manuscript_check.py` verifica métricas, formato do replay e a

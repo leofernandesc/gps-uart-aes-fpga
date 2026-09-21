@@ -4,10 +4,10 @@
 Working draft for BTSym'26. Physical GPS and integrated-board results are
 identified explicitly as pending where applicable.
 
-Editorial review, 20 September: the current RX-to-TX latency table includes
-deliberate TX stalls and is not a nominal-latency measurement. Remeasure before
-submission. The mandatory second target is EP4CE6E22C8; the present secure RTL
-failed an exploratory fit due to capacity. See [technical review](revisao-completa-2026-09-20.md).
+Editorial review, 20 September: the nominal replay was regenerated without
+artificial TX stalls after the validation merge. The mandatory second target is
+EP4CE6E22C8; its current result is capacity-only until the board clock and
+pinout are confirmed. See [technical review](revisao-completa-2026-09-20.md).
 
 ## Abstract
 
@@ -23,9 +23,9 @@ target with a 50 MHz clock. Independent software verification was used to
 compare the bytes observed at the serial output and to recover the secure
 stream. A 309-byte public NMEA replay was also executed at the production
 50 MHz/9600 baud timing, with no byte divergence or FIFO overflow. Quartus
-post-fit reports show 342 logic elements and 215 registers for the baseline,
-against 6,984 logic elements and 2,196 registers for the secure variant; the
-minimum reported Fmax decreases from 132.61 MHz to 82.19 MHz, while both
+post-fit reports show 347 logic elements and 216 registers for the baseline,
+against 5,622 logic elements and 917 registers for the secure variant; the
+minimum reported Fmax decreases from 123.00 MHz to 98.23 MHz, while both
 variants remain above the 50 MHz operating clock. The physical acquisition of
 data from the NEO-M8N and the integrated-board experiment remain the final
 validation stage.
@@ -138,7 +138,7 @@ The evaluation separates three kinds of evidence:
    collected from post-fit reports.
 
 The current software/RTL evidence comprises 27 HDL simulations, nine lint
-configurations and 19 PC tests. These counts include the public replay and the
+configurations and 31 Python tests. These counts include the public replay and the
 raw-capture validation contract; they do not represent a physical GPS run.
 
 The current evidence does not replace the final physical experiment. The
@@ -178,9 +178,10 @@ output was recovered with the independent AES-CTR context and matched the same
 | Metric | Baseline | Secure |
 | --- | ---: | ---: |
 | Replayed bytes | 309 | 309 |
-| FIFO maximum occupancy | 2 bytes | 2 bytes |
-| First RX to first TX | 169,269 cycles / 3.385 ms* | 169,269 cycles / 3.385 ms* |
-| First RX to last TX | 16,236,274 cycles / 324.725 ms* | 16,236,274 cycles / 324.725 ms* |
+| FIFO maximum occupancy | 1 byte | 1 byte |
+| RX-valid to TX start | 80 ns | 80 ns |
+| RX-valid to TX done | 1,041,680 ns | 1,041,680 ns |
+| Input-frame start to TX start | 989,643 ns | 989,643 ns |
 | Byte divergences | 0 | 0 after recovery |
 | FIFO overflow | 0 | 0 |
 
@@ -189,29 +190,28 @@ serial source, rather than the AES stage, dominates the transfer rate for this
 workload. This conclusion is limited to the tested fixed-rate RTL model and
 must be checked again with a physical GPS stream.
 
-*These latency values come from the historical stimulus with deliberate TX
-stalls. The testbench now separates the nominal replay; the replacement
-measurement must be generated in Linux before submission.*
+These nominal values come from the production-clock RTL replay without
+artificial TX stalls. They are not electrical measurements of a GPS or a board.
 
 ### 4.2 FPGA post-fit comparison
 
 | Metric | Baseline | Secure | Secure − baseline |
 | --- | ---: | ---: | ---: |
-| Logic elements | 342 | 6,984 | +6,642 (+1,942.11%) |
-| Registers | 215 | 2,196 | +1,981 (+921.40%) |
+| Logic elements | 347 | 5,622 | +5,275 (+1,520.17%) |
+| Registers | 216 | 917 | +701 (+324.54%) |
 | Memory bits | 8,192 | 8,192 | 0 |
 | Pins | 14 | 14 | 0 |
-| Minimum Fmax | 132.61 MHz | 82.19 MHz | −50.42 MHz (−38.02%) |
-| Worst setup slack | 12.459 ns | 7.833 ns | positive |
-| Worst hold slack | 0.102 ns | 0.111 ns | positive |
-| Worst recovery slack | 15.341 ns | 12.724 ns | positive |
-| Worst removal slack | 0.424 ns | 2.332 ns | positive |
+| Minimum Fmax | 123.00 MHz | 98.23 MHz | −24.77 MHz (−20.14%) |
+| Worst setup slack | 11.870 ns | 9.820 ns | positive |
+| Worst hold slack | 0.102 ns | 0.101 ns | positive |
+| Worst recovery slack | 14.454 ns | 13.688 ns | positive |
+| Worst removal slack | 0.439 ns | 2.256 ns | positive |
 
 Both configurations meet the 50 MHz clock constraint in all audited corners.
 The secure variant has a substantial logic/register cost because the current
 AES implementation uses on-demand round-key expansion and an iterative round
-datapath. The post-area-reduction DE10-Lite metrics must be regenerated before
-the final comparison; the existing table is the earlier build evidence.
+datapath. The table was regenerated from the post-merge manifests and Quartus
+reports.
 
 ## 5. Discussion and limitations
 
@@ -225,9 +225,10 @@ The current evaluation has four important limitations. First, the NMEA input
 used in RTL is a public synthetic replay and not a live NEO-M8N capture. Second,
 the integrated baseline and secure designs have been compiled but still need a
 physical DE10-Lite programming and serial-output test. Third, the Cyclone IV
-comparison is not part of the current quantitative table: the EP4CE6E22C8 is
-identified, and an exploratory post-reduction fit passed, but the board clock
-and pinout still need confirmation. Finally, AES-CTR alone does
+comparison is not part of the current quantitative table: the EP4CE6E22C8
+capacity-only study passed (351 LE/216 registers baseline and 5,626 LE/917
+registers secure), but the board clock and pinout still need confirmation.
+Finally, AES-CTR alone does
 not authenticate the data; an authenticated mode or a separate integrity
 mechanism would be required for a complete secure telemetry protocol.
 

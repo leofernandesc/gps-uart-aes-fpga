@@ -42,14 +42,14 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 14/09 | Revisão e teste UART autônomo | Simulação, SOF e timing do alvo UART; documentação revisada | Concluído em simulação e Quartus |
 | 16–18/09 | UART na DE10-Lite | Captura TX no osciloscópio, 0x55/104,16 µs, RX por jumper e indicadores registrados | Concluído em 18/09 — relatório da bancada |
 | 20–21/09 | Identificar Cyclone IV | Modelo da placa, clock, pinos e esquema confirmados | Em andamento — EP4CE6E22C8 definido em 20/09; clock provável 48 MHz; etapa de 16–17/09 atrasada |
-| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Em andamento — área, métricas e NMEA corrigidos em 20/09; falta regressão HDL/Linux, latência nominal e alvo físico |
+| 20–21/09 | Revisão e adequação às duas plataformas | Secure cabe no EP4CE6; métricas, captura e regressão corrigidas | Concluído no commit reconciliado — regressão HDL/Linux, latência nominal, manifests e estudo de capacidade aprovados; alvo físico pendente |
 | 16/09 | Integração RTL e comparador | Replay serial recuperado sem divergências nos dois modos; testes PC | Concluído em simulação/PTY; ver marco abaixo |
 | 17–18/09 | Contexto e preparação dos builds | Wrapper carrega contexto de bring-up e projetos baseline/secure separados | Concluído para DE10-Lite — aplicação de contexto privado validada em 20/09 |
-| 18/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs, recursos e timing registrados |
+| 18–20/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs regenerados, manifests `PASS`, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
 | 21–22/09 | Experimentos | Três replays físicos por configuração e captura GPS contínua com comparação byte a byte | Pendente — reagendado de 19–20/09; depende dos quatro builds, interfaces e GPS |
-| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Em andamento — reavaliar latência e refazer comparação após otimização; resultados físicos pendentes |
+| 21–22/09 | Resultados e manuscrito | Tabelas, gráficos, discussão de latência/taxa útil e versão completa | Em andamento — métricas e latência nominal atualizadas; resultados físicos e Cyclone IV de bancada pendentes |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada | Pendente |
 | 24/09 | Submissão principal | Envio e comprovante preservados | Pendente |
 | **25/09** | **Contingência e encerramento** | **Correções de envio, eventual reenvio e confirmação final** | **Pendente** |
@@ -83,9 +83,9 @@ interno termina em 25/09 independentemente dessa folga.
   vez. O validador NMEA passou a analisar janelas brutas sem alterar os bytes,
   aceitar identificadores padrão e proprietários válidos e relatar prefixos ou
   sufixos parciais explicitamente.
-- A suíte Python local passou a 30 testes aprovados. Simulação RTL, builds
-  Quartus e ensaios físicos continuam sendo verificados após a reconciliação
-  com o remoto; nada deste marco representa validação física da Cyclone IV ou
+- A suíte Python local passou a 31 testes aprovados. A regressão HDL, os builds
+  Quartus, o replay GPS nominal e a auditoria de métricas passaram após a
+  reconciliação; nada deste marco representa validação física da Cyclone IV ou
   do GPS.
 
 ## Marco em 20/09: redução de área do AES
@@ -106,13 +106,17 @@ interno termina em 25/09 independentemente dessa folga.
 ### Ponto de retomada
 
 As correções de wrapper, reset, métricas, captura, validação NMEA e o estudo de
-capacidade da Cyclone IV estão sendo integrados ao histórico remoto após revisão
-do diff recebido. Depois do merge, repetir a regressão completa, os builds
-baseline/secure e a auditoria de métricas antes de publicar as tabelas dos dois
-manuscritos. Os artefatos locais não substituem a confirmação de modelo,
-oscilador e pinagem da Cyclone IV nem os ensaios físicos do GPS.
+capacidade da Cyclone IV foram integrados ao histórico remoto no merge
+`b065ba8`. A regressão completa, os builds baseline/secure e a auditoria de
+métricas foram repetidos antes de atualizar as tabelas dos manuscritos. Os
+artefatos locais não substituem a confirmação de modelo, oscilador e pinagem da
+Cyclone IV nem os ensaios físicos do GPS.
 
-## Marco em 20/09: correções sem hardware
+## Marco intermediário em 20/09: correções sem hardware (superado)
+
+Este registro foi escrito antes da reconciliação e preserva o diagnóstico
+intermediário. Os pendentes descritos abaixo foram encerrados no marco de
+endurecimento da validação, acima.
 
 - `scripts/fpga_metrics.py` passou a rejeitar slack negativo, auditoria
   incompleta, ausência de Fmax por canto e status de build não aprovado; foram
@@ -121,18 +125,16 @@ oscilador e pinagem da Cyclone IV nem os ensaios físicos do GPS.
   corpo vazio e sentenças acima de 82 bytes incluindo CRLF. O replay público
   continua com 5 sentenças e 309 bytes.
 - O replay de produção foi separado do estímulo com pausas artificiais; a nova
-  latência ainda precisa ser medida em Linux com simulador HDL.
+  latência foi medida em Linux no ensaio nominal.
 - O wrapper DE10-Lite não rearma o mesmo contexto estático após um reset
   operacional; nova programação é necessária antes de outro ensaio. Isso é
   proteção contra reutilização acidental, não gerenciamento de chaves.
 - Evidência: [validação das correções](validacao-correcoes-2026-09-20.md).
-- `python -m unittest tb.test_gps_fixture tb.test_fpga_metrics -v`: 8 testes
-  aprovados; `py_compile` e `git diff --check` aprovados. PTY e HDL ficam
-  pendentes neste Windows.
+- O conjunto final passou com 31 testes Python, `py_compile`, `git diff --check`,
+  regressão HDL, replay GPS, builds DE10-Lite e `make metrics`.
 
-O próximo passo sem placa é executar a regressão completa em Linux, medir a
-latência nominal e atualizar os manuscritos. Não criar alvo Cyclone IV enquanto
-clock e pinagem permanecerem não confirmados.
+O próximo passo é a validação física. O alvo Cyclone IV permanece limitado ao
+estudo de capacidade enquanto clock e pinagem permanecerem não confirmados.
 
 ## Marco em 20/09: revisão completa e identificação do EP4CE6
 
@@ -250,13 +252,14 @@ secure com o mesmo contexto registrado no PC e, depois, conectar o GPS real.
   secure processaram 9 streams/2.681 bytes no modo acelerado e 4 streams/49
   bytes em 50 MHz/9600, sem divergências.
 - A simulação dedicada processou os 309 bytes do replay em 50 MHz/9600 nos dois
-  modos, com FIFO máxima de 2 bytes e latência de 169.269 ciclos até o primeiro
-  TX; a recuperação no PC não apresentou divergências.
+  modos, com FIFO máxima de 1 byte e latência nominal de 80 ns do RX válido ao
+  início do TX e 1.041.680 ns até o fim do TX; a recuperação no PC não apresentou
+  divergências.
 - `make metrics` consolidou recursos, Fmax e slacks dos builds baseline/secure;
   a tabela está pronta para a seção de resultados do artigo.
 - Os rascunhos em inglês e português foram consolidados com os resultados
   atuais e a marcação explícita das evidências físicas ainda pendentes.
-- A suíte do PC passou com 19 testes. A evidência está em
+- A suíte Python passou com 31 testes. A evidência está em
   [validação do replay NMEA](validacao-replay-nmea-2026-09-20.md).
 
 Esta entrega valida apenas o contrato de dados e o caminho RTL/PC. Não é
@@ -269,7 +272,7 @@ P07–P11 na bancada.
   serial: sentença completa, ASCII, CRLF, checksum e limite de 82 caracteres.
 - O relatório registra tipos de sentença, quantidade, tamanho e SHA-256, com
   permissão `0600` e sem sobrescrever um ensaio anterior.
-- O replay público foi usado como teste de contrato, com 19 testes PC aprovados.
+- O replay público foi usado como teste de contrato, com 31 testes Python aprovados.
   Isso deixa o procedimento pronto para o NEO-M8N, mas ainda não comprova uma
   captura física.
 - O comando de bancada será:

@@ -49,7 +49,7 @@ sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão atual: 27 simulações, nove configurações de lint e 19 testes PC.
+- Regressão atual: 27 simulações, nove configurações de lint e 31 testes Python.
 - Validador de captura NMEA pronto: confere a integridade formal do arquivo
   bruto antes do ensaio; a origem física continua sendo registrada na bancada.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
@@ -62,12 +62,13 @@ sem confirmar oscilador, pinos e bancos. O prazo até 25/09 está em risco.
 - Cyclone IV definida como EP4CE6E22C8; faltam modelo da placa, oscilador e pinagem.
 - ESP32 disponível; dois adaptadores CP2102 são recomendados para captura dupla,
   com lógica de 3,3 V confirmada. A compra/disponibilidade não está confirmada.
-- A latência de 169.269 ciclos do replay inclui pausas artificiais. O testbench
-  foi corrigido para o ensaio nominal; refazer a medição em Linux e atualizar os
-  resultados comparativos após a otimização de área.
+- O replay nominal sem pausas artificiais foi medido nos dois modos: 80 ns de
+  RX válido até início do TX, 1.041.680 ns até o fim do TX e 989.643 ns do
+  início do quadro de entrada ao início do TX.
 - As correções sem hardware de métricas, NMEA e rearmamento do contexto estão
-  registradas em `validacao-correcoes-2026-09-20.md`; a regressão HDL/Linux ainda
-  é necessária antes de congelar o artigo.
+  registradas em `validacao-correcoes-2026-09-20.md`; `make check`, os dois
+  builds DE10-Lite, `make integration-gps` e `make metrics` foram repetidos
+  após o merge.
 
 Relatórios: [AES](validacao-aes-2026-09-09.md),
 [CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
@@ -97,7 +98,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 | 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao RTL/PC e validador de captura bruta pronto; GPS físico continua pendente |
 | 21–22/09 | Experimentos | Reagendado de 19–20/09; três replays por configuração e GPS contínuo, após os quatro builds |
-| 21–22/09 | Resultados / manuscrito | Corrigir latência, atualizar recursos após otimização e incorporar resultados físicos |
+| 21–22/09 | Resultados / manuscrito | Incorporar métricas pós-merge, latência nominal e resultados físicos disponíveis |
 | 23/09 | Revisão com orientador | Comentários incorporados e versão congelada |
 | 24/09 | Submissão | Arquivos enviados e comprovante salvo |
 | 25/09 | Contingência | Correções de envio/reenvio e confirmação final |
@@ -205,12 +206,12 @@ sem precisar excluir outros módulos do repositório.
 - Extrair LEs, registradores, bits/blocos de memória, Fmax e slacks do pós-fit.
 - Não copiar as exceções de portas virtuais do AES isolado para o sistema completo.
 
-Resultado DE10-Lite: baseline e secure compilados, com timing positivo. O
-baseline usou 342 LE/215 registradores/8.192 bits de memória e Fmax mínima de
-132,61 MHz; o secure usou 6.984 LE/2.196 registradores/8.192 bits e Fmax mínima
-de 82,19 MHz. Os dois operam a 50 MHz sem violação. A matriz completa continua
-pendente até confirmar a Cyclone IV; não apresentar esse resultado parcial como
-quatro builds concluídos.
+Resultado DE10-Lite: baseline e secure compilados no commit reconciliado, com
+timing positivo. O baseline usou 347 LE/216 registradores/8.192 bits de memória
+e Fmax mínima de 123,00 MHz; o secure usou 5.622 LE/917 registradores/8.192 bits
+e Fmax mínima de 98,23 MHz. Os dois operam a 50 MHz sem violação. A matriz
+completa continua pendente até confirmar a Cyclone IV; não apresentar esse
+resultado parcial como quatro builds concluídos.
 
 ## 5. GPS real e experimentos — 21–22/09 (reagendado de 19–20/09)
 
@@ -222,10 +223,10 @@ na simulação baseline/secure e pelo verificador independente no PC. Ele valida
 o contrato de dados, mas não substitui a aquisição do NEO-M8N.
 
 O replay completo também foi executado com o divisor real de 50 MHz/9600 baud
-nos dois modos. A FIFO atingiu no máximo 2 bytes; a recuperação no PC coincidiu
-com os 309 bytes de entrada. A latência medida no testbench foi de 169.269 ciclos
-até o primeiro TX e 16.236.274 ciclos até o último TX, equivalentes a 3,385 ms e
-324,725 ms a 50 MHz. Esses valores são de RTL e não incluem USB, sistema
+nos dois modos. A FIFO atingiu no máximo 1 byte; a recuperação no PC coincidiu
+com os 309 bytes de entrada. No replay nominal, a latência `RX válido → início
+TX` foi 80 ns, `RX válido → fim TX` foi 1.041.680 ns e `início do quadro →
+início TX` foi 989.643 ns. Esses valores são de RTL e não incluem USB, sistema
 operacional ou a propagação elétrica da bancada.
 
 Após conferir módulo, alimentação e montagem:

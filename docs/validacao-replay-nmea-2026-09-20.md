@@ -44,14 +44,15 @@ Resultados observados:
   bytes cada, sem divergência.
 - Simulação dedicada `make integration-gps`: baseline e secure processaram o
   replay completo de 309 bytes em 50 MHz/9600, sem divergência ou overflow.
-- Nos dois modos, a ocupação máxima da FIFO foi de 2 bytes. No estímulo
-  registrado, que continha pausas artificiais de TX, a distância entre o
-  primeiro byte RX e o primeiro quadro TX foi de 169.269 ciclos (3,385 ms); até
-  o último quadro TX foram 16.236.274 ciclos (324,725 ms). Esses números são
-  históricos e não devem ser usados como latência nominal.
+- No replay nominal, sem pausas artificiais de TX, a ocupação máxima da FIFO foi
+  de 1 byte nos dois modos. A latência `rx_valid → tx_start` foi de 80 ns, a
+  latência `rx_valid → tx_done` foi de 1.041.680 ns e a distância entre o início
+  do quadro de entrada e o início do quadro de saída foi de 989.643 ns. Os
+  valores foram medidos para os 309 bytes, com média, mínimo e máximo iguais.
 - Verificação independente no PC: os bytes do baseline foram preservados e o
   ciphertext do secure foi recuperado byte a byte com AES-CTR.
-- Suíte Python: 16 testes aprovados, incluindo o contrato do replay NMEA.
+- Suíte Python: 31 testes aprovados, incluindo o contrato do replay NMEA,
+  captura/contexto e auditoria fail-closed de métricas.
 
 ## Limite e próximo uso
 
@@ -63,5 +64,5 @@ registrar perdas, framing, overflow e duração. A validação atual não altera
 situação pendente dos ensaios P07–P11.
 
 O testbench foi corrigido em 20/09 para separar o replay nominal do estímulo
-com pausas. A nova medição deve ser executada em Linux com simulador HDL antes
-de substituir os valores históricos no artigo.
+com pausas. Os valores nominais acima são de simulação RTL em clock de produção;
+continuam não sendo uma medição elétrica do GPS ou da placa.

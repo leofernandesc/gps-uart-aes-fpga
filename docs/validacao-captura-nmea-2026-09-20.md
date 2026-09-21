@@ -29,7 +29,7 @@ python3 -m py_compile scripts/gps_fixture.py scripts/gps_capture.py tb/test_gps_
 - `make gps-replay`: **PASS** — 5 sentenças, 309 bytes CRLF.
 - SHA-256 do replay público usado no teste:
   `a96557374ebe971dd88329d8d40452c06f33c624ba99cd6c5e9b972594aa4f89`.
-- `make pc`: **PASS** — 19 testes em `1,017 s`.
+- `make pc`/suíte Python: **PASS** — 31 testes após a reconciliação.
 - O teste da CLI confirmou geração de relatório com permissão `0600`.
 - Casos de checksum alterado, captura truncada e conversão para LF foram
   rejeitados.
