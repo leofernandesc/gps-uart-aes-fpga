@@ -81,13 +81,19 @@ bytes no PC.
 
 ## Procedimento físico
 
-1. Compilar o alvo escolhido e programar o `.sof` por JTAG.
-2. Pressionar e soltar KEY0.
+1. Compilar o alvo escolhido e confirmar a cadeia MAX 10 antes de programar o
+   `.sof` por JTAG.
+2. Manter a fonte UART inativa até a configuração e o carregamento do contexto.
 3. Para `baseline` ou `secure`, apresentar uma sequência UART de teste em V10.
 4. Observar a retransmissão em W10 e verificar LEDs 6 e 7 apagados.
-5. Medir no osciloscópio o quadro 8N1, o período de aproximadamente 104,16 µs
+5. Medir no osciloscópio o quadro 8N1, o período de aproximadamente 104,17 µs
    por bit e, com dois canais, a latência entre RX e TX.
-6. Repetir com o GPS quando o módulo estiver disponível.
+6. Não pressionar KEY0 depois do primeiro byte. O contexto é de uso único e um
+   reset nesse ponto exige reprogramar o SOF antes de uma nova captura.
+7. Repetir com o GPS depois de concluir os bytes conhecidos.
+
+Comandos, pinagem do ESP32, vetores esperados e campos de evidência estão no
+[roteiro integrado de 22/09](../../docs/bancada-de10-lite-integrada-2026-09-22.md).
 
 O `uart_scope` é o único alvo que transmite sem uma fonte externa: ele envia
 `0x55` a cada 100 ms. O roteiro e os resultados desse ensaio estão em

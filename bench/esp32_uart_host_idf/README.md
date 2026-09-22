@@ -1,17 +1,17 @@
 # ESP32 UART host — ESP-IDF
 
-Este projeto usa o ESP-IDF para gerar e capturar o tráfego UART da Cyclone IV
-sem um adaptador USB–UART externo.
+Este projeto usa o ESP-IDF para gerar e capturar o tráfego UART da DE10-Lite
+ou da Cyclone IV sem um adaptador USB–UART externo.
 
 ## Pinagem
 
 Para um ESP32 DevKit clássico com GPIO16 e GPIO17 disponíveis:
 
-| ESP32 | Cyclone IV | Função |
-| --- | --- | --- |
-| GPIO17 / TX2 | J3 `PIN_103` | entrada `UART_RX` da FPGA |
-| GPIO16 / RX2 | J3 `PIN_100` | saída `UART_TX` da FPGA |
-| GND | GND do J3 | referência comum |
+| ESP32 | DE10-Lite | Cyclone IV | Função |
+| --- | --- | --- | --- |
+| GPIO17 / TX2 | JP1 pino 1 / `V10` | J3 `PIN_103` | entrada `UART_RX` da FPGA |
+| GPIO16 / RX2 | JP1 pino 2 / `W10` | J3 `PIN_100` | saída `UART_TX` da FPGA |
+| GND | JP1 pino 12 ou 30 | GND do J3 | referência comum |
 
 O USB do ESP32 é usado somente para programação e para o log no PC. As duas
 placas devem ser alimentadas separadamente. Não conectar `5V` ou `3V3` de uma
@@ -46,6 +46,7 @@ O firmware configura UART2 em 9600 baud, 8N1, envia repetidamente:
 
 e mostra no monitor USB os bytes retornados pela FPGA. Cada tentativa:
 
+- começa somente após uma janela de armamento de 10 s depois do boot;
 - espera exatamente cinco bytes por até 30 ms;
 - mantém uma guarda adicional de 10 ms para detectar bytes tardios ou
   duplicados;
@@ -69,6 +70,29 @@ latência física da FPGA. A latência deve ser medida no osciloscópio usando R
 TX como referências.
 
 O código-fonte está em `main/uart_host_main.c`.
+
+## Verificação automática do log
+
+Salve a saída completa do monitor e execute, a partir da raiz do repositório:
+
+```bash
+make esp32-log-check \
+  ESP32_LOG=data/private/de10-2026-09-22/baseline-monitor.log \
+  BENCH_MODE=baseline \
+  REPORT=data/private/de10-2026-09-22/baseline-report.json
+```
+
+Para o bring-up secure com o contexto público padrão, troque o modo para
+`secure`. Para um ensaio com contexto próprio, acrescente
+`CONTEXT_FILE=data/private/.../context.json`. O verificador exige quatro
+linhas `RESULT`, sequência iniciando em 1 e consecutiva, cinco bytes por
+tentativa e nenhum erro de transporte. No secure, ele concatena o ciphertext,
+decifra AES-CTR de forma independente e compara com todos os bytes enviados.
+Se o arquivo contiver reinicializações, somente a sessão iniciada pelo último
+`ESP-IDF UART host ready` é analisada.
+
+O [roteiro integrado da DE10-Lite](../../docs/bancada-de10-lite-integrada-2026-09-22.md)
+define a ordem de programação, captura e medição no osciloscópio.
 
 ## Compatibilidade de placa
 

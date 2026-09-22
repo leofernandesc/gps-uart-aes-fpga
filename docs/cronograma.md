@@ -26,6 +26,13 @@ e framing persistente. O datapath, a pinagem e a força de saída UART não fora
 alterados. Os builds baseline/secure e a regressão de integração passaram; isso
 prepara, mas não conclui, o P04 físico.
 
+Para a DE10-Lite, o roteiro P03–P06 foi fechado com pinagem JP1, ordem segura
+de programação, quatro tentativas por variante, valores secure esperados e
+verificação automática do log ESP32. A preparação não altera o status físico:
+baseline e secure integrados ainda precisam ser programados nessa placa.
+O host aguarda 10 s após o boot para permitir que o TX seja conectado somente
+depois da configuração do FPGA, sem consumir bytes/contexto antes da captura.
+
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
 O gravador/comparador binário passou em testes com porta virtual Linux.
@@ -61,7 +68,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
 | 21/09 | Preparação física das duas plataformas | Pinagem/clock/JTAG confirmados; bitstreams de bancada programáveis; UART isolada validada | **Concluído com avanço** — P01/P02 Cyclone IV, baseline programado e P03 aprovado com ESP32; P04 iniciado |
-| 22/09 | Baseline nas duas plataformas | P03/P04 executados na DE10-Lite e Cyclone IV; bytes conhecidos, waveform, loopback e comparação no PC | **Em andamento** — host/diagnósticos implementados e compilados; P03 Cyclone IV aprovado; falta fechar P04 com ponta ×10/massa curta e repetir o baseline na DE10-Lite |
+| 22/09 | Baseline nas duas plataformas | P03/P04 executados na DE10-Lite e Cyclone IV; bytes conhecidos, waveform, loopback e comparação no PC | **Em andamento** — P03 Cyclone IV aprovado; roteiro e verificador DE10-Lite preparados; faltam P03/P04 físicos na DE10-Lite e P04 definitivo na Cyclone IV |
 | 23/09 | Secure nas duas plataformas | P05/P06 executados; ciphertext capturado, decifrado no PC e contexto/reset registrados | Pendente |
 | 24/09 | GPS real e ensaio contínuo | P07–P10 executados nos quatro pares placa/configuração; três repetições e captura contínua | Pendente — depende do NEO-M8N e das interfaces seriais |
 | **25/09** | **Falhas, reset e fechamento físico** | **P11, repetição de qualquer caso instável, matriz de evidências completa e freeze** | **Pendente — último dia de bancada** |
@@ -120,6 +127,8 @@ submissão deve ocorrer até 30/09.
 - O host ESP-IDF deixou de limpar a UART a cada tentativa e passou a usar a
   fila de eventos do driver. Cada tentativa exige cinco bytes em até 30 ms e
   observa mais 10 ms para detectar respostas tardias ou duplicadas.
+- Após cada boot, o host mantém uma janela de armamento de 10 s antes de
+  `seq=1`; o verificador ignora sessões anteriores ao último marcador de boot.
 - As linhas `RESULT` e `SUMMARY` registram sequência, modo, TX/RX, tamanho,
   igualdade, timeout, extras, framing, paridade, overflow, buffer cheio e
   falhas de escrita/transmissão. `host_window_us` é explicitamente tempo do
@@ -136,6 +145,13 @@ submissão deve ocorrer até 30/09.
 - O P04 continua pendente. A repetição deve usar ponta ×10, entrada de 1 MΩ,
   acoplamento DC e massa curta. Os 8 mA permanecem inalterados até existir uma
   captura correta e repetível que justifique testar 4 mA/slew lento.
+- O novo [roteiro integrado da DE10-Lite](bancada-de10-lite-integrada-2026-09-22.md)
+  separa P03–P06, impede confusão de cabo quando as duas FPGAs estão presentes
+  e fixa quatro tentativas de `55 A5 00 FF 3C` por variante.
+- `scripts/esp32_log_verify.py` transforma as linhas `RESULT` em relatório:
+  baseline exige eco exato; secure decifra todo o fluxo CTR e rejeita lacunas,
+  corrupção ou qualquer flag de transporte. Cinco testes unitários passaram;
+  nenhum log físico da DE10-Lite foi produzido nesta preparação.
 
 ## Marco em 21/09: perfil Cyclone IV preparado para a bancada
 

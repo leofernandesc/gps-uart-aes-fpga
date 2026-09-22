@@ -138,8 +138,9 @@ The evaluation separates three kinds of evidence:
    collected from post-fit reports.
 
 The current software/RTL evidence comprises 27 HDL simulations, nine lint
-configurations and 31 Python tests. These counts include the public replay and the
-raw-capture validation contract; they do not represent a physical GPS run.
+configurations and 36 Python tests. These counts include the public replay, the
+ESP32 bench-log verifier, and the raw-capture validation contract; they do not
+represent a physical GPS run.
 
 The current evidence does not replace the final physical experiment. The
 integrated baseline/secure bitstreams still have to be programmed and tested on

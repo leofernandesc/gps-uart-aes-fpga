@@ -107,7 +107,7 @@ make check
 Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e cinco da integração/wrapper.
 Inclui nove configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 31 testes Python de captura, contexto,
+bytes CTR e do TX integrado, além de 36 testes Python de captura, contexto,
 replay e validação NMEA.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
@@ -140,6 +140,7 @@ make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
 make gps-capture-check GPS_CAPTURE=arquivo.bin # Valida uma captura NMEA bruta
+make esp32-log-check ESP32_LOG=monitor.log BENCH_MODE=baseline # valida bancada externa
 make manuscript-check # Confere métricas e limitações declaradas nos manuscritos
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
@@ -264,6 +265,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
 - [Roteiro de bancada Cyclone IV](docs/bancada-cyclone4-2026-09-21.md)
+- [Roteiro integrado da DE10-Lite](docs/bancada-de10-lite-integrada-2026-09-22.md)
 - [Instrumentação anterior ao P04–P06](docs/validacao-instrumentacao-2026-09-22.md)
 - [Alvo Cyclone IV e perfil de compilação](fpga/cyclone4/README.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
@@ -279,8 +281,8 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada, com quatro telas, freeze físico em 25/09 e escrita no fim de semana. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo da bancada: gravar o host ESP32 atualizado, reprogramar o baseline
-Cyclone IV e fechar o P04 com ponta ×10/massa curta; depois executar P05/P06
+Próximo passo da bancada: executar P03/P04 na DE10-Lite com o roteiro próprio e
+fechar o P04 da Cyclone IV com ponta ×10/massa curta; depois executar P05/P06
 secure nas duas placas conforme o [plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.

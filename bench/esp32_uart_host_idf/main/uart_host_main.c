@@ -1,12 +1,12 @@
 /*
- * ESP-IDF UART host for the Cyclone IV baseline/secure bench tests.
+ * ESP-IDF UART host for the DE10-Lite and Cyclone IV baseline/secure tests.
  *
  * USB Serial (UART0 through the ESP32 development board) is the PC log
  * channel at 115200 baud. UART2 is the tested 9600/8N1 FPGA channel:
  *
- *   ESP32 GPIO17 / TX2 -> Cyclone IV J3 PIN_103 / UART_RX
- *   ESP32 GPIO16 / RX2 <- Cyclone IV J3 PIN_100 / UART_TX
- *   ESP32 GND          -> Cyclone IV GND
+ *   ESP32 GPIO17 / TX2 -> FPGA UART_RX
+ *   ESP32 GPIO16 / RX2 <- FPGA UART_TX
+ *   ESP32 GND          -> FPGA GND
  *
  * Both boards must be powered independently. Do not connect their 5 V or
  * 3.3 V supply rails together; share only GND and the 3.3 V logic signals.
@@ -37,6 +37,7 @@
 #define FPGA_UART_EXTRA_GUARD_MS   10
 #define FPGA_UART_PERIOD_MS        1000
 #define FPGA_UART_CAPTURE_BYTES    64
+#define FPGA_UART_ARM_DELAY_MS     10000
 
 static const char *TAG = "esp32_uart_host";
 static const uint8_t test_bytes[] = {0x55, 0xA5, 0x00, 0xFF, 0x3C};
@@ -255,7 +256,7 @@ static void update_counters(run_counters_t *counters,
 void app_main(void)
 {
     run_counters_t counters = {0};
-    TickType_t previous_wake = xTaskGetTickCount();
+    TickType_t previous_wake;
     uint32_t sequence = 0;
     char tx_hex[sizeof(test_bytes) * 2 + 1];
 
@@ -270,6 +271,11 @@ void app_main(void)
     ESP_LOGI(TAG, "mode=secure expected_echo=0; ciphertext requires PC verification");
 #endif
     ESP_LOGW(TAG, "host_window_us is driver timing, not FPGA latency");
+    ESP_LOGW(TAG, "ARM_DELAY_MS=%d; connect FPGA UART now",
+             FPGA_UART_ARM_DELAY_MS);
+    vTaskDelay(pdMS_TO_TICKS(FPGA_UART_ARM_DELAY_MS));
+    ESP_LOGI(TAG, "ARMED: starting sequence at seq=1");
+    previous_wake = xTaskGetTickCount();
 
     while (true) {
         trial_result_t result = {0};

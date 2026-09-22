@@ -1,8 +1,8 @@
 # ESP32 como fonte e captura UART
 
 O adaptador USB–UART não é obrigatório para os ensaios integrados. O ESP32
-pode gerar a entrada UART e receber a saída da Cyclone IV; o cabo USB do ESP32
-fica responsável apenas por exibir os resultados no PC.
+pode gerar a entrada UART e receber a saída da DE10-Lite ou da Cyclone IV; o
+cabo USB do ESP32 fica responsável apenas por exibir os resultados no PC.
 
 A implementação recomendada usa ESP-IDF e está em
 [`bench/esp32_uart_host_idf`](../bench/esp32_uart_host_idf/). O sketch Arduino
@@ -18,6 +18,11 @@ Usando um ESP32 DevKit com GPIO16/GPIO17 disponíveis:
 | GPIO17 / TX2 | J3 `PIN_103` | entrada RX da FPGA |
 | GPIO16 / RX2 | J3 `PIN_100` | saída TX da FPGA |
 | GND | GND do J3 | referência comum |
+
+Na DE10-Lite, a ligação equivalente é GPIO17 → JP1 pino 1 (`V10`), JP1
+pino 2 (`W10`) → GPIO16 e GND → JP1 pino 12 ou 30. O
+[roteiro específico](bancada-de10-lite-integrada-2026-09-22.md) deve ser usado
+para programar e medir essa placa.
 
 Na relação física do J3 usada neste ensaio, `PIN_103` é o nono contato da
 primeira fileira informada e `PIN_100` é o décimo. Confirme sempre a inscrição
@@ -36,6 +41,11 @@ O firmware ESP-IDF em `main/uart_host_main.c` transmite, em 9600/8N1, a sequênc
 e imprime no USB Serial do ESP32 os bytes que retornam da FPGA. Use o monitor
 do ESP-IDF a 115200 baud para visualizar o log. As instruções de instalação,
 compilação e gravação estão no README do projeto.
+
+Após cada boot, o firmware aguarda 10 s antes de `seq=1`. Durante essa janela,
+conecte GPIO17 ao RX da FPGA já programada; isso impede que bytes anteriores à
+captura consumam o contexto CTR. Não pressione o reset da FPGA depois do
+primeiro byte.
 
 ## Baseline
 
@@ -56,6 +66,10 @@ O baseline deve retransmitir os mesmos bytes na mesma ordem.
 
 O secure não deve ser validado pela aparência dos bytes no terminal: a
 verificação deve ser feita por comparação binária e recuperação AES-CTR.
+
+Os logs estruturados podem ser validados com `make esp32-log-check`; o comando
+rejeita sequência incompleta, timeout, bytes extras e eventos de erro, e no
+modo secure recupera o fluxo completo com o contexto correspondente.
 
 Se o ESP32 não expuser GPIO16/GPIO17, alterar as constantes do sketch para
 dois GPIOs livres do modelo disponível e manter a mesma ligação cruzada.

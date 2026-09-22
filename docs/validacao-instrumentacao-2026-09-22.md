@@ -12,6 +12,7 @@ UART2. Para cada sequência `55 A5 00 FF 3C`, ele:
 - aceita os cinco bytes esperados por até 30 ms;
 - observa mais 10 ms para detectar bytes tardios ou duplicados;
 - no fluxo nominal, limpa a entrada apenas uma vez, antes do primeiro ensaio;
+- aguarda 10 s depois de cada boot para a montagem ser armada antes de `seq=1`;
 - inicia tentativas a cada 1 s com `vTaskDelayUntil`;
 - contabiliza timeout, divergência, bytes extras, framing, paridade, overflow,
   buffer cheio, break, falha de escrita e timeout do TX;
@@ -28,6 +29,11 @@ ESP32 e não pode ser usado como latência física da FPGA.
 As duas opções do Kconfig — baseline e secure — foram compiladas com ESP-IDF
 6.0.2. A gravação no ESP32 e a observação dos novos logs pertencem à próxima
 execução física.
+
+Na preparação posterior da DE10-Lite, foi adicionado um verificador dos logs
+`RESULT`. Ele usa somente a sessão iniciada pelo último marcador de boot,
+rejeita lacunas/flags de erro e recupera independentemente o fluxo AES-CTR. A
+janela de armamento e o verificador não concluem P03–P06 sem execução física.
 
 ## Diagnósticos da Cyclone IV
 
@@ -55,8 +61,9 @@ métricas.
 | --- | --- |
 | `idf.py build`, modo baseline | **PASS** |
 | `idf.py build`, modo secure | **PASS** |
-| `make check` | **PASS** — 27 simulações, nove configurações de lint, síntese estrutural e 31 testes PC |
-| `make integration` | **PASS** — 2.681 bytes por modo no ensaio acelerado, casos de 50 MHz/9600 e 31 testes PC |
+| `make check` | **PASS** — repetido após a preparação DE10-Lite; 27 simulações, nove configurações de lint, síntese estrutural e 36 testes PC |
+| `make integration` | **PASS** — 2.681 bytes por modo no ensaio acelerado, casos de 50 MHz/9600 e 36 testes PC na regressão atual |
+| `python3 -m unittest tb.test_esp32_log_verify -v` | **PASS** — cinco casos positivos e negativos do log de bancada |
 | `make cyclone4-baseline-fpga` | **PASS** — SOF gerado e três cantos temporais aprovados; não programado nesta etapa |
 | `make cyclone4-secure-fpga` | **PASS** — SOF gerado e três cantos temporais aprovados; não programado nesta etapa |
 | `make cyclone4-metrics` | **PASS** |
@@ -78,8 +85,8 @@ Quartus e não constituem medição física.
 ## Próxima execução
 
 1. Gravar o firmware ESP32 em modo baseline e reprogramar o SOF baseline.
-2. Confirmar três linhas `RESULT` consecutivas com cinco bytes, `same=1` e
-   todos os contadores de erro em zero.
+2. Usar a janela de armamento e confirmar quatro linhas `RESULT` consecutivas
+   com cinco bytes, `same=1` e todos os contadores de erro em zero.
 3. Repetir P04 com ponta ×10, entrada de 1 MΩ, acoplamento DC e massa curta.
 4. Medir aproximadamente 104,17 µs por bit, 1,0417 ms por byte e 5,208 ms para
    os cinco bytes; salvar a captura de RX e TX.

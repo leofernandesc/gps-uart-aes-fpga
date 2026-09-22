@@ -52,7 +52,7 @@ concentrado na bancada.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão atual: 27 simulações, nove configurações de lint e 31 testes Python.
+- Regressão atual: 27 simulações, nove configurações de lint e 36 testes Python.
 - Validador de captura NMEA pronto: confere a integridade formal do arquivo
   bruto antes do ensaio; a origem física continua sendo registrada na bancada.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
