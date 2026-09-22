@@ -17,21 +17,24 @@ O prazo continua concentrado na bancada até 25/09, com redação no fim de sema
 e submissão/contingência até 30/09. Ver [revisão completa](revisao-completa-2026-09-20.md)
 e o [roteiro específico da Cyclone IV](bancada-cyclone4-2026-09-21.md).
 
-Antes de retomar os ensaios físicos, a instrumentação foi endurecida. O host
-ESP32 agora coleta cinco bytes por eventos com prazo de 30 ms, guarda de 10 ms
-para extras, período fixo de 1 s e contadores estruturados de timeout,
-divergência, framing, paridade e overflow. Na Cyclone IV, os quatro LEDs dos
-tops integrados mostram heartbeat, atividade/configuração, overflow persistente
-e framing persistente. O datapath, a pinagem e a força de saída UART não foram
-alterados. Os builds baseline/secure e a regressão de integração passaram; isso
-prepara, mas não conclui, o P04 físico.
+Antes de retomar os ensaios físicos, a instrumentação foi definida em torno de
+um único adaptador USB–TTL CP2102. O novo host PC envia quatro quadros de cinco
+bytes, aguarda 10 ms para detectar bytes extras e compara baseline/secure com
+uma biblioteca independente. Na Cyclone IV, os quatro LEDs dos tops integrados
+mostram heartbeat, atividade/configuração, overflow persistente e framing
+persistente. O datapath, a pinagem e a força de saída UART não foram alterados.
+Os builds baseline/secure e a regressão de integração passaram; isso prepara,
+mas não conclui, o P04 físico.
 
 Para a DE10-Lite, o roteiro P03–P06 foi fechado com pinagem JP1, ordem segura
 de programação, quatro tentativas por variante, valores secure esperados e
-verificação automática do log ESP32. A preparação não altera o status físico:
+verificação automática do relatório do CP2102. A preparação não altera o status físico:
 baseline e secure integrados ainda precisam ser programados nessa placa.
-O host aguarda 10 s após o boot para permitir que o TX seja conectado somente
-depois da configuração do FPGA, sem consumir bytes/contexto antes da captura.
+O script arma a porta depois da programação e limpa as filas seriais antes do
+primeiro quadro, sem consumir bytes/contexto antes da captura.
+O teste em PTY de baseline/secure e o replay GPS passaram; a regressão `make check`
+foi repetida com 34 testes Python. Isso valida o host, mas ainda não é evidência
+física do CP2102.
 Os dois SOFs foram regenerados no commit `746b085`, passaram pela auditoria de
 timing nos três cantos e tiveram seus hashes registrados no plano de testes.
 Em 22/09, o WaveForms 3.25.1 e o Adept Runtime 2.30.1 foram instalados no
@@ -74,7 +77,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 18–20/09 | Builds DE10-Lite | Baseline/secure com recursos e timing rastreáveis | Concluído — dois SOFs regenerados, manifests `PASS`, recursos e timing registrados |
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
-| 21/09 | Preparação física das duas plataformas | Pinagem/clock/JTAG confirmados; bitstreams de bancada programáveis; UART isolada validada | **Concluído com avanço** — P01/P02 Cyclone IV, baseline programado e P03 aprovado com ESP32; P04 iniciado |
+| 21/09 | Preparação física das duas plataformas | Pinagem/clock/JTAG confirmados; bitstreams de bancada programáveis; UART isolada validada | **Concluído com avanço** — P01/P02 Cyclone IV, baseline programado e P03 histórico aprovado; P04 iniciado |
 | 22/09 | Baseline nas duas plataformas | P03/P04 executados na DE10-Lite e Cyclone IV; bytes conhecidos, waveform, loopback e comparação no PC | **Em andamento** — P03 Cyclone IV aprovado; roteiro e verificador DE10-Lite preparados; faltam P03/P04 físicos na DE10-Lite e P04 definitivo na Cyclone IV |
 | 23/09 | Secure nas duas plataformas | P05/P06 executados; ciphertext capturado, decifrado no PC e contexto/reset registrados | Pendente |
 | 24/09 | GPS real e ensaio contínuo | P07–P10 executados nos quatro pares placa/configuração; três repetições e captura contínua | Pendente — depende do NEO-M8N e das interfaces seriais |
@@ -93,7 +96,7 @@ bytes forem comparados automaticamente; LED ou forma de onda isolada não basta.
 
 | Dia | Manhã | Tarde | Fechamento obrigatório |
 | --- | --- | --- | --- |
-| **Seg 21/09** | Confirmar Cyclone IV: código EP4CE6E22C8, oscilador, pinagem, alimentação, GND e JTAG. Preparar QSF/SDC e identificar os pinos RX/TX. | Programar um bitstream mínimo/`uart_scope` em cada placa. Repetir UART autônoma e loopback na Cyclone IV; iniciar o baseline com o ESP32. | P01/P02 registrados; P03 do baseline aprovado pelo retorno externo `55 A5 00 FF 3C`; P04 iniciado, com repetição elétrica necessária. |
+| **Seg 21/09** | Confirmar Cyclone IV: código EP4CE6E22C8, oscilador, pinagem, alimentação, GND e JTAG. Preparar QSF/SDC e identificar os pinos RX/TX. | Programar um bitstream mínimo/`uart_scope` em cada placa. Repetir UART autônoma e loopback na Cyclone IV; preparar o baseline para o CP2102. | P01/P02 registrados; P03 histórico do baseline aprovado; P04 iniciado, com repetição elétrica necessária. |
 | **Ter 22/09** | Repetir P04 com ponta ×10 e massa curta; medir bit time e amplitudes da borda no baseline das duas plataformas. | Consolidar captura no PC, waveform e três repetições por placa; corrigir qualquer instabilidade antes do secure. | P03/P04 do baseline classificados, comparação byte a byte e waveform arquivadas. |
 | **Qua 23/09** | Programar o secure nas duas placas e carregar o contexto do ensaio. Repetir os bytes conhecidos. | Executar P05/P06: capturar ciphertext no PC, decifrar com o contexto registrado e medir RX→TX no osciloscópio ou AD2 quando possível. Testar reset antes do primeiro byte e bloqueio após o primeiro byte. | Ciphertext recuperado exatamente, contexto/nonce registrados sem chave em claro, três repetições secure por placa e evidência de reset. |
 | **Qui 24/09** | Validar o NEO-M8N: VCC, GND, nível elétrico, atividade TX e 9600/8N1. Capturar a referência NMEA independente. | Executar P07–P09 nos quatro casos: DE10-Lite baseline/secure e Cyclone IV baseline/secure. Fazer três repetições, validar NMEA e comparar a entrada com a saída recuperada. | GPS físico comprovado, zero divergência, framing/overflow registrados e arquivos brutos/hash preservados. Se possível, iniciar P10 contínuo. |
@@ -113,9 +116,9 @@ bytes forem comparados automaticamente; LED ou forma de onda isolada não basta.
 - **P11:** reset, descarte da captura anterior e recuperação com contexto novo.
 
 O NEO-M8N, a Cyclone IV com pinagem confirmada, o osciloscópio, USB-Blaster,
-cabos/jumpers e uma fonte/captura UART independente precisam estar disponíveis
-antes do início de 21/09. O ESP32 pode atuar como fonte ou registrador auxiliar;
-dois CP2102 simplificam a captura simultânea de referência e saída. Sem GPS ou
+cabos/jumpers e um adaptador USB–TTL com sinais de 3,3 V precisam estar disponíveis
+antes do início de 21/09. Um CP2102 é suficiente: a referência GPS é capturada
+primeiro e depois reapresentada à FPGA pelo mesmo módulo. Sem GPS ou
 sem a identificação elétrica da Cyclone IV, o caso correspondente deve ser
 marcado como **bloqueado**, nunca como aprovado por replay RTL.
 
@@ -131,18 +134,16 @@ submissão deve ocorrer até 30/09.
 
 ## Marco em 22/09: instrumentação preparada para P04–P06
 
-- O host ESP-IDF deixou de limpar a UART a cada tentativa e passou a usar a
-  fila de eventos do driver. Cada tentativa exige cinco bytes em até 30 ms e
-  observa mais 10 ms para detectar respostas tardias ou duplicadas.
-- Após cada boot, o host mantém uma janela de armamento de 10 s antes de
-  `seq=1`; o verificador ignora sessões anteriores ao último marcador de boot.
-- As linhas `RESULT` e `SUMMARY` registram sequência, modo, TX/RX, tamanho,
-  igualdade, timeout, extras, framing, paridade, overflow, buffer cheio e
-  falhas de escrita/transmissão. `host_window_us` é explicitamente tempo do
-  host, não latência física da FPGA.
+- O host PC `scripts/serial_bench.py` foi implementado para o CP2102
+  full-duplex. Cada tentativa transmite cinco bytes, espera até 1 s pela
+  resposta e observa 10 ms para detectar bytes tardios ou duplicados.
+- O relatório JSON registra sequência, modo, TX/RX, tamanho, timeout, extras,
+  divergência e hashes. O tempo registrado é explicitamente do host, não
+  latência física da FPGA; framing e overflow continuam vindo dos diagnósticos
+  da placa e da instrumentação.
 - O modo baseline verifica eco; o modo secure preserva o ciphertext para
-  comparação independente no PC. As duas configurações compilaram no ESP-IDF
-  6.0.2; o binário ainda precisa ser gravado para a próxima rodada física.
+  comparação independente no PC. O fluxo funciona tanto na DE10-Lite quanto na
+  Cyclone IV, com o mesmo adaptador e pinagem específica de cada placa.
 - Os LEDs integrados da Cyclone IV agora priorizam as flags persistentes:
   heartbeat, configuração/atividade, overflow e framing. O mapeamento é igual
   no baseline e no secure.
@@ -162,10 +163,11 @@ submissão deve ocorrer até 30/09.
 - Os SOFs baseline/secure foram regenerados a partir de `746b085`, com manifests
   `PASS`, timing aprovado nos três cantos e hashes conferidos. Isso ainda não
   representa programação ou funcionamento físico na DE10-Lite.
-- `scripts/esp32_log_verify.py` transforma as linhas `RESULT` em relatório:
-  baseline exige eco exato; secure decifra todo o fluxo CTR e rejeita lacunas,
-  corrupção ou qualquer flag de transporte. Cinco testes unitários passaram;
-  nenhum log físico da DE10-Lite foi produzido nesta preparação.
+- `scripts/serial_bench.py` envia o vetor conhecido ou o replay NMEA, registra
+  cada resposta e gera um relatório JSON: baseline exige eco exato; secure
+  decifra todo o fluxo CTR e rejeita lacunas, corrupção ou bytes extras. Os
+  testes unitários do host passaram; nenhum log físico da DE10-Lite foi
+  produzido nesta preparação.
 
 ## Marco em 21/09: perfil Cyclone IV preparado para a bancada
 
@@ -181,9 +183,9 @@ submissão deve ocorrer até 30/09.
   correspondentes. `make cyclone4-metrics` também passou.
 - `j3_scope` foi programado e medido: aproximadamente `104 µs` por bit e
   `3,32 V` em nível alto. O loopback entre `PIN_100` e `PIN_103` passou.
-- O baseline integrado foi programado e o P03 passou pelo caminho externo
-  ESP32 GPIO17 → FPGA RX → FIFO → FPGA TX → ESP32 GPIO16, com retorno exato de
-  `55 A5 00 FF 3C`. Não havia jumper local entre RX e TX.
+- O baseline integrado foi programado e o P03 histórico passou pelo caminho
+  externo, com retorno exato de `55 A5 00 FF 3C`. Não havia jumper local entre
+  RX e TX. A repetição atual será feita pelo CP2102 full-duplex.
 - A primeira observação de borda do P04 registrou overshoot/undershoot
   preliminar; ela não fecha o teste e motivou a instrumentação de 22/09.
 - Evidência e sequência completa: [bancada Cyclone IV](bancada-cyclone4-2026-09-21.md).
@@ -280,8 +282,8 @@ não de funcionamento elétrico da placa.
 - Testes adicionais reproduziram reutilização de máscara CTR após reset,
   aceitação de slack negativo pelo extrator de métricas e falhas do validador
   NMEA. O RTL não foi modificado nesta revisão; correções continuam pendentes.
-- ESP32 disponível como alternativa. Dois CP2102 com sinais de 3,3 V são
-  recomendados para observar referência e saída; aquisição ainda não confirmada.
+- Um CP2102 com sinais de 3,3 V foi definido como o único host serial da
+  bancada. A captura direta do GPS e o replay para a FPGA continuam pendentes.
 - Próximo passo sem placa: adequar a área do AES compartilhado e os testes;
   em paralelo, Leonardo confirma placa/oscilador/pinagem e prepara as interfaces.
 

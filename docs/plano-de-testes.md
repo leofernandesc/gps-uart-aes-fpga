@@ -8,15 +8,13 @@ diferentes e não devem ser misturados.
 Revisão em 22/09: a reconciliação com o remoto foi concluída, as correções de
 área, métricas, contexto/reset e aquisição foram testadas e os resultados foram
 regenerados. Na Cyclone IV, a variante de bancada foi programada e os ensaios
-físicos de TX e loopback foram aprovados com o acesso J3. O host ESP32/ESP-IDF
-foi compilado, gravado e usado para validar o baseline por um caminho externo,
-sem jumper entre `PIN_100` e `PIN_103`, com GND comum conectado. A validação
-física do secure, a conclusão do P04 e o GPS continuam pendentes. Antes desses
-ensaios, o host recebeu coleta por eventos, prazo e guarda de bytes extras; os
-LEDs integrados da Cyclone IV passaram a expor overflow e framing persistentes.
-A latência nominal abaixo não contém pausas artificiais. Para a DE10-Lite, foi
-preparado um roteiro P03–P06 e um verificador fail-closed dos logs do ESP32;
-isso ainda não constitui execução física dos tops integrados.
+físicos de TX e loopback foram aprovados com o acesso J3. O host operacional
+passa a ser o PC com um único CP2102 full-duplex, usado para validar baseline e
+secure nas duas placas. A validação física do secure, a conclusão do P04 e o
+GPS continuam pendentes. Os LEDs integrados da Cyclone IV expõem overflow e
+framing persistentes. A latência nominal abaixo não contém pausas artificiais.
+Para a DE10-Lite, o roteiro P03–P06 e o host serial foram preparados; isso ainda
+não constitui execução física dos tops integrados.
 
 ## Configuração fixa
 
@@ -30,7 +28,7 @@ isso ainda não constitui execução física dos tops integrados.
 - Caminho secure: `UART RX -> FIFO -> AES-128-CTR -> UART TX`.
 - Entradas e saídas da DE10-Lite: RX em `V10` e TX em `W10`.
 - Instrumentação física: osciloscópio de bancada ou Analog Discovery 2; os
-  bytes continuam sendo fornecidos/recebidos pelo ESP32 ou CP2102.
+  bytes são fornecidos/recebidos por um único CP2102 em nível de 3,3 V.
 - Variantes FPGA: projetos Quartus separados em `fpga/de10_lite/baseline/` e
   `fpga/de10_lite/secure/`; para a Cyclone IV, `fpga/cyclone4/uart_scope/`,
   `fpga/cyclone4/baseline/` e `fpga/cyclone4/secure/`.
@@ -72,12 +70,12 @@ substitui um resultado físico.
 | S12 | Wrapper baseline | Lint e síntese estrutural do top DE10-Lite | Top elabora sem AES e sem latch/problema estrutural | **Concluído em 18/09** — `make integration`; AES ausente na hierarquia baseline |
 | S13 | Wrapper secure | Lint e síntese estrutural do top DE10-Lite | Top elabora com AES-CTR e sem latch/problema estrutural | **Concluído em 18/09** — `make integration` |
 | S14 | Regressão final | `make check` após a reconciliação | Nenhuma regressão nos módulos já aprovados | **Repetido em 22/09** — código 0; 27 simulações, lint, estrutura e PC |
-| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto; a suíte atual tem 36 testes PC |
+| S15 | Contexto do ensaio | `make context` e `make pc` | Contexto privado, nonce novo e registro sem chave em claro | **Concluído em 20/09** — 7 testes de contexto; a suíte atual tem 34 testes PC |
 | S16 | Contexto no wrapper | Testbench do top DE10-Lite com parâmetros substituídos | Ciphertext observado no TX corresponde ao contexto de elaboração | **Concluído em 19/09** — `make integration`, `0x55 -> 0xe2` |
 | S17 | Contexto no build Quartus | `CONTEXT_FILE=... make secure-fpga` e validação do pacote gerado | O JSON é validado, o modo é conferido e o pacote privado entra no SOF | **Concluído em 20/09** — baseline/secure compilados; programação física pendente |
 | S18 | Replay NMEA estruturado | `make gps-replay`, `make integration` e testes PC | Sentenças ASCII com checksum válido são convertidas para CRLF e preservadas nos modos baseline/secure | **Concluído em 20/09** — 5 sentenças, replay sintético de 309 bytes, RTL/PC; GPS físico pendente |
 | S19 | Replay GPS em clock de produção | `make integration-gps` e `--verify-gps` | Os 309 bytes do replay atravessam baseline e secure em 50 MHz/9600 sem perda, overflow ou divergência | **Concluído em 20/09** — FIFO máxima de 1 byte; 80 ns de RX válido até início do TX e 1.041.680 ns até fim; físico pendente |
-| S20 | Validação de captura NMEA | `scripts/gps_capture.py` e `make pc` | Captura bruta completa, ASCII, CRLF, checksum e limite NMEA aprovados antes do experimento | **Concluído em 20/09** — 31 testes Python; captura física ainda pendente |
+| S20 | Validação de captura NMEA | `scripts/gps_capture.py` e `make pc` | Captura bruta completa, ASCII, CRLF, checksum e limite NMEA aprovados antes do experimento | **Concluído em 20/09** — 34 testes Python; captura física ainda pendente |
 
 Comandos principais:
 
@@ -209,30 +207,22 @@ autônoma; não valida ainda FIFO, AES ou GPS.
 2. Manter a fonte UART inativa até a configuração estar concluída.
 3. Confirmar LED de configuração/atividade.
 4. Apresentar bytes por uma fonte UART independente no RX da plataforma.
-5. Observar a retransmissão no TX com o host ESP32.
+5. Observar a retransmissão no TX com o host PC e o CP2102.
 6. Registrar erros, eventos, ocupação e comportamento após reset.
 
-No ensaio de 21/09, o ESP32 enviou `55 A5 00 FF 3C` pela GPIO17 e o monitor
-recebeu o mesmo vetor com cinco bytes. A configuração usada foi ESP32 UART2,
-9600/8N1, GPIO17→J3 `PIN_103`, J3 `PIN_100`→GPIO16 e GND comum.
-
-**Situação Cyclone IV: aprovado para o caminho externo.** Não havia jumper entre J3
-`PIN_100` e `PIN_103`; o vetor retornou pelo enlace ESP32 → FPGA → ESP32.
-Registro completo:
-[`validacao-esp32-cyclone4-2026-09-21.md`](validacao-esp32-cyclone4-2026-09-21.md).
+O registro anterior por microcontrolador é histórico. A execução operacional
+será feita com o CP2102: TXD→RX da placa, RXD←TX da placa e GND comum, sem
+jumper entre os sinais.
 
 **Situação DE10-Lite: pendente.** A montagem, a ordem de programação e a
 verificação automática estão no
 [roteiro integrado da DE10-Lite](bancada-de10-lite-integrada-2026-09-22.md).
 
-Para as próximas repetições, o host ESP32 coleta por fila de eventos: cinco
-bytes devem chegar em até 30 ms e uma guarda de 10 ms detecta bytes extras. O
-log `RESULT` registra tamanho, igualdade, timeout, extras, framing, paridade,
-overflow e falhas do host; `SUMMARY` acumula os contadores. A entrada é limpa
-somente uma vez na inicialização para não esconder bytes tardios. O campo
-`host_window_us` é tempo do driver/RTOS e não será usado como latência da FPGA.
-Uma janela de armamento de 10 s após o boot permite conectar o TX do ESP32
-somente depois da programação; o verificador seleciona a sessão mais recente.
+Para as próximas repetições, `scripts/serial_bench.py` envia quatro quadros de
+cinco bytes, observa uma guarda de 10 ms para bytes extras e produz um relatório
+JSON com tamanho, igualdade, timeout, extras e hashes. O tempo do host não será
+usado como latência da FPGA. A porta é armada depois da programação e suas filas
+são limpas antes do primeiro quadro.
 
 Nos tops integrados da Cyclone IV, os LEDs ativos em zero são: `LED[0]`
 heartbeat, `LED[1]` configuração/atividade, `LED[2]` overflow persistente e
@@ -286,7 +276,7 @@ comparação.
    comparar com `55 A5 00 FF 3C`.
 
 No contexto público de bring-up, a primeira resposta esperada é
-`5B 72 25 65 E1`. O verificador `scripts/esp32_log_verify.py` exige sequência
+`5B 72 25 65 E1`. O comparador do `scripts/serial_bench.py` exige sequência
 consecutiva, ausência de erros e recuperação CTR exata; quatro tentativas
 também atravessam a primeira fronteira de bloco de 16 bytes.
 
@@ -297,8 +287,8 @@ também atravessam a primeira fronteira de bloco de 16 bytes.
 Repetir a medição nos pinos específicos da plataforma. Na DE10-Lite, usar CH1
 em `V10` e CH2 em `W10`; na Cyclone IV, CH1 em J3 `PIN_103` e CH2 em J3
 `PIN_100`. A forma de onda deve continuar sendo 9600/8N1; o conteúdo cifrado
-será verificado no PC, não visualmente no osciloscópio. Timestamps do ESP32 ou
-de um adaptador USB–UART não substituem essa medição de latência.
+será verificado no PC, não visualmente no osciloscópio. Timestamps do host
+serial não substituem essa medição de latência.
 
 **Situação: pendente.**
 
@@ -416,19 +406,18 @@ GPS deverá passar pelo S20 antes da comparação.
 | --- | --- | --- |
 | `make lint` | **Passou** | Lint UART, AES, CTR, bridge e tops DE10-Lite; acesso ao Docker local foi necessário |
 | `make gps-replay` | **Passou em 20/09** | 5 sentenças NMEA, 309 bytes CRLF, checksums válidos |
-| `make integration` | **Passou novamente em 22/09** | Baseline e secure em clock acelerado e 50 MHz/9600; 2.681 bytes por modo sem divergência; 36 testes PC aprovados |
+| `make integration` | **Passou novamente em 22/09** | Baseline e secure em clock acelerado e 50 MHz/9600; 2.681 bytes por modo sem divergência; 34 testes PC aprovados |
 | `make integration-gps` | **Passou em 20/09** | Replay completo de 309 bytes em 50 MHz/9600; FIFO máxima 2 bytes; baseline/secure recuperados no PC |
 | `make baseline-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make secure-fpga` | **Passou** | SOF, fit e auditoria temporal concluídos |
 | `make context` | **Passou** | 7 testes de criação, permissões, limites, renderização e reutilização de nonce |
-| `make pc` | **Passou em 20/09** | 31 testes, incluindo captura, comparação, contexto, replay, métricas e validação NMEA bruta |
+| `make pc` | **Passou em 22/09** | 34 testes, incluindo captura, comparação, contexto, replay, bancada CP2102, métricas e validação NMEA bruta |
 | `make gps-capture-check` | **Pronto em 20/09** | Requer `GPS_CAPTURE=...`; valida um arquivo real quando a captura estiver disponível |
-| `make check` | **Passou novamente em 22/09** | Código 0; 27 simulações, nove configurações de lint, estrutura e 36 testes Python |
+| `make check` | **Passou novamente em 22/09** | Código 0; 27 simulações, nove configurações de lint, estrutura e 34 testes Python |
 | `make cyclone4-uart-fpga` | **Passou em 21/09** | SOF `build/cyclone4/uart_scope/uart_scope.sof`; programação física e P01/P02 registrados |
 | `make cyclone4-baseline-fpga` / `make cyclone4-secure-fpga` | **Passou em 22/09** | SOFs e auditoria de três cantos `PASS`; alvo `EP4CE6E22C8`, 48 MHz |
 | `make cyclone4-metrics` | **Passou em 22/09** | Baseline 299 LE/104,08 MHz; secure 5.580 LE/83,56 MHz; métricas pós-fit, não bancada |
-| `idf.py build` | **Passou em 22/09** | Host ESP32 por eventos, prazo de 30 ms, guarda de 10 ms e logs estruturados; ainda não gravado nesta revisão |
-| `python3 -m unittest tb.test_esp32_log_verify -v` | **Passou em 22/09** | 5 casos: baseline, CTR cruzando bloco, corrupção, erro de transporte e relatório privado |
+| `python3 -m unittest tb.test_serial_bench -v` | **Passou em 22/09** | Host CP2102 em porta virtual: baseline e secure full-duplex, contexto e relatório privado |
 | `make uart` | **Parcial** | O primeiro teste `uart_rx` passou; a gravação seguinte parou com `No space left on device` no ambiente de execução |
 
 O erro de espaço registrado na execução histórica de `make uart` ocorreu ao

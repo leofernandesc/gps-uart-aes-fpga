@@ -92,8 +92,9 @@ bytes no PC.
    reset nesse ponto exige reprogramar o SOF antes de uma nova captura.
 7. Repetir com o GPS depois de concluir os bytes conhecidos.
 
-Comandos, pinagem do ESP32, vetores esperados e campos de evidência estão no
-[roteiro integrado de 22/09](../../docs/bancada-de10-lite-integrada-2026-09-22.md).
+Comandos, pinagem do CP2102, vetores esperados e campos de evidência estão no
+[roteiro integrado de 22/09](../../docs/bancada-de10-lite-integrada-2026-09-22.md)
+e no [guia da bancada serial](../../docs/cp2102-serial-bench.md).
 
 O `uart_scope` é o único alvo que transmite sem uma fonte externa: ele envia
 `0x55` a cada 100 ms. O roteiro e os resultados desse ensaio estão em

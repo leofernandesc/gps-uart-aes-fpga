@@ -141,9 +141,9 @@ A avaliação separa três tipos de evidência:
    temporais são coletados dos relatórios pós-fit.
 
 As evidências atuais de software/RTL compreendem 27 simulações HDL, nove
-configurações de lint e 36 testes Python. Essas contagens incluem o replay
-público, o verificador dos logs de bancada do ESP32 e o contrato de validação
-da captura bruta; não representam um ensaio físico de GPS.
+configurações de lint e os testes Python do replay público, da bancada serial
+com CP2102 e do contrato de validação da captura bruta; não representam um
+ensaio físico de GPS.
 
 A evidência atual não substitui o ensaio físico final. Os bitstreams integrados
 baseline e secure ainda precisam ser programados e testados na DE10-Lite, e a

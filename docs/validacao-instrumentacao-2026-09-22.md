@@ -4,36 +4,23 @@ Esta etapa prepara a bancada para produzir evidência repetível. Ela não alter
 o caminho de dados UART/FIFO/AES-CTR e não conclui nenhum teste físico que ainda
 estava pendente.
 
-## Host ESP32
+## Host PC com um CP2102
 
-O host em `bench/esp32_uart_host_idf` passou a usar a fila de eventos do driver
-UART2. Para cada sequência `55 A5 00 FF 3C`, ele:
+O host ativo é `scripts/serial_bench.py`, executado no PC através de um único
+adaptador USB–TTL em nível lógico de 3,3 V. Para cada sequência `55 A5 00 FF 3C`,
+ele transmite cinco bytes, aguarda a resposta por até 1 s, observa mais 10 ms
+para detectar bytes tardios ou duplicados e grava um relatório JSON.
 
-- aceita os cinco bytes esperados por até 30 ms;
-- observa mais 10 ms para detectar bytes tardios ou duplicados;
-- no fluxo nominal, limpa a entrada apenas uma vez, antes do primeiro ensaio;
-- aguarda 10 s depois de cada boot para a montagem ser armada antes de `seq=1`;
-- inicia tentativas a cada 1 s com `vTaskDelayUntil`;
-- contabiliza timeout, divergência, bytes extras, framing, paridade, overflow,
-  buffer cheio, break, falha de escrita e timeout do TX;
-- emite linhas estruturadas `RESULT` e `SUMMARY`.
+O modo `baseline` exige eco. O modo `secure` captura o ciphertext e o decifra
+independentemente no PC com o contexto registrado. O host contabiliza timeout,
+divergência, bytes faltantes e extras, mas não inventa flags de framing ou
+overflow que o CP2102 não fornece; essas flags continuam sendo lidas nos LEDs
+da FPGA e na instrumentação elétrica.
 
-Em caso de overflow ou buffer cheio, o host limpa o RX e reinicia a fila de
-eventos como recuperação explícita; esse evento continua contabilizado no log.
-
-O modo `baseline` exige eco. O modo `secure` captura o ciphertext sem contar a
-diferença em relação ao plaintext como erro; a aprovação depende da decifragem
-independente no PC. O campo `host_window_us` inclui driver e escalonamento do
-ESP32 e não pode ser usado como latência física da FPGA.
-
-As duas opções do Kconfig — baseline e secure — foram compiladas com ESP-IDF
-6.0.2. A gravação no ESP32 e a observação dos novos logs pertencem à próxima
-execução física.
-
-Na preparação posterior da DE10-Lite, foi adicionado um verificador dos logs
-`RESULT`. Ele usa somente a sessão iniciada pelo último marcador de boot,
-rejeita lacunas/flags de erro e recupera independentemente o fluxo AES-CTR. A
-janela de armamento e o verificador não concluem P03–P06 sem execução física.
+O mesmo adaptador atende a DE10-Lite e Cyclone IV. Para GPS, a referência é
+capturada diretamente primeiro e depois reapresentada à FPGA pelo comando
+`replay`, garantindo que a comparação use os mesmos bytes. O relatório inclui
+tempo do host, que não é latência isolada da FPGA.
 
 ## Diagnósticos da Cyclone IV
 
@@ -59,11 +46,9 @@ métricas.
 
 | Verificação | Resultado |
 | --- | --- |
-| `idf.py build`, modo baseline | **PASS** |
-| `idf.py build`, modo secure | **PASS** |
-| `make check` | **PASS** — repetido após a preparação DE10-Lite; 27 simulações, nove configurações de lint, síntese estrutural e 36 testes PC |
-| `make integration` | **PASS** — 2.681 bytes por modo no ensaio acelerado, casos de 50 MHz/9600 e 36 testes PC na regressão atual |
-| `python3 -m unittest tb.test_esp32_log_verify -v` | **PASS** — cinco casos positivos e negativos do log de bancada |
+| `python3 -m unittest tb.test_serial_bench -v` | **PASS** — baseline e secure em porta serial virtual full-duplex |
+| `make check` | **PASS** — repetido após a preparação DE10-Lite; 27 simulações, nove configurações de lint, síntese estrutural e 34 testes PC |
+| `make integration` | **PASS** — 2.681 bytes por modo no ensaio acelerado, casos de 50 MHz/9600 e 34 testes PC na regressão atual |
 | `make cyclone4-baseline-fpga` | **PASS** — SOF gerado e três cantos temporais aprovados; não programado nesta etapa |
 | `make cyclone4-secure-fpga` | **PASS** — SOF gerado e três cantos temporais aprovados; não programado nesta etapa |
 | `make cyclone4-metrics` | **PASS** |
@@ -84,12 +69,13 @@ Quartus e não constituem medição física.
 
 ## Próxima execução
 
-1. Gravar o firmware ESP32 em modo baseline e reprogramar o SOF baseline.
-2. Usar a janela de armamento e confirmar quatro linhas `RESULT` consecutivas
-   com cinco bytes, `same=1` e todos os contadores de erro em zero.
+1. Conectar o CP2102 em TXD→RX, RXD←TX e GND, sem aplicar 5 V aos GPIOs.
+2. Reprogramar o SOF baseline e executar `serial_bench.py run` com quatro
+   quadros; conferir `PASS`, 20 bytes e zero extras.
 3. Repetir P04 com ponta ×10, entrada de 1 MΩ, acoplamento DC e massa curta.
-4. Medir aproximadamente 104,17 µs por bit, 1,0417 ms por byte e 5,208 ms para
-   os cinco bytes; salvar a captura de RX e TX.
+4. Medir aproximadamente 104,17 µs por bit, 1,0417 ms por quadro de 10 bits e
+   salvar as capturas de RX e TX.
 5. Somente se duas capturas corretas ainda excederem `−0,3 V` a `3,6 V`, criar
    e comparar uma variante de 4 mA com slew lento.
-6. Fechado o baseline, gerar contexto privado novo e executar P05/P06 secure.
+6. Fechado o baseline, gerar contexto privado novo, reprogramar o secure e
+   executar P05/P06 com o mesmo CP2102.

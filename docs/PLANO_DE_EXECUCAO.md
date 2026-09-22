@@ -52,7 +52,7 @@ concentrado na bancada.
 - Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
   usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
 - Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão atual: 27 simulações, nove configurações de lint e 36 testes Python.
+- Regressão atual: 27 simulações, nove configurações de lint e 34 testes Python.
 - Validador de captura NMEA pronto: confere a integridade formal do arquivo
   bruto antes do ensaio; a origem física continua sendo registrada na bancada.
 - DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
@@ -66,10 +66,11 @@ concentrado na bancada.
 - Cyclone IV identificada como `EP4CE6E22C8N` na placa ZRTECH/WXEDA V2.00.
   Clock de 48 MHz, TX J3 `PIN_100` e RX J3 `PIN_103` foram validados; P01/P02
   e P03 estão registrados.
-- O ESP32 foi validado como fonte/capturador externo. Em 22/09 o host recebeu
-  fila de eventos, prazo de 30 ms, guarda de 10 ms, período fixo de 1 s e
-  contadores estruturados. Um CP2102 independente continua recomendado para a
-  evidência final do GPS/secure, mas não é necessário para fechar o P04.
+- O host físico do protocolo é um único adaptador USB–TTL CP2102 (ou equivalente)
+  em full-duplex. O script `scripts/serial_bench.py` transmite o vetor conhecido
+  ou um replay GPS, recebe a saída e compara o resultado no PC. A referência GPS
+  e o caminho da FPGA são executados em duas etapas controladas, porque um único
+  adaptador não captura duas saídas simultaneamente.
 - WaveForms 3.25.1 e Adept Runtime 2.30.1 foram instalados no Ubuntu amd64.
   O Analog Discovery 2 será usado como instrumentação alternativa para P04/P06;
   sua enumeração física e as capturas ainda estão pendentes. O procedimento
@@ -147,8 +148,8 @@ Critérios de aceite:
   para testar RX assíncrono.
 
 Não é necessário USB–UART para observar o TX desse gerador. Para comparação de
-fluxos no PC, prever dois canais de captura serial: saída da FPGA e referência
-GPS; podem usar USB–UART ou microcontrolador com ponte validada.
+fluxos no PC, usar um CP2102 em duas etapas: capturar a referência GPS e depois
+retransmitir essa mesma captura para a FPGA, recebendo a saída no mesmo módulo.
 
 Na Cyclone IV, consultar os [dados do alvo](../fpga/cyclone4/README.md) e o
 [roteiro de bancada](bancada-cyclone4-2026-09-21.md). Os wrappers/QSF/SDC e o

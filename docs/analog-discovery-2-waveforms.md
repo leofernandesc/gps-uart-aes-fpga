@@ -7,7 +7,7 @@ projeto GPS + UART + AES-128-CTR. Ele é complementar aos roteiros de bancada da
 [Cyclone IV](bancada-cyclone4-2026-09-21.md).
 
 O AD2 fornece evidência elétrica e temporal. Ele não substitui a fonte serial,
-o receptor no PC, o ESP32, o adaptador USB–UART ou o GPS. Uma forma de onda
+o receptor no PC, o adaptador USB–UART ou o GPS. Uma forma de onda
 correta também não prova, sozinha, que os bytes foram recuperados corretamente:
 essa parte continua sendo verificada pelo host e pelos comparadores do projeto.
 
@@ -179,44 +179,32 @@ instrumento.
 | --- | --- |
 | AD2 — Scope | Forma de onda analógica, níveis, bit time, bordas e RX→TX |
 | AD2 — Logic/Protocol UART | Decodificação digital opcional dos bytes UART |
-| ESP32 ou CP2102 | Fonte/receptor serial e log de bytes no PC |
+| CP2102 | Fonte/receptor serial e log de bytes no PC |
 | GPS NEO-M8N | Fonte física das sentenças NMEA |
 | Quartus/USB-Blaster | Programação e identificação da FPGA |
 
 O AD2 não é um USB–UART. Ele não deve ser usado como fonte única para provar
 que o GPS foi recebido nem como substituto do verificador AES. Para o artigo,
-usar o ESP32 ou o CP2102 para transportar os bytes e o AD2 para produzir a
-evidência elétrica/temporal independente.
+usar o CP2102 para transportar os bytes e o AD2 para produzir a evidência
+elétrica/temporal independente.
 
 ### USB–UART TTL: obrigatório ou opcional?
 
-Para o arranjo atual, o adaptador USB–UART TTL **não é obrigatório**:
+Para o arranjo atual, um adaptador USB–UART TTL é o host serial definido:
 
 | Situação | Adaptadores necessários |
 | --- | ---: |
-| P03/P05 com vetor conhecido, usando ESP32 como fonte e receptor | 0 |
-| P04/P06 com AD2 observando RX/TX | 0 adicionais; o AD2 fornece a captura |
-| GPS e AD2 capturando simultaneamente GPS TX e FPGA TX | 0, desde que os dois sinais sejam lidos pelos DIOs do AD2 |
-| GPS com captura serial convencional no PC, sem usar o AD2 como segundo canal | 1 |
-| Dois canais independentes feitos exclusivamente por USB–UART | 2 |
+| P03/P05 com vetor conhecido, usando CP2102 full-duplex | 1 |
+| P04/P06 com AD2 observando RX/TX | 1, usado para o vetor e para o log |
+| GPS e AD2 observando simultaneamente GPS TX e FPGA TX | 1, para o transporte; o AD2 fornece a segunda observação |
+| GPS com captura serial direta e replay posterior | 1 |
 
-O AD2 consegue observar os dois sinais ao mesmo tempo, e o ESP32 já funciona
-como fonte/receptor para os vetores conhecidos. Portanto, não comprar dois
-adaptadores apenas por causa deste projeto. Se for desejada uma interface
-serial convencional como redundância, comprar **um** CP2102 configurado para
-I/O lógico de 3,3 V é suficiente: ele pode capturar a referência do GPS ou a
-saída da FPGA, enquanto o AD2 observa o outro canal.
-
-Um único CP2102 não captura dois fluxos seriais independentes ao mesmo tempo.
-Nesse caso, usar o segundo canal do AD2 ou o ESP32 para o outro fluxo. O
-adaptador também não deve alimentar a FPGA ou o GPS automaticamente: conectar
-TX, RX e GND conforme o ensaio e manter as fontes separadas. O pino de I/O
-deve estar em 3,3 V; nunca conectar a saída lógica de 5 V aos pinos da FPGA,
-do GPS ou do ESP32.
-
-Recomendação de compra: um CP2102 TTL com nível lógico de 3,3 V, para servir
-como interface serial independente e plano de contingência. Ele não é requisito
-para começar os testes com ESP32 + AD2.
+Um único CP2102 é suficiente porque a referência GPS é capturada primeiro e
+depois reapresentada à FPGA pelo mesmo adaptador. Ele não captura dois fluxos
+seriais independentes ao mesmo tempo. O adaptador não deve alimentar a FPGA ou
+o GPS: conectar TX, RX e GND conforme o ensaio e manter as fontes separadas.
+O pino de I/O deve estar em 3,3 V; nunca conectar saída lógica de 5 V aos pinos
+da FPGA ou do GPS.
 
 ### Pontos de medição
 
@@ -236,7 +224,7 @@ Para os canais analógicos do AD2:
   referência;
 - não ligar `W1` ou `W2` aos sinais UART;
 - não ligar as fontes `V+`/`V-` do AD2 às placas;
-- cada FPGA, GPS e ESP32 deve permanecer alimentado por sua própria fonte;
+- cada FPGA, GPS e CP2102 deve permanecer alimentado por sua própria fonte;
 - não conectar diretamente sinais RS-232 ou sinais de 5 V aos GPIOs de 3,3 V.
 
 As entradas digitais do AD2 podem ser usadas no Logic Analyzer/Protocol para
@@ -274,9 +262,9 @@ iniciar a captura.
 ### P03 — baseline no PC
 
 1. Programar o SOF baseline e confirmar o cabo JTAG correto.
-2. Preparar o monitor ESP32 e deixar o AD2 armado.
+2. Conectar o CP2102 e deixar o AD2 armado.
 3. Enviar quatro vezes `55 A5 00 FF 3C` pelo caminho externo.
-4. Verificar no ESP32 o eco exato e todos os contadores de erro em zero.
+4. Verificar no relatório do CP2102 o eco exato e todos os contadores de erro em zero.
 5. Usar o AD2 para confirmar que RX e TX possuem quadros completos em 8N1.
 
 O critério de bytes continua sendo o log/verificador do host; o AD2 fornece a
@@ -295,7 +283,7 @@ Registrar pelo menos duas capturas com RX e TX simultâneos:
 - ausência de quadro truncado.
 
 Salvar CSV bruto e imagem com escalas, canais, trigger e configurações visíveis.
-Não usar `host_window_us` do ESP32 como latência física.
+Não usar o tempo do host no relatório do CP2102 como latência física.
 
 ### P05 — secure e AES-CTR
 
@@ -385,8 +373,7 @@ reprodutíveis.
 - `lsusb`, `dwfcmd enumerate` e a abertura do WaveForms validam a instalação e
   a conexão do AD2, não o sinal da FPGA.
 - CSV do Scope contém amostras de tensão; bytes exigem decodificação UART.
-- Bytes decodificados pelo AD2 não substituem o retorno verificado pelo ESP32 ou
-  CP2102.
+- Bytes decodificados pelo AD2 não substituem o retorno verificado pelo CP2102.
 - P04/P06 só podem ser marcados como concluídos com captura física registrada.
 - Um replay NMEA no testbench não é equivalente à captura de um GPS real.
 - A forma de onda não comprova autenticação, integridade criptográfica ou

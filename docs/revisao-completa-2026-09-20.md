@@ -179,15 +179,14 @@ Isso é validação no PC, não justificativa para acrescentar parser NMEA no RT
 | `scripts` | Captura binária, arquivos privados, não sobrescrita e comparação independente adequados; falta robustez nas métricas e na aquisição real. |
 | `docs`, `build` | Separação entre evidência versionada e saídas locais adequada; registrar revisão/hash da fonte junto dos novos resultados. |
 
-## Bancada: ESP32, CP2102 e clock
+## Bancada: CP2102 e clock
 
-O ESP32 pode atuar como ponte, mas exige firmware e validação de buffering,
-preservação binária e identificação dos dois canais. Para o prazo, recomenda-se
-dois adaptadores USB–UART CP2102: um RX observa o TX do GPS em paralelo com o RX
-da FPGA; o outro RX captura o TX da FPGA. Um adaptador basta para receber só
-a saída ou para replay bidirecional, mas não observa as duas entradas de referência
-simultaneamente. A referência precisa corresponder ao mesmo ensaio, não a uma
-gravação de GPS de outro instante.
+O host operacional é um único adaptador USB–UART CP2102 em full-duplex. Ele
+transmite o vetor conhecido ou um replay e captura a saída da FPGA. Para GPS,
+primeiro registra-se a referência direta e depois reapresenta-se o mesmo arquivo
+à FPGA; assim a comparação não mistura duas sequências GPS diferentes. Um único
+adaptador não observa duas entradas independentes simultaneamente, mas isso não
+é requisito do protocolo atual.
 
 O CP2102 suporta 9600/8N1; a faixa oficial começa em 300 bps, não 300 Kbps.
 Os pinos 3,3 V/5 V são alimentação: confirmar o nível lógico de TX/RX do módulo.

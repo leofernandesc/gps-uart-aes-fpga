@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check esp32-log-check manuscript-check metrics cyclone4-metrics fpga baseline-fpga secure-fpga cyclone4-uart-fpga cyclone4-j3-uart-fpga cyclone4-baseline-fpga cyclone4-secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics cyclone4-metrics fpga baseline-fpga secure-fpga cyclone4-uart-fpga cyclone4-j3-uart-fpga cyclone4-baseline-fpga cyclone4-secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
@@ -92,11 +92,15 @@ gps-capture-check:
 	@if [ -z "$(GPS_CAPTURE)" ]; then echo "Uso: make gps-capture-check GPS_CAPTURE=arquivo.bin" >&2; exit 2; fi
 	python3 scripts/gps_capture.py --input "$(GPS_CAPTURE)"
 
-# Validate saved ESP-IDF monitor output. BENCH_MODE is baseline or secure.
-esp32-log-check:
-	@if [ -z "$(ESP32_LOG)" ]; then echo "Uso: make esp32-log-check ESP32_LOG=monitor.log BENCH_MODE=baseline [CONTEXT_FILE=contexto.json] [REPORT=relatorio.json]" >&2; exit 2; fi
-	@if [ -z "$(BENCH_MODE)" ]; then echo "BENCH_MODE deve ser baseline ou secure" >&2; exit 2; fi
-	python3 scripts/esp32_log_verify.py --input "$(ESP32_LOG)" --mode "$(BENCH_MODE)" $(if $(CONTEXT_FILE),--context "$(CONTEXT_FILE)",) $(if $(REPORT),--report "$(REPORT)",)
+# Run the known-vector bench through one full-duplex CP2102.
+serial-bench:
+	@if [ -z "$(CP2102_PORT)" ] || [ -z "$(CONTEXT_FILE)" ] || [ -z "$(RECEIVED)" ] || [ -z "$(REPORT)" ]; then echo "Uso: make serial-bench CP2102_PORT=/dev/ttyUSB0 CONTEXT_FILE=contexto.json RECEIVED=saida.bin REPORT=relatorio.json [REGISTRY=nonce-registry.json] [TRIALS=4]" >&2; exit 2; fi
+	python3 scripts/serial_bench.py run \
+		--port "$(CP2102_PORT)" \
+		--context "$(CONTEXT_FILE)" \
+		--received "$(RECEIVED)" \
+		--report "$(REPORT)" $(if $(REGISTRY),--registry "$(REGISTRY)") \
+		--trials "$(or $(TRIALS),4)"
 
 manuscript-check:
 	python3 scripts/manuscript_check.py

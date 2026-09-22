@@ -1,8 +1,13 @@
-# Captura e comparação no PC
+# Captura, replay e comparação no PC
 
-`scripts/capture.py` fornece duas operações independentes: gravar bytes de uma
-porta serial Linux e comparar arquivos de referência/saída. Não programa a
-FPGA nem transmite chave, nonce ou comandos para ela.
+scripts/capture.py grava bytes de uma porta serial Linux e compara arquivos
+de referência/saída. Para a bancada full-duplex, scripts/serial_bench.py usa
+um único adaptador USB–TTL, transmite vetores ou replays e faz a comparação
+independente no PC. Nenhum dos scripts programa a FPGA nem transmite chave,
+nonce ou comandos de configuração para ela.
+
+O adaptador deve estar em nível lógico de 3,3 V, com TXD, RXD e GND conectados.
+O padrão fixo do projeto é 9600/8N1. O módulo USB não alimenta a FPGA.
 
 ## Gravar um canal
 
@@ -22,10 +27,11 @@ de caracteres especiais. Limpa a fila anterior e imprime `READY` quando está
 pronto. Somente então iniciar a fonte. Os nomes de porta são exemplos: conferir
 qual interface corresponde à saída da FPGA.
 
-Gravar a referência com outra instância/canal, usando nomes distintos. Ambos
-devem estar prontos antes do início. Não colocar dois leitores na mesma porta.
-O GPS e a FPGA também precisam ser armados de forma a compartilhar o primeiro
-byte; o programa não deduz alinhamento de ciphertext nem procura `$` nele.
+Para uma referência adquirida diretamente do GPS, conecte GPS TX ao RXD do
+adaptador e use capture.py record. Para a execução da FPGA, desconecte esse
+TX e use o mesmo adaptador em full-duplex; não coloque duas saídas TX no mesmo
+fio. A referência é reapresentada pelo comando serial_bench.py replay, de
+modo que a comparação use exatamente os mesmos bytes.
 
 `--bytes` é o número de bytes de cada arquivo; `--timeout` é o prazo total,
 incluindo a espera pelo início. Ao atingir N, a gravação termina; bytes futuros
@@ -63,6 +69,30 @@ make gps-capture-check GPS_CAPTURE=data/private/ensaio01/gps-reference.bin
 
 Uma captura parcial, convertida para LF pelo terminal ou com checksum inválido
 deve ser rejeitada e não pode entrar como referência do baseline/secure.
+
+## Executar o host full-duplex
+
+Para quatro quadros do vetor conhecido 55 A5 00 FF 3C, crie um contexto de
+20 bytes, programe o SOF correspondente e execute:
+
+~~~bash
+python3 scripts/serial_bench.py run --port /dev/ttyUSB0 --context data/private/ensaio01/contexto.json --registry data/private/nonce-registry.json --received data/private/ensaio01/saida.bin --report data/private/ensaio01/relatorio.json --trials 4
+~~~
+
+No baseline, omita --registry. O comando envia cada quadro, lê a resposta
+correspondente e mantém uma guarda para detectar bytes extras. Um secure
+consome o contexto antes de READY; se a tentativa falhar, gere outro nonce e
+reprograme o SOF antes de repetir.
+
+Para replay da captura GPS:
+
+~~~bash
+python3 scripts/serial_bench.py replay --port /dev/ttyUSB0 --input data/private/gps-reference.bin --context data/private/ensaio01/contexto.json --registry data/private/nonce-registry.json --received data/private/ensaio01/gps-output.bin --report data/private/ensaio01/gps-output.json
+~~~
+
+O contexto precisa declarar exatamente o número de bytes do input. No baseline,
+o comparador exige eco exato. No secure, ele decifra todo o ciphertext com
+cryptography/OpenSSL e compara o plaintext recuperado com a captura original.
 
 ## Criar e registrar um contexto
 
@@ -169,8 +199,8 @@ make integration
 make check
 ```
 
-`make pc` testa comparação, corrupção, truncamento, excesso, limites do contexto,
-códigos de saída, preservação de arquivos e captura binária/timeout em uma porta
-virtual Linux (PTY), incluindo `0x00`, `0xff`, CR/LF e XON/XOFF. O teste integrado
-passa os bytes efetivamente decodificados do TX pelo mesmo comparador.
-Nenhum desses testes comprova funcionamento de um adaptador USB–UART físico.
+make pc testa comparação, corrupção, truncamento, excesso, limites do contexto,
+códigos de saída, preservação de arquivos, captura binária/timeout em uma porta
+virtual Linux (PTY) e o host full-duplex baseline/secure, incluindo `0x00`,
+`0xff`, CR/LF e XON/XOFF. A PTY valida o protocolo do software, não substitui
+a evidência do CP2102 físico, da forma de onda ou das flags da FPGA.

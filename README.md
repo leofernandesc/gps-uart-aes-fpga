@@ -69,12 +69,13 @@ secure com perfil de 48 MHz, 9600/8N1 e pinagem registrada em
 [`docs/bancada-cyclone4-2026-09-21.md`](docs/bancada-cyclone4-2026-09-21.md).
 O `j3_scope` foi programado; TX, loopback e clock de 48 MHz foram confirmados
 em J3 `PIN_100`/`PIN_103`. O baseline integrado também foi programado e devolveu
-corretamente `55 A5 00 FF 3C` pelo caminho externo com ESP32, sem jumper local.
+corretamente `55 A5 00 FF 3C` pelo caminho externo. A repetição operacional será
+feita com um único adaptador USB–TTL full-duplex, sem jumper local.
 P04, secure e GPS ainda precisam de validação física.
 
-Em 22/09, o host ESP32 foi preparado para os ensaios restantes: coleta por
-eventos, cinco bytes em até 30 ms, guarda de 10 ms para extras, período fixo de
-1 s e contadores estruturados. Os LEDs dos tops Cyclone IV agora mostram
+Em 22/09, o host PC `scripts/serial_bench.py` foi implementado para os ensaios
+restantes: quatro transações de cinco bytes, guarda de 10 ms para extras e
+comparação independente no baseline/secure. Os LEDs dos tops Cyclone IV agora mostram
 heartbeat, atividade/configuração, overflow persistente e framing persistente.
 Integração RTL e os builds baseline/secure passaram novamente; esses resultados
 não substituem a repetição do P04 no osciloscópio ou no Analog Discovery 2.
@@ -90,7 +91,7 @@ não substituem a repetição do P04 no osciloscópio ou no Analog Discovery 2.
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
 | Avaliação | Quatro builds: baseline/secure em cada FPGA, com o mesmo RTL |
-| Instrumentação física | Osciloscópio de bancada ou Analog Discovery 2; captura serial continua no ESP32/CP2102 |
+| Instrumentação física | Osciloscópio de bancada ou Analog Discovery 2; captura serial pelo CP2102 |
 | Datas de trabalho | Freeze físico em 25/09; artigo em 26–27/09; submissão até 30/09/2026 |
 
 AES-CTR fornecerá **confidencialidade**, não autenticação, proteção contra
@@ -108,7 +109,7 @@ make check
 Executa 27 simulações: quatro testes históricos, catorze configurações de UART/
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e cinco da integração/wrapper.
 Inclui nove configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 36 testes Python de captura, contexto,
+bytes CTR e do TX integrado, além de 34 testes Python de captura, contexto,
 replay e validação NMEA.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
@@ -141,7 +142,7 @@ make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
 make gps-capture-check GPS_CAPTURE=arquivo.bin # Valida uma captura NMEA bruta
-make esp32-log-check ESP32_LOG=monitor.log BENCH_MODE=baseline # valida bancada externa
+make serial-bench CP2102_PORT=/dev/ttyUSB0 CONTEXT_FILE=contexto.json RECEIVED=saida.bin REPORT=relatorio.json # vetor conhecido
 make manuscript-check # Confere métricas e limitações declaradas nos manuscritos
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
@@ -258,6 +259,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Interface e funcionamento do CTR](docs/ctr.md)
 - [Contrato da integração UART–FIFO–CTR](docs/integracao-uart-ctr.md)
 - [Captura binária e comparação no PC](docs/captura-pc.md)
+- [Bancada full-duplex com um CP2102](docs/cp2102-serial-bench.md)
 - [Validação do contexto e registro de nonces](docs/validacao-contexto-2026-09-19.md)
 - [Validação do contexto no build Quartus](docs/validacao-build-contexto-2026-09-20.md)
 - [Validação do replay NMEA](docs/validacao-replay-nmea-2026-09-20.md)

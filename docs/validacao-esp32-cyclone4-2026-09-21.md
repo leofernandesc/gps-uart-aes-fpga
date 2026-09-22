@@ -1,4 +1,8 @@
-# Validação física — ESP32 e Cyclone IV — 21/09/2026
+# Registro histórico — validação física da Cyclone IV — 21/09/2026
+
+Este arquivo preserva a evidência de uma bancada anterior. Ele não descreve o
+protocolo atual: as novas execuções usam um adaptador USB–TTL e o host PC. O
+registro é mantido apenas para rastreabilidade dos resultados já observados.
 
 Este registro documenta o primeiro ensaio do caminho serial entre a placa
 Cyclone IV e um ESP32 usado como fonte e capturador UART. O objetivo foi

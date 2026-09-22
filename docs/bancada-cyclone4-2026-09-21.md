@@ -138,7 +138,11 @@ O loopback da variante `j3_scope` foi então executado com um jumper entre
 está acessível no header utilizado. O `PIN_101` não foi usado
 porque o Quartus o reserva como `nCEO` nessa configuração de Active Serial.
 
-### Registro P03 aprovado — ESP32 como fonte e capturador
+### Registro histórico P03 — fonte externa anterior
+
+O registro abaixo documenta uma execução anterior e não faz parte do protocolo
+atual. As novas repetições de P03–P11 devem usar exclusivamente o CP2102
+full-duplex e o host PC descritos em `docs/cp2102-serial-bench.md`.
 
 Em 21/09/2026, o projeto `baseline` foi programado e um ESP32 clássico foi
 usado como fonte serial e capturador, por meio do CP2102 da própria placa. O
