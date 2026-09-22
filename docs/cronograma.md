@@ -5,17 +5,26 @@ DE10-Lite/MAX 10 e Cyclone IV, com um build sem cifra e outro com cifra por
 placa. **Freeze dos testes físicos em 25/09; redação em 26–27/09; submissão
 até 30/09.**
 
-## Situação em 21/09/2026
+## Situação em 22/09/2026
 
 **Revisão técnica:** as duas plataformas são obrigatórias. A segunda FPGA é a
 Cyclone IV E `EP4CE6E22C8N`, montada na placa ZRTECH/WXEDA V2.00. O perfil de
-48 MHz, 9600/8N1 e a pinagem de bancada foram confirmados inicialmente pelo
-JTAG, pela programação e pelo período medido no TX. O secure otimizado agora
- cabe no fit e os três projetos Cyclone IV já geram SOF; isso ainda não substitui
- os testes físicos integrados.
+48 MHz, 9600/8N1 e a pinagem de bancada foram confirmados pelo JTAG, pela
+programação e pelo período medido no TX. O secure otimizado agora cabe no fit e
+os três projetos Cyclone IV já geram SOF; isso ainda não substitui os testes
+físicos integrados.
 O prazo continua concentrado na bancada até 25/09, com redação no fim de semana
 e submissão/contingência até 30/09. Ver [revisão completa](revisao-completa-2026-09-20.md)
 e o [roteiro específico da Cyclone IV](bancada-cyclone4-2026-09-21.md).
+
+Antes de retomar os ensaios físicos, a instrumentação foi endurecida. O host
+ESP32 agora coleta cinco bytes por eventos com prazo de 30 ms, guarda de 10 ms
+para extras, período fixo de 1 s e contadores estruturados de timeout,
+divergência, framing, paridade e overflow. Na Cyclone IV, os quatro LEDs dos
+tops integrados mostram heartbeat, atividade/configuração, overflow persistente
+e framing persistente. O datapath, a pinagem e a força de saída UART não foram
+alterados. Os builds baseline/secure e a regressão de integração passaram; isso
+prepara, mas não conclui, o P04 físico.
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
@@ -52,7 +61,7 @@ builds MAX 10 e o artigo seguem em paralelo, mantendo o encerramento em 25/09.
 | 19/09 | Contexto e registro no PC | Contextos privados e registro persistente de nonces testados | Concluído — `make context` e `make pc` |
 | 20/09 | Replay NMEA / captura | Fixture integrado ao ensaio RTL/PC e validador de captura bruta implementado | Concluído em simulação/PC; GPS físico pendente |
 | 21/09 | Preparação física das duas plataformas | Pinagem/clock/JTAG confirmados; bitstreams de bancada programáveis; UART isolada validada | **Concluído com avanço** — P01/P02 Cyclone IV, baseline programado e P03 aprovado com ESP32; P04 iniciado |
-| 22/09 | Baseline nas duas plataformas | P03/P04 executados na DE10-Lite e Cyclone IV; bytes conhecidos, waveform, loopback e comparação no PC | **Programado** — fechar P04 com nova captura de borda/bit time e consolidar as evidências do baseline |
+| 22/09 | Baseline nas duas plataformas | P03/P04 executados na DE10-Lite e Cyclone IV; bytes conhecidos, waveform, loopback e comparação no PC | **Em andamento** — host/diagnósticos implementados e compilados; P03 Cyclone IV aprovado; falta fechar P04 com ponta ×10/massa curta e repetir o baseline na DE10-Lite |
 | 23/09 | Secure nas duas plataformas | P05/P06 executados; ciphertext capturado, decifrado no PC e contexto/reset registrados | Pendente |
 | 24/09 | GPS real e ensaio contínuo | P07–P10 executados nos quatro pares placa/configuração; três repetições e captura contínua | Pendente — depende do NEO-M8N e das interfaces seriais |
 | **25/09** | **Falhas, reset e fechamento físico** | **P11, repetição de qualquer caso instável, matriz de evidências completa e freeze** | **Pendente — último dia de bancada** |
@@ -106,32 +115,47 @@ de bancada termina em 25/09; o fim de semana fica reservado para a redação e a
 submissão deve ocorrer até 30/09.
 [Chamada de trabalhos](https://lcv.fee.unicamp.br/virtual-btsym26-home/btsym26-call-for-paper/).
 
+## Marco em 22/09: instrumentação preparada para P04–P06
+
+- O host ESP-IDF deixou de limpar a UART a cada tentativa e passou a usar a
+  fila de eventos do driver. Cada tentativa exige cinco bytes em até 30 ms e
+  observa mais 10 ms para detectar respostas tardias ou duplicadas.
+- As linhas `RESULT` e `SUMMARY` registram sequência, modo, TX/RX, tamanho,
+  igualdade, timeout, extras, framing, paridade, overflow, buffer cheio e
+  falhas de escrita/transmissão. `host_window_us` é explicitamente tempo do
+  host, não latência física da FPGA.
+- O modo baseline verifica eco; o modo secure preserva o ciphertext para
+  comparação independente no PC. As duas configurações compilaram no ESP-IDF
+  6.0.2; o binário ainda precisa ser gravado para a próxima rodada física.
+- Os LEDs integrados da Cyclone IV agora priorizam as flags persistentes:
+  heartbeat, configuração/atividade, overflow e framing. O mapeamento é igual
+  no baseline e no secure.
+- `make check`, os dois builds Cyclone IV e `make cyclone4-metrics`
+  passaram. Pós-fit: baseline 299 LE/189 registradores/Fmax 104,08 MHz; secure
+  5.580 LE/889 registradores/Fmax 83,56 MHz; ambos operam a 48 MHz.
+- O P04 continua pendente. A repetição deve usar ponta ×10, entrada de 1 MΩ,
+  acoplamento DC e massa curta. Os 8 mA permanecem inalterados até existir uma
+  captura correta e repetível que justifique testar 4 mA/slew lento.
+
 ## Marco em 21/09: perfil Cyclone IV preparado para a bancada
 
 - A placa foi identificada como **ZRTECH/WXEDA V2.00**, com FPGA
   `EP4CE6E22C8N`. A memória `W9864G6KH-6` é SDRAM externa e não participa do
   caminho UART/AES.
-- O perfil candidato usa clock de 48 MHz no `PIN_24`, reset ativo baixo no
-  `PIN_89`, RX no `PIN_87`, TX no `PIN_86` e quatro LEDs nos pinos
-  `PIN_1`, `PIN_2`, `PIN_3` e `PIN_144`. Esses pinos vieram de referências
-  públicas compatíveis e ainda precisam de confirmação visual/elétrica antes
-  de conectar sinais externos.
+- O perfil validado usa clock de 48 MHz no `PIN_24`, reset ativo baixo no
+  `PIN_89`, RX em J3 `PIN_103`, TX em J3 `PIN_100` e quatro LEDs nos pinos
+  `PIN_1`, `PIN_2`, `PIN_3` e `PIN_144`. RX/TX foram deslocados dos pinos da
+  referência pública para os pontos realmente acessíveis no J3.
 - `make cyclone4-uart-fpga`, `make cyclone4-baseline-fpga` e
   `make cyclone4-secure-fpga` passaram no Quartus 25.1 e produziram os SOFs
   correspondentes. `make cyclone4-metrics` também passou.
-- Resultado pós-fit, ainda **sem programação ou medição física**:
-
-  | Configuração | LE | Registradores | Memória | Fmax mínima |
-  | --- | ---: | ---: | ---: | ---: |
-  | Baseline | 302 | 192 | 8.192 bits | 94,22 MHz |
-  | Secure | 5.576 | 892 | 8.192 bits | 94,63 MHz |
-
-- O primeiro ensaio é `uart_scope`: programar o SOF sem GPS conectado e medir
-  o TX. Com 48 MHz, o bit de 9600 baud deve durar aproximadamente `104,17 µs`.
-  Se a placa responder com aproximadamente `416,7 µs`, o clock efetivo usado
-  pelo FPGA não é 48 MHz ou a pinagem está incorreta; interromper a sequência e
-  revisar o perfil. O valor `YXC 12.0...` não deve ser assumido como clock da
-  FPGA sem rastrear sua ligação.
+- `j3_scope` foi programado e medido: aproximadamente `104 µs` por bit e
+  `3,32 V` em nível alto. O loopback entre `PIN_100` e `PIN_103` passou.
+- O baseline integrado foi programado e o P03 passou pelo caminho externo
+  ESP32 GPIO17 → FPGA RX → FIFO → FPGA TX → ESP32 GPIO16, com retorno exato de
+  `55 A5 00 FF 3C`. Não havia jumper local entre RX e TX.
+- A primeira observação de borda do P04 registrou overshoot/undershoot
+  preliminar; ela não fecha o teste e motivou a instrumentação de 22/09.
 - Evidência e sequência completa: [bancada Cyclone IV](bancada-cyclone4-2026-09-21.md).
 
 ## Marco em 20/09: endurecimento da validação e preparação da Cyclone IV

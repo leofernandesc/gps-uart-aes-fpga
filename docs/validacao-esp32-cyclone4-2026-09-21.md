@@ -335,3 +335,12 @@ deve ser interrompido para revisar pinagem e divisor de baud.
 O ESP32 está sendo usado apenas como instrumento de bancada: o PC conversa com
 ele pelo USB/CP2102 a 115200 baud, enquanto a UART2 entre ESP32 e FPGA permanece
 em 9600/8N1. Não conectar os trilhos de 5 V ou 3,3 V das duas placas.
+
+## Adendo de 22/09/2026
+
+O host foi endurecido antes da repetição: coleta por eventos, prazo de 30 ms,
+guarda de 10 ms, período fixo e contadores estruturados. Os LEDs integrados da
+Cyclone IV também passaram a expor overflow e framing persistentes. A
+implementação e as compilações estão registradas em
+[`validacao-instrumentacao-2026-09-22.md`](validacao-instrumentacao-2026-09-22.md).
+Esse adendo não altera a classificação física do P04, que continua pendente.

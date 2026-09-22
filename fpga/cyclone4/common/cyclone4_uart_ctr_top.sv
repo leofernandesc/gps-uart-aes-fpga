@@ -1,13 +1,12 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-// Board wrapper for the ZRTech/WXEDA EP4CE6E22C8N candidate profile.
+// Board wrapper for the validated ZRTech/WXEDA EP4CE6E22C8N bench profile.
 //
 // The implementation is shared with the DE10-Lite comparison.  Only the
 // board-facing clock, reset, serial pins and four active-low LEDs are adapted
-// here.  The Cyclone IV board exposes four user LEDs in this profile, so the
-// remaining diagnostics stay inside the common wrapper and can be observed by
-// the serial test or by a future SignalTap build.
+// here.  The limited LED set prioritizes persistent error flags over the RX/TX
+// event toggles, which are already visible in the serial capture.
 module cyclone4_uart_ctr_top #(
     parameter integer ENABLE_AES = 1,
     parameter integer CLK_FREQ = 48_000_000,
@@ -40,9 +39,10 @@ module cyclone4_uart_ctr_top #(
         .LEDR          (diagnostics)
     );
 
-    // The board LEDs are active-low.  Keep the first four common diagnostics:
-    // heartbeat, active/acquisition, RX activity and TX activity.
-    assign LED = ~diagnostics[3:0];
+    // Active-low LEDs, identical for baseline and secure:
+    // 0 heartbeat, 1 configured/active, 2 FIFO overflow, 3 framing error.
+    assign LED = ~{diagnostics[7], diagnostics[6],
+                   diagnostics[1], diagnostics[0]};
 endmodule
 
 `default_nettype wire

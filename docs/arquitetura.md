@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 21/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 22/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -82,7 +82,7 @@ compara arquivos. Não há configuração em tempo de execução.
 | Placa | Baseline integrado | Secure integrado | Clock |
 | --- | --- | --- | --- |
 | DE10-Lite / MAX 10 10M50DAF484C7G | Build concluído | Build concluído | 50 MHz |
-| Cyclone IV E / EP4CE6E22C8N, ZRTECH/WXEDA V2.00 | Build concluído; programação pendente | Build concluído; programação pendente | Perfil candidato de 48 MHz; confirmar no P01 |
+| Cyclone IV E / EP4CE6E22C8N, ZRTECH/WXEDA V2.00 | P03 programado e aprovado | Build concluído; programação pendente | 48 MHz confirmado no P01 |
 
 As quatro configurações são obrigatórias. A [revisão de 20/09](revisao-completa-2026-09-20.md)
 identificou que o secure existente excedia a capacidade do EP4CE6; a otimização
@@ -108,9 +108,8 @@ RX/TX usam contadores locais no clock do sistema. A ponte aceita `CLK_FREQ` e
 `BAUD_RATE` como parâmetros de elaboração e calcula `CLKS_PER_BIT`. A DE10-Lite
 declara 50.000.000/9.600 explicitamente: 5.208 ciclos por bit, sem clock gerado.
 O perfil Cyclone IV usa 48.000.000/9.600: 5.000 ciclos por bit, sem clock
-gerado. Esse é o valor de compilação a ser confirmado no P01 pela medição de
-aproximadamente `104,17 µs` por bit; o `create_clock` do SDC não cria clock no
-hardware.
+gerado. O P01 confirmou esse perfil pela medição de aproximadamente `104 µs`
+por bit; o `create_clock` do SDC não cria clock no hardware.
 
 50 MHz é o clock de operação da DE10-Lite, não a frequência máxima da FPGA.
 Fmax é uma estimativa temporal de um circuito específico no dispositivo. Um

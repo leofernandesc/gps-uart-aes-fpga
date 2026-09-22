@@ -1,0 +1,19 @@
+menu "FPGA UART bench host"
+
+choice FPGA_UART_EXPECTATION
+    prompt "Expected FPGA return"
+    default FPGA_UART_EXPECT_ECHO
+    help
+        Select echo checking for the baseline bitstream or raw ciphertext
+        capture for the secure bitstream. Secure captures still require an
+        independent PC comparison with the experiment AES-CTR context.
+
+config FPGA_UART_EXPECT_ECHO
+    bool "Baseline: input must be echoed"
+
+config FPGA_UART_CAPTURE_CIPHERTEXT
+    bool "Secure: capture ciphertext"
+
+endchoice
+
+endmenu

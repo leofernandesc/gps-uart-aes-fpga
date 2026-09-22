@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 21/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 22/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -41,9 +41,9 @@ implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_FILE` para gerar esse pacote privado a partir do JSON. O valor padrão
 continua sendo apenas o contexto de bring-up. A captura GPS e os ensaios físicos
 integrados continuam pendentes. A comparação exige também a Cyclone IV E
-`EP4CE6E22C8N`; a placa foi identificada e o perfil de 48 MHz/pinagem já foi
-preparado, mas a aprovação da bancada depende de JTAG, níveis elétricos e da
-medição do bit time no `uart_scope`.
+`EP4CE6E22C8N`; JTAG, clock de 48 MHz, pinagem, nível alto do TX, bit time,
+loopback e baseline externo já foram confirmados. P04, secure e GPS ainda
+dependem da bancada.
 
 A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
 de área no secure anterior. O AES agora calcula chaves durante as rodadas,
@@ -65,17 +65,26 @@ compilados; ainda precisam ser programados e validados fisicamente.
 
 Em 21/09, a Cyclone IV foi identificada como a placa ZRTECH/WXEDA V2.00 com
 FPGA `EP4CE6E22C8N`. Foram preparados e compilados `uart_scope`, baseline e
-secure com perfil candidato de 48 MHz, 9600/8N1 e pinagem registrada em
+secure com perfil de 48 MHz, 9600/8N1 e pinagem registrada em
 [`docs/bancada-cyclone4-2026-09-21.md`](docs/bancada-cyclone4-2026-09-21.md).
-Os SOFs ainda precisam ser programados e verificados na bancada; os resultados
-Quartus não substituem a medição do bit time.
+O `j3_scope` foi programado; TX, loopback e clock de 48 MHz foram confirmados
+em J3 `PIN_100`/`PIN_103`. O baseline integrado também foi programado e devolveu
+corretamente `55 A5 00 FF 3C` pelo caminho externo com ESP32, sem jumper local.
+P04, secure e GPS ainda precisam de validação física.
+
+Em 22/09, o host ESP32 foi preparado para os ensaios restantes: coleta por
+eventos, cinco bytes em até 30 ms, guarda de 10 ms para extras, período fixo de
+1 s e contadores estruturados. Os LEDs dos tops Cyclone IV agora mostram
+heartbeat, atividade/configuração, overflow persistente e framing persistente.
+Integração RTL e os builds baseline/secure passaram novamente; esses resultados
+não substituem a repetição do P04 no osciloscópio.
 
 ## Configuração do protótipo
 
 | Item | Decisão |
 | --- | --- |
 | Placa | DE10-Lite, clock de 50 MHz |
-| Segundo alvo | Cyclone IV E `EP4CE6E22C8N`, ZRTECH/WXEDA V2.00; perfil candidato de 48 MHz |
+| Segundo alvo | Cyclone IV E `EP4CE6E22C8N`, ZRTECH/WXEDA V2.00; clock confirmado de 48 MHz |
 | GPS | NEO-M8N-010; VCC de 3,3 V; conferir conector da placa de suporte na bancada |
 | Serial | 9600 baud, 8N1, sem seleção de taxa em execução |
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
@@ -255,6 +264,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
 - [Métricas pós-fit da DE10-Lite](docs/metricas-fpga-2026-09-20.md)
 - [Roteiro de bancada Cyclone IV](docs/bancada-cyclone4-2026-09-21.md)
+- [Instrumentação anterior ao P04–P06](docs/validacao-instrumentacao-2026-09-22.md)
 - [Alvo Cyclone IV e perfil de compilação](fpga/cyclone4/README.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
 - [Rascunho do manuscrito BTSym em português](docs/manuscrito-btsym-rascunho-pt.md)
@@ -269,8 +279,9 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada, com quatro telas, freeze físico em 25/09 e escrita no fim de semana. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo da bancada: programar os tops baseline/secure e executar os
-ensaios integrados descritos no [plano de testes](docs/plano-de-testes.md).
+Próximo passo da bancada: gravar o host ESP32 atualizado, reprogramar o baseline
+Cyclone IV e fechar o P04 com ponta ×10/massa curta; depois executar P05/P06
+secure nas duas placas conforme o [plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.
 Simulação, fit e programação não substituem a medição física nem a captura GPS.

@@ -4,14 +4,14 @@
 
 | Item | Registro atual | Confirmação restante |
 | --- | --- | --- |
-| Placa | ZRTECH V2.00 / DESIGNED BY WXEDA | Foto da placa e serigrafia dos conectores |
+| Placa | ZRTECH V2.00 / DESIGNED BY WXEDA | Identificada na bancada |
 | FPGA | EP4CE6E22C8N | Confirmado pela marcação do encapsulamento |
 | SDRAM | Winbond W9864G6KH-6, 64 Mbit | Não é usada neste experimento |
-| Clock candidato | 48 MHz, PIN_24 | Confirmar componente ligado ao clock ou medir UART |
-| Reset candidato | PIN_89, ativo baixo | Confirmar botão e polaridade |
+| Clock | 48 MHz, PIN_24 | Confirmado pelo bit time físico de 104 µs |
+| Reset | PIN_89, ativo baixo | Usado nos tops integrados |
 | UART RX da referência pública | PIN_87 | Não acessível no header usado; bancada usa PIN_103 |
 | UART TX da referência pública | PIN_86 | Não acessível no header usado; bancada usa PIN_100 |
-| LEDs candidatos | PIN_1, PIN_2, PIN_3, PIN_144 | Confirmar ordem e polaridade |
+| LEDs | PIN_1, PIN_2, PIN_3, PIN_144 | Ativos em zero; funções integradas abaixo |
 
 As pinagens candidatas vêm de referências públicas que correspondem ao perfil
 ZRTech/WXEDA, não de uma leitura elétrica desta unidade. O `YXC 12.0...` deve
@@ -163,6 +163,13 @@ como latência da UART: o firmware faz uma leitura bloqueante de até 250 ms e
 imprime `TX` antes da escrita. Uma medição de latência será feita somente com
 um host/captura específico. O P04, que exige medição da forma de onda no
 osciloscópio nessa configuração, continua pendente.
+
+Para a repetição, o host foi atualizado em 22/09: coleta por eventos, cinco
+bytes em até 30 ms, guarda de 10 ms para extras e linhas estruturadas
+`RESULT`/`SUMMARY`. Nos tops integrados, os LEDs ativos em zero são `LED[0]`
+heartbeat, `LED[1]` configuração/atividade, `LED[2]` overflow persistente e
+`LED[3]` framing persistente. A força de saída UART continua em 8 mA até o P04
+ser repetido com ponta ×10 e massa curta.
 
 Na primeira observação do P04, foram relatados espaçamento aproximado de `30 µs`
 entre picos na visão afastada e `680 ns` entre os picos negativo e positivo de

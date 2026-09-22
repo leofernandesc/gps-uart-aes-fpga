@@ -31,6 +31,11 @@ idf.py -p /dev/ttyUSB0 monitor -b 115200
 Substitua `/dev/ttyUSB0` pelo dispositivo que aparecer no Linux. O comando
 `flash` altera apenas o firmware do ESP32; não altera a configuração da FPGA.
 
+O modo padrão é `baseline`. Antes do ensaio `secure`, executar
+`idf.py menuconfig`, abrir **FPGA UART bench host** e selecionar
+**Secure: capture ciphertext**. Essa opção muda apenas a interpretação dos
+contadores: o mesmo firmware sempre preserva e imprime os bytes recebidos.
+
 ## Comportamento
 
 O firmware configura UART2 em 9600 baud, 8N1, envia repetidamente:
@@ -39,10 +44,29 @@ O firmware configura UART2 em 9600 baud, 8N1, envia repetidamente:
 55 A5 00 FF 3C
 ```
 
-e mostra no monitor USB os bytes retornados pela FPGA. No top `baseline`, o
-esperado é o mesmo vetor na saída. No top `secure`, o esperado é um ciphertext;
-a conferência deve ser feita com o contexto AES-CTR correspondente, não pela
-aparência do texto no terminal.
+e mostra no monitor USB os bytes retornados pela FPGA. Cada tentativa:
+
+- espera exatamente cinco bytes por até 30 ms;
+- mantém uma guarda adicional de 10 ms para detectar bytes tardios ou
+  duplicados;
+- registra eventos de framing, paridade, overflow da FIFO UART do ESP32 e
+  buffer cheio;
+- começa a cada 1 s, sem somar o tempo de leitura ao período;
+- não limpa a entrada entre tentativas, pois isso esconderia bytes tardios.
+
+O log principal é estruturado para ser salvo e analisado depois:
+
+```text
+RESULT seq=1 mode=baseline tx=55A500FF3C rx=55A500FF3C rx_len=5 same=1 timeout=0 extra=0 frame_err=0 parity_err=0 fifo_ovf=0 buffer_full=0 break=0 write_err=0 tx_timeout=0 host_window_us=...
+SUMMARY trials=1 timeouts=0 mismatches=0 extra_trials=0 capture_failures=0 ...
+```
+
+No top `baseline`, são exigidos cinco bytes iguais e nenhum erro. No top
+`secure`, `same=0` é normalmente esperado: o ciphertext deve ser conferido no
+PC com o contexto AES-CTR do ensaio, e não por sua aparência no terminal.
+`host_window_us` mede a janela do driver e do escalonamento do ESP32; não é a
+latência física da FPGA. A latência deve ser medida no osciloscópio usando RX e
+TX como referências.
 
 O código-fonte está em `main/uart_host_main.c`.
 
