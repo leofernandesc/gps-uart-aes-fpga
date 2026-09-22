@@ -109,7 +109,7 @@ Os relatórios de F01–F07 devem ficar em `build/` e ser resumidos em uma tabel
 do artigo. Os resultados da UART autônoma não devem ser usados como se fossem
 os resultados do sistema GPS integrado.
 
-### Resultado dos builds DE10-Lite — 20/09/2026
+### Resultado dos builds DE10-Lite — regenerado em 22/09/2026
 
 | Métrica pós-fit | Baseline | Secure | Diferença secure − baseline |
 | --- | ---: | ---: | ---: |
@@ -134,13 +134,15 @@ Os SOFs e relatórios estão em `build/de10_lite/baseline/` e
 
 ```text
 baseline uart_baseline.sof
-SHA-256: ffe074b4dcd50ad50edacd4f6b817bc9a614477fafad8485736f02bdd577c8ad
+SHA-256: f878f884b264c2f02a4d720c6ef3120f85ed88c3b52c3f87da7421c90437161c
 
 secure uart_secure.sof
-SHA-256: 5f54cffcc5a5b8ca776b32c067896fb8971d41e3d88155c4913788303e879c89
+SHA-256: 320357adffc3f530f7908fd0abcc2016d41d5cd123b3aa22dc25b4af9db0a91a
 ```
 
-O Quartus 25.1 compilou as duas revisões sem erros. Os avisos do fit ficam
+Os hashes acima pertencem aos builds `PASS` gerados a partir do commit
+`746b0852ecf3ea0f049cf3adefec470723ed810a`. O Quartus 25.1 compilou as duas
+revisões sem erros. Os avisos do fit ficam
 preservados nos logs; incluem o aviso de requisitos elétricos dos pinos de
 3,3 V e a mensagem de licença LogicLock. Eles não produziram violação temporal.
 

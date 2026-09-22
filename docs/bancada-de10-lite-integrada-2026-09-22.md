@@ -22,7 +22,9 @@ SOF, acender LEDs ou observar pulsos não encerra sozinho nenhum teste.
 
 ```text
 build/de10_lite/baseline/uart_baseline.sof
+  SHA-256 f878f884b264c2f02a4d720c6ef3120f85ed88c3b52c3f87da7421c90437161c
 build/de10_lite/secure/uart_secure.sof
+  SHA-256 320357adffc3f530f7908fd0abcc2016d41d5cd123b3aa22dc25b4af9db0a91a
 bench/esp32_uart_host_idf/
 scripts/esp32_log_verify.py
 ```
@@ -33,9 +35,12 @@ Antes da bancada, a partir da raiz do repositório:
 make baseline-fpga
 make secure-fpga
 make metrics
+sha256sum build/de10_lite/baseline/uart_baseline.sof \
+  build/de10_lite/secure/uart_secure.sof
 ```
 
-Esses comandos compilam e auditam; não programam a placa.
+Os hashes precisam coincidir com os valores acima antes da programação. Esses
+comandos compilam e auditam; não programam a placa.
 
 ## 3. Ligações
 

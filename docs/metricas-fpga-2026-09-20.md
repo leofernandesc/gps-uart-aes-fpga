@@ -1,7 +1,9 @@
 # Métricas FPGA — DE10-Lite — 20/09/2026
 
-Resultado regenerado após a reconciliação com `origin/main`, no commit
-`b065ba8e9cb16a10e0903d054e7927e0b22846a1`.
+Resultado originalmente consolidado após a reconciliação com `origin/main`, no
+commit `b065ba8e9cb16a10e0903d054e7927e0b22846a1`, e regenerado para a bancada em
+22/09 no commit `746b0852ecf3ea0f049cf3adefec470723ed810a`. As métricas permaneceram
+inalteradas.
 
 ## Método
 
@@ -38,6 +40,13 @@ As duas variantes operam a 50 MHz com slack positivo nos quatro tipos de
 análise. A inclusão do AES aumenta significativamente a lógica e os
 registradores e reduz a Fmax estimada, mas não impede o clock de operação
 definido para a DE10-Lite.
+
+Artefatos preparados para a bancada em 22/09:
+
+| Variante | Arquivo | SHA-256 |
+| --- | --- | --- |
+| Baseline | `build/de10_lite/baseline/uart_baseline.sof` | `f878f884b264c2f02a4d720c6ef3120f85ed88c3b52c3f87da7421c90437161c` |
+| Secure | `build/de10_lite/secure/uart_secure.sof` | `320357adffc3f530f7908fd0abcc2016d41d5cd123b3aa22dc25b4af9db0a91a` |
 
 ## Limites
 

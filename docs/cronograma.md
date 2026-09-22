@@ -32,6 +32,8 @@ verificação automática do log ESP32. A preparação não altera o status fís
 baseline e secure integrados ainda precisam ser programados nessa placa.
 O host aguarda 10 s após o boot para permitir que o TX seja conectado somente
 depois da configuração do FPGA, sem consumir bytes/contexto antes da captura.
+Os dois SOFs foram regenerados no commit `746b085`, passaram pela auditoria de
+timing nos três cantos e tiveram seus hashes registrados no plano de testes.
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
@@ -148,6 +150,9 @@ submissão deve ocorrer até 30/09.
 - O novo [roteiro integrado da DE10-Lite](bancada-de10-lite-integrada-2026-09-22.md)
   separa P03–P06, impede confusão de cabo quando as duas FPGAs estão presentes
   e fixa quatro tentativas de `55 A5 00 FF 3C` por variante.
+- Os SOFs baseline/secure foram regenerados a partir de `746b085`, com manifests
+  `PASS`, timing aprovado nos três cantos e hashes conferidos. Isso ainda não
+  representa programação ou funcionamento físico na DE10-Lite.
 - `scripts/esp32_log_verify.py` transforma as linhas `RESULT` em relatório:
   baseline exige eco exato; secure decifra todo o fluxo CTR e rejeita lacunas,
   corrupção ou qualquer flag de transporte. Cinco testes unitários passaram;
