@@ -77,7 +77,7 @@ eventos, cinco bytes em até 30 ms, guarda de 10 ms para extras, período fixo d
 1 s e contadores estruturados. Os LEDs dos tops Cyclone IV agora mostram
 heartbeat, atividade/configuração, overflow persistente e framing persistente.
 Integração RTL e os builds baseline/secure passaram novamente; esses resultados
-não substituem a repetição do P04 no osciloscópio.
+não substituem a repetição do P04 no osciloscópio ou no Analog Discovery 2.
 
 ## Configuração do protótipo
 
@@ -90,6 +90,7 @@ não substituem a repetição do P04 no osciloscópio.
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
 | Avaliação | Quatro builds: baseline/secure em cada FPGA, com o mesmo RTL |
+| Instrumentação física | Osciloscópio de bancada ou Analog Discovery 2; captura serial continua no ESP32/CP2102 |
 | Datas de trabalho | Freeze físico em 25/09; artigo em 26–27/09; submissão até 30/09/2026 |
 
 AES-CTR fornecerá **confidencialidade**, não autenticação, proteção contra
@@ -267,6 +268,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Roteiro de bancada Cyclone IV](docs/bancada-cyclone4-2026-09-21.md)
 - [Roteiro integrado da DE10-Lite](docs/bancada-de10-lite-integrada-2026-09-22.md)
 - [Instrumentação anterior ao P04–P06](docs/validacao-instrumentacao-2026-09-22.md)
+- [Instalação do WaveForms e uso do Analog Discovery 2](docs/analog-discovery-2-waveforms.md)
 - [Alvo Cyclone IV e perfil de compilação](fpga/cyclone4/README.md)
 - [Rascunho do manuscrito BTSym](docs/manuscrito-btsym-draft.md)
 - [Rascunho do manuscrito BTSym em português](docs/manuscrito-btsym-rascunho-pt.md)

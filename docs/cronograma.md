@@ -34,6 +34,11 @@ O host aguarda 10 s após o boot para permitir que o TX seja conectado somente
 depois da configuração do FPGA, sem consumir bytes/contexto antes da captura.
 Os dois SOFs foram regenerados no commit `746b085`, passaram pela auditoria de
 timing nos três cantos e tiveram seus hashes registrados no plano de testes.
+Em 22/09, o WaveForms 3.25.1 e o Adept Runtime 2.30.1 foram instalados no
+Ubuntu amd64. O Analog Discovery 2 ainda não estava conectado, portanto a
+instalação do software foi concluída, mas a enumeração e os ensaios P04/P06 com
+esse instrumento continuam pendentes. O procedimento está no
+[guia do AD2](analog-discovery-2-waveforms.md).
 
 UART, FIFO, AES e CTR estão integrados em um módulo comum para baseline e
 secure. A saída serial foi comparada no PC, incluindo simulação em 50 MHz/9600.
@@ -90,7 +95,7 @@ bytes forem comparados automaticamente; LED ou forma de onda isolada não basta.
 | --- | --- | --- | --- |
 | **Seg 21/09** | Confirmar Cyclone IV: código EP4CE6E22C8, oscilador, pinagem, alimentação, GND e JTAG. Preparar QSF/SDC e identificar os pinos RX/TX. | Programar um bitstream mínimo/`uart_scope` em cada placa. Repetir UART autônoma e loopback na Cyclone IV; iniciar o baseline com o ESP32. | P01/P02 registrados; P03 do baseline aprovado pelo retorno externo `55 A5 00 FF 3C`; P04 iniciado, com repetição elétrica necessária. |
 | **Ter 22/09** | Repetir P04 com ponta ×10 e massa curta; medir bit time e amplitudes da borda no baseline das duas plataformas. | Consolidar captura no PC, waveform e três repetições por placa; corrigir qualquer instabilidade antes do secure. | P03/P04 do baseline classificados, comparação byte a byte e waveform arquivadas. |
-| **Qua 23/09** | Programar o secure nas duas placas e carregar o contexto do ensaio. Repetir os bytes conhecidos. | Executar P05/P06: capturar ciphertext no PC, decifrar com o contexto registrado e medir RX→TX no osciloscópio quando possível. Testar reset antes do primeiro byte e bloqueio após o primeiro byte. | Ciphertext recuperado exatamente, contexto/nonce registrados sem chave em claro, três repetições secure por placa e evidência de reset. |
+| **Qua 23/09** | Programar o secure nas duas placas e carregar o contexto do ensaio. Repetir os bytes conhecidos. | Executar P05/P06: capturar ciphertext no PC, decifrar com o contexto registrado e medir RX→TX no osciloscópio ou AD2 quando possível. Testar reset antes do primeiro byte e bloqueio após o primeiro byte. | Ciphertext recuperado exatamente, contexto/nonce registrados sem chave em claro, três repetições secure por placa e evidência de reset. |
 | **Qui 24/09** | Validar o NEO-M8N: VCC, GND, nível elétrico, atividade TX e 9600/8N1. Capturar a referência NMEA independente. | Executar P07–P09 nos quatro casos: DE10-Lite baseline/secure e Cyclone IV baseline/secure. Fazer três repetições, validar NMEA e comparar a entrada com a saída recuperada. | GPS físico comprovado, zero divergência, framing/overflow registrados e arquivos brutos/hash preservados. Se possível, iniciar P10 contínuo. |
 | **Sex 25/09** | Completar P10: captura contínua por duração registrada nos quatro casos, com perdas, primeira divergência, FIFO e erros contabilizados. | Completar P11 em cada placa/configuração; repetir qualquer ensaio instável, salvar SOFs/logs/capturas e preencher a matriz final de evidências. | **Freeze físico:** P01–P11 classificados como aprovado, reprovado ou bloqueado com causa objetiva. Nenhuma nova alteração de RTL depois deste ponto. |
 
@@ -150,6 +155,10 @@ submissão deve ocorrer até 30/09.
 - O novo [roteiro integrado da DE10-Lite](bancada-de10-lite-integrada-2026-09-22.md)
   separa P03–P06, impede confusão de cabo quando as duas FPGAs estão presentes
   e fixa quatro tentativas de `55 A5 00 FF 3C` por variante.
+- O ambiente WaveForms/Adept foi instalado e verificado; a ausência do AD2 na
+  porta USB foi registrada. A captura com AD2 será evidência física somente
+  depois de `dwfcmd enumerate` listar o instrumento e os arquivos de captura
+  serem preservados.
 - Os SOFs baseline/secure foram regenerados a partir de `746b085`, com manifests
   `PASS`, timing aprovado nos três cantos e hashes conferidos. Isso ainda não
   representa programação ou funcionamento físico na DE10-Lite.

@@ -71,6 +71,13 @@ Usar pontas ×10, entrada de 1 MΩ, acoplamento DC, massas curtas e, se
 disponível, limite de banda de 20 MHz. Não usar o jacaré de massa em um pino de
 sinal.
 
+O osciloscópio de bancada pode ser substituído pelo Analog Discovery 2 para
+P04/P06. Nesse caso, usar as entradas diferenciais `1+`/`1−` no RX e
+`2+`/`2−` no TX, com os terminais negativos no GND comum, e salvar o CSV bruto
+além da imagem. A instalação, enumeração, configuração e limites do AD2 estão
+no [guia de WaveForms](analog-discovery-2-waveforms.md). O ESP32 continua
+responsável pelo estímulo e pela verificação dos bytes.
+
 ## 4. Identificação JTAG segura
 
 Como duas placas serão usadas no mesmo dia, não assumir que o número do
@@ -170,7 +177,7 @@ Critério P03: relatório `PASS`, quatro tentativas consecutivas, 20 bytes
 recebidos e nenhuma flag de erro. Os LEDs 2 e 3 apenas alternam por evento e
 podem voltar ao estado inicial após um número par de bytes.
 
-## 7. P04 — baseline no osciloscópio
+## 7. P04 — baseline no osciloscópio ou Analog Discovery 2
 
 Use trigger na borda de descida do CH1 e comece com `200 µs/div`. Capture pelo
 menos `0x55` e `0xA5`, preservando imagem ou CSV com escalas visíveis.
@@ -247,7 +254,7 @@ quatro cópias do vetor e nenhuma flag de transporte. O contexto público serve
 somente ao bring-up. Um ensaio definitivo com contexto próprio deve compilar o
 SOF com `CONTEXT_FILE=...` e passar o mesmo JSON ao verificador.
 
-## 9. P06 — secure no osciloscópio
+## 9. P06 — secure no osciloscópio ou Analog Discovery 2
 
 Mantenha exatamente os canais, pontas e escalas de P04. O conteúdo do CH2 muda,
 mas os quadros continuam 9600/8N1. Registrar:

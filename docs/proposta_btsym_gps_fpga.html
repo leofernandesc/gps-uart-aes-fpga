@@ -201,7 +201,8 @@
             <tr><td><span class="material-name">Cyclone IV E · EP4CE6E22C8N</span><span class="material-use">Segundo alvo obrigatório; baseline e secure preparados</span></td><td><span class="badge">48 MHz e pinos J3 validados</span></td></tr>
             <tr><td><span class="material-name">GPS NEO-M8N-010 + antena</span><span class="material-use">Aquisição real das sentenças GPS</span></td><td><span class="badge">Disponível · integração pendente</span></td></tr>
             <tr><td><span class="material-name">Osciloscópio + pontas</span><span class="material-use">Níveis elétricos, duração dos bits e quadros</span></td><td><span class="badge">TX e loopback concluídos</span></td></tr>
-            <tr><td><span class="material-name">Interface serial para o PC</span><span class="material-use">ESP32 para estímulo; CP2102 recomendado para captura final independente</span></td><td><span class="badge">ESP32 validado</span></td></tr>
+            <tr><td><span class="material-name">Analog Discovery 2 + WaveForms</span><span class="material-use">Captura CSV, decodificação UART e medidas repetíveis</span></td><td><span class="badge">WaveForms instalado · AD2 físico pendente</span></td></tr>
+            <tr><td><span class="material-name">Interface serial para o PC</span><span class="material-use">ESP32 para estímulo; um CP2102 opcional para captura independente</span></td><td><span class="badge">ESP32 validado</span></td></tr>
             <tr><td><span class="material-name">PC, cabos e conexões</span><span class="material-use">Quartus instalado; USB-Blaster, jumper e GND comum</span></td><td><span class="badge">Disponível</span></td></tr>
           </tbody>
         </table>
@@ -211,7 +212,7 @@
           <article class="bench-step"><h3>3. Experimento com GPS — pendente</h3><p>Com o NEO-M8N-010 disponível, capturar a referência e a saída da FPGA, decifrar no PC e comparar os bytes. Repetir em cada configuração e medir perdas, latência e taxa útil.</p></article>
         </div>
       </div>
-      <p class="sources">USB-Blaster programa a FPGA. A interface serial transporta os dados ao PC. O osciloscópio fornece a evidência elétrica e temporal.</p>
+      <p class="sources">USB-Blaster programa a FPGA. A interface serial transporta os dados ao PC. O osciloscópio ou o Analog Discovery 2 fornece a evidência elétrica e temporal.</p>
     </section>
     <section class="slide" id="4" data-label="Cronograma" aria-labelledby="title-4">
       <p class="eyebrow">04 / Planejamento · atualizado em 22/09/2026</p>

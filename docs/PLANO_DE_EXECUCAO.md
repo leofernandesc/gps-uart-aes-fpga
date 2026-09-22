@@ -70,6 +70,10 @@ concentrado na bancada.
   fila de eventos, prazo de 30 ms, guarda de 10 ms, período fixo de 1 s e
   contadores estruturados. Um CP2102 independente continua recomendado para a
   evidência final do GPS/secure, mas não é necessário para fechar o P04.
+- WaveForms 3.25.1 e Adept Runtime 2.30.1 foram instalados no Ubuntu amd64.
+  O Analog Discovery 2 será usado como instrumentação alternativa para P04/P06;
+  sua enumeração física e as capturas ainda estão pendentes. O procedimento
+  está em [analog-discovery-2-waveforms.md](analog-discovery-2-waveforms.md).
 - O replay nominal sem pausas artificiais foi medido nos dois modos: 80 ns de
   RX válido até início do TX, 1.041.680 ns até o fim do TX e 989.643 ns do
   início do quadro de entrada ao início do TX.
@@ -88,6 +92,7 @@ e [integração de 16/09](validacao-integracao-2026-09-16.md),
 [validação das correções sem hardware de 20/09](validacao-correcoes-2026-09-20.md) e
 [validação dos manuscritos de 20/09](validacao-manuscrito-2026-09-20.md) e
 [instrumentação de 22/09](validacao-instrumentacao-2026-09-22.md) e
+[instalação e uso do Analog Discovery 2](analog-discovery-2-waveforms.md) e
 [rascunho do manuscrito BTSym](manuscrito-btsym-draft.md) e
 [versão em português](manuscrito-btsym-rascunho-pt.md).
 

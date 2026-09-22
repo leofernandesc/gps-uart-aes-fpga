@@ -29,6 +29,8 @@ isso ainda não constitui execução física dos tops integrados.
 - Caminho baseline: `UART RX -> FIFO -> UART TX`.
 - Caminho secure: `UART RX -> FIFO -> AES-128-CTR -> UART TX`.
 - Entradas e saídas da DE10-Lite: RX em `V10` e TX em `W10`.
+- Instrumentação física: osciloscópio de bancada ou Analog Discovery 2; os
+  bytes continuam sendo fornecidos/recebidos pelo ESP32 ou CP2102.
 - Variantes FPGA: projetos Quartus separados em `fpga/de10_lite/baseline/` e
   `fpga/de10_lite/secure/`; para a Cyclone IV, `fpga/cyclone4/uart_scope/`,
   `fpga/cyclone4/baseline/` e `fpga/cyclone4/secure/`.
@@ -237,7 +239,7 @@ heartbeat, `LED[1]` configuração/atividade, `LED[2]` overflow persistente e
 `LED[3]` framing persistente. Essa associação é idêntica no baseline e no
 secure.
 
-### P04 — Baseline no osciloscópio
+### P04 — Baseline no osciloscópio ou Analog Discovery 2
 
 Com o baseline recebendo o vetor de teste, medir a saída em `W10` na DE10-Lite
 ou em J3 `PIN_100` na Cyclone IV. Se houver dois canais, medir também a entrada
@@ -262,9 +264,11 @@ picos preliminares de `−1,52 V` e `4,92 V`; como excedem os trilhos de 3,3 V,
 devem ser tratados como possível artefato da sonda até a repetição com massa
 curta.
 
-Configuração obrigatória para fechar o P04: ponta ×10, entrada de 1 MΩ,
-acoplamento DC, massa curta ou mola de terra e, se disponível, limite de banda
-de 20 MHz. A força de saída permanece em 8 mA durante essa repetição. Somente
+No osciloscópio de bancada, usar ponta ×10, entrada de 1 MΩ, acoplamento DC,
+massa curta ou mola de terra e, se disponível, limite de banda de 20 MHz. No
+AD2, usar entradas diferenciais com o terminal negativo no GND, faixa compatível
+com 0–3,3 V e salvar o CSV bruto junto da imagem da captura.
+A força de saída permanece em 8 mA durante essa repetição. Somente
 se duas capturas corretas ainda mostrarem excursões fora de `−0,3 V` a `3,6 V`
 será criada uma variante experimental com 4 mA e slew rate lento; essa variante
 deverá ser aplicada de forma idêntica ao baseline e ao secure antes de qualquer
@@ -288,7 +292,7 @@ também atravessam a primeira fronteira de bloco de 16 bytes.
 
 **Situação: preparada em software e pendente nas duas placas.**
 
-### P06 — Secure no osciloscópio
+### P06 — Secure no osciloscópio ou Analog Discovery 2
 
 Repetir a medição nos pinos específicos da plataforma. Na DE10-Lite, usar CH1
 em `V10` e CH2 em `W10`; na Cyclone IV, CH1 em J3 `PIN_103` e CH2 em J3
@@ -297,6 +301,11 @@ será verificado no PC, não visualmente no osciloscópio. Timestamps do ESP32 o
 de um adaptador USB–UART não substituem essa medição de latência.
 
 **Situação: pendente.**
+
+O AD2, a instalação do WaveForms e o formato das evidências estão descritos no
+[guia específico de instrumentação](analog-discovery-2-waveforms.md). A
+enumeração do dispositivo e a abertura do aplicativo não encerram P04/P06 sem
+captura dos sinais da placa.
 
 ### P07 — Entrada do GPS
 

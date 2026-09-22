@@ -62,6 +62,10 @@ versionado quando ela existir.
 - O comparativo possui quatro builds: baseline/secure em MAX 10 e Cyclone IV.
   Preserve clock, FIFO, interfaces e instrumentação dentro de cada par; explique
   as diferenças de clock ao comparar latência entre placas.
+- A instalação e o uso do Analog Discovery 2 estão documentados em
+  `docs/analog-discovery-2-waveforms.md`. WaveForms/Adept instalados ou uma
+  enumeração USB bem-sucedida não equivalem a P04/P06 concluídos: preserve CSV,
+  imagens, logs, hash e condições do instrumento antes de atualizar o status.
 
 ## Procedimento obrigatório ao atualizar o repositório
 

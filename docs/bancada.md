@@ -17,8 +17,9 @@ determinada pelo código impresso no receptor u-blox.
 | --- | --- | --- |
 | DE10-Lite + cabo USB | FPGA e programação USB-Blaster | Placa enumerada e identificada no Quartus |
 | GPS NEO-M8N-010 + antena correspondente, disponíveis | Fonte real dos dados | Conector do carrier, VCC e tensão da saída UART |
-| Dois canais de captura serial: USB–UART ou ponte com microcontrolador validada | Saída FPGA e referência crua | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
+| ESP32 ou um CP2102 TTL, conforme o ensaio | Fonte/receptor serial e referência crua | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
 | Osciloscópio e pontas | Níveis e duração dos bits; teste UART isolado | Terra em GND, fator da ponta correto e instrumento acessível na bancada |
+| Analog Discovery 2 + WaveForms, opcional | Captura CSV, decodificação UART e medidas repetíveis de RX/TX | WaveForms instalado; AD2 físico deve ser enumerado antes do P04/P06 |
 | Jumpers e conexões firmes, disponíveis | Sinais e terra comum | Continuidade, identificação dos pinos e ausência de curto |
 | Multímetro; fonte 3,3 V regulada com limite de corrente | Conferência inicial | Um único suprimento para cada dispositivo; não unir fontes |
 | PC com Quartus e suporte MAX 10 | Compilação e programação | Quartus Linux já compila; USB-Blaster e permissões/driver dependem da placa |
@@ -29,6 +30,17 @@ pode usar adaptadores USB–UART ou um microcontrolador com duas entradas UART e
 transferência USB validada: preservar bytes binários, ordem e identificação dos
 canais, sem conversão de texto ou perdas. Não usar RS-232 de tensões
 positivas/negativas, UART de 5 V ou alimentação direta de bateria no GPIO/GPS.
+
+O Analog Discovery 2 pode substituir o osciloscópio de bancada para as medidas
+de timing e captura, desde que o GND seja comum e o dispositivo seja
+enumerado pelo WaveForms. Ele não substitui a fonte/receptor serial nem a
+verificação independente do AES. O procedimento de instalação, conexões e
+registro das evidências está em
+[Analog Discovery 2 e WaveForms](analog-discovery-2-waveforms.md).
+Com AD2 + ESP32, nenhum USB–UART adicional é obrigatório. Se for desejada uma
+captura serial independente no PC, um CP2102 de 3,3 V basta; dois só são
+necessários quando os dois canais independentes forem feitos exclusivamente por
+USB–UART.
 
 ## Ordem de execução
 
