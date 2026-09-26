@@ -10,8 +10,11 @@ até 30/09.**
 **Atualização de bancada em 25/09:** a DE10-Lite foi reprogramada com
 `uart_scope` e o Analog Discovery 2 capturou um quadro completo `0x55`, com
 aproximadamente 104 µs por bit. A referência diferencial da captura ainda
-precisa ser corrigida: a tensão apareceu entre 0 e −2,77 V, portanto o nível
-elétrico do TX não foi validado por esse registro. O CSV bruto, o hash, a
+precisa ser esclarecida: a tensão apareceu entre 0 e −2,77 V, portanto o nível
+elétrico do TX não foi validado por esse registro. Na verificação DC seguinte,
+o multímetro indicou 3,3 V no ponto de referência, mas o Voltmeter do AD2
+mostrou −17,2 mV. Acoplamento AC no adaptador BNC é uma hipótese a verificar,
+não um diagnóstico confirmado. O CSV bruto, a imagem, os hashes, a
 configuração do instrumento e a próxima verificação estão em
 [bancada DE10-Lite + AD2](bancada-de10-lite-ad2-2026-09-25.md). O WaveForms
 foi aberto e reconheceu o AD2; o `dwfcmd` não consegue adquirir enquanto a

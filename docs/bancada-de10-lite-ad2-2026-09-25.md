@@ -22,8 +22,28 @@ dos quadros com separação próxima de 100 ms. Isso confirma a temporização e
 sequência de bits do TX autônomo, mas **não** conclui a medição de níveis
 elétricos: a aquisição foi de aproximadamente 0 V em repouso a −2,77 V nos
 pulsos. A interpretação provável é referência diferencial ligada a um nível
-alto, por exemplo 3,3 V, em vez de GND; a ligação física precisa ser conferida
-antes de atribuir valores de tensão ao pino TX.
+alto, por exemplo 3,3 V, em vez de GND; esta era uma hipótese inicial, não
+uma conclusão sobre a ligação. O teste DC abaixo aponta outra possibilidade.
+
+### Referência DC medida com o WaveForms
+
+Com o canal 1 ligado à saída fixa de 3,3 V da DE10-Lite, o usuário mediu
+**3,3 V no multímetro** e mostrou o Voltmeter do WaveForms indicando
+`C1 = −17,2 mV`, `C1RMS = 17,3 mV` e `C1AC = 1,3 mV`. A
+[imagem do instrumento](evidence/de10-lite-ad2-3v3-voltmeter-2026-09-25.png)
+foi preservada com SHA-256
+`52f821cb386eb9ddc6dcfca10ae67adfea4c3ae0cb85d201bfd8d54b4ef0ffe1`.
+O valor do multímetro foi comunicado pelo usuário; não foi registrado por uma
+interface ligada ao computador. Ele confirmou também que `1+`, `1−` e o GND
+próprio do AD2 estão ligados aos pontos pretendidos.
+
+O conjunto `3,3 V DC → ~0 V no AD2` e `UART → pulsos negativos a partir de
+~0 V` é compatível com **acoplamento AC**. Segundo a documentação da Digilent,
+o adaptador BNC do Analog Discovery tem jumper físico AC/DC e pode vir em AC
+por padrão: <https://files.digilent.com/manuals/WaveForms/3.25.1/startadbnc.html>.
+Isso **ainda não está confirmado**, pois é preciso identificar se esse
+adaptador está sendo usado e observar a posição do jumper. `C1AC` na tela é a
+medida de componente AC, não uma indicação da posição do jumper.
 
 O WaveForms aberto ocupa o dispositivo (`dwfcmd enumerate` retorna
 `Is Busy?: YES`), e `dwfcmd connect` falha com `FDwfDeviceOpen` nessa condição.
@@ -32,8 +52,10 @@ com código 139, sem gerar CSV. O aplicativo foi reaberto normalmente e voltou
 a reconhecer o AD2. Para a próxima captura, usar o Scope e a exportação CSV
 pela própria interface, sem repetir a chamada de script que falhou.
 
-Próximo passo: com a placa desligada, confirmar fisicamente `1+` no JP1 pino 2
-(`W10`, TX) e `1−` no JP1 pino 12 ou 30 (GND; **não** pino 29, que é 3,3 V).
-Após religar, repetir a captura e aceitar o nível elétrico somente se o
-repouso ficar próximo de 3,3 V e os bits baixos próximos de 0 V. Esta medição
-é da UART autônoma; baseline, secure e GPS integrados continuam pendentes.
+Próximo passo: identificar se a entrada do canal 1 passa por um adaptador BNC.
+Se sim, com a placa desligada, colocar o jumper CH1 em **DC** e repetir a
+leitura do pino JP1 29; o esperado é cerca de +3,3 V. Se forem usados fios
+diretos, medir com o multímetro entre os próprios contatos de `1+` e `1−` e
+revisar a configuração do canal. Só depois devolver `1+` ao JP1 pino 2
+(`W10`, TX) e repetir a captura. Esta medição é da UART autônoma; baseline,
+secure e GPS integrados continuam pendentes.
