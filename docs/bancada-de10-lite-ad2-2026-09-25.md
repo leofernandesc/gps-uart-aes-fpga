@@ -23,7 +23,8 @@ sequência de bits do TX autônomo, mas **não** conclui a medição de níveis
 elétricos: a aquisição foi de aproximadamente 0 V em repouso a −2,77 V nos
 pulsos. A interpretação provável é referência diferencial ligada a um nível
 alto, por exemplo 3,3 V, em vez de GND; esta era uma hipótese inicial, não
-uma conclusão sobre a ligação. O teste DC abaixo aponta outra possibilidade.
+uma conclusão sobre a ligação. A causa confirmada depois foi o acoplamento AC
+no adaptador BNC, descrito abaixo.
 
 ### Referência DC medida com o WaveForms
 
@@ -41,9 +42,18 @@ O conjunto `3,3 V DC → ~0 V no AD2` e `UART → pulsos negativos a partir de
 ~0 V` é compatível com **acoplamento AC**. Segundo a documentação da Digilent,
 o adaptador BNC do Analog Discovery tem jumper físico AC/DC e pode vir em AC
 por padrão: <https://files.digilent.com/manuals/WaveForms/3.25.1/startadbnc.html>.
-Isso **ainda não está confirmado**, pois é preciso identificar se esse
-adaptador está sendo usado e observar a posição do jumper. `C1AC` na tela é a
+O usuário identificou o jumper azul sobre os pinos **AC + central**, moveu-o
+para **central + DC** e passou a ler **3,3 V** no Voltmeter do WaveForms no
+mesmo ponto da placa. Isso confirma a causa da supressão do nível DC na
+captura anterior. A leitura corrigida foi comunicada pelo usuário; uma nova
+imagem ou CSV com o jumper em DC ainda não foi preservada. `C1AC` na tela é a
 medida de componente AC, não uma indicação da posição do jumper.
+
+Como a placa foi desligada para trocar o jumper, o SOF JTAG anterior foi
+perdido. Às 23:08 de 25/09, `quartus_pgm` reprogramou `uart_scope.sof` pelo
+`USB-Blaster [1-3]`; identificou `10M50DAF484@1`, JTAG ID `0x031050DD` e
+informou `Configuration succeeded`, 0 erros e 0 avisos. A programação não
+equivale à nova medição elétrica do TX.
 
 O WaveForms aberto ocupa o dispositivo (`dwfcmd enumerate` retorna
 `Is Busy?: YES`), e `dwfcmd connect` falha com `FDwfDeviceOpen` nessa condição.
@@ -52,10 +62,9 @@ com código 139, sem gerar CSV. O aplicativo foi reaberto normalmente e voltou
 a reconhecer o AD2. Para a próxima captura, usar o Scope e a exportação CSV
 pela própria interface, sem repetir a chamada de script que falhou.
 
-Próximo passo: identificar se a entrada do canal 1 passa por um adaptador BNC.
-Se sim, com a placa desligada, colocar o jumper CH1 em **DC** e repetir a
-leitura do pino JP1 29; o esperado é cerca de +3,3 V. Se forem usados fios
-diretos, medir com o multímetro entre os próprios contatos de `1+` e `1−` e
-revisar a configuração do canal. Só depois devolver `1+` ao JP1 pino 2
-(`W10`, TX) e repetir a captura. Esta medição é da UART autônoma; baseline,
-secure e GPS integrados continuam pendentes.
+Próximo passo: devolver a ponta positiva do canal 1 ao JP1 pino 2 (`W10`, TX),
+manter o retorno no GND e capturar novamente com o jumper em **DC**. Esperados:
+repouso perto de +3,3 V, bits baixos perto de 0 V, `0x55` em 8N1 e cerca de
+104 µs por bit. Se a placa for desligada para mover a ponta, reprogramar o SOF
+JTAG antes da captura. Esta medição é da UART autônoma; baseline, secure e GPS
+integrados continuam pendentes.

@@ -13,9 +13,11 @@ aproximadamente 104 µs por bit. A referência diferencial da captura ainda
 precisa ser esclarecida: a tensão apareceu entre 0 e −2,77 V, portanto o nível
 elétrico do TX não foi validado por esse registro. Na verificação DC seguinte,
 o multímetro indicou 3,3 V no ponto de referência, mas o Voltmeter do AD2
-mostrou −17,2 mV. Acoplamento AC no adaptador BNC é uma hipótese a verificar,
-não um diagnóstico confirmado. O CSV bruto, a imagem, os hashes, a
-configuração do instrumento e a próxima verificação estão em
+mostrou −17,2 mV. O jumper azul do adaptador BNC foi encontrado em AC; após
+movê-lo para DC, o usuário obteve 3,3 V no WaveForms. O `uart_scope.sof` foi
+reprogramado via JTAG às 23:08 após o desligamento da placa, com sucesso e sem
+avisos. A nova captura TX em DC ainda está pendente. O CSV bruto, a imagem,
+os hashes, a configuração do instrumento e a próxima verificação estão em
 [bancada DE10-Lite + AD2](bancada-de10-lite-ad2-2026-09-25.md). O WaveForms
 foi aberto e reconheceu o AD2; o `dwfcmd` não consegue adquirir enquanto a
 interface ocupa o dispositivo. Esta repetição não encerra P03/P04 dos tops
