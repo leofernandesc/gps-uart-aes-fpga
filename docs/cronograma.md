@@ -16,8 +16,13 @@ o multímetro indicou 3,3 V no ponto de referência, mas o Voltmeter do AD2
 mostrou −17,2 mV. O jumper azul do adaptador BNC foi encontrado em AC; após
 movê-lo para DC, o usuário obteve 3,3 V no WaveForms. O `uart_scope.sof` foi
 reprogramado via JTAG às 23:08 após o desligamento da placa, com sucesso e sem
-avisos. A nova captura TX em DC ainda está pendente. O CSV bruto, a imagem,
-os hashes, a configuração do instrumento e a próxima verificação estão em
+avisos. O workspace `TesteAD2UART.dwf3work` foi salvo às 23:15 e analisado:
+na captura em DC, o canal 1 apresentou níveis de aproximadamente 3,308 V e
+−0,072 V, quadro 8N1 `0x55` e período de 104,18 µs/bit. A repetição P01 do
+TX autônomo está **concluída no AD2**, complementando o loopback anterior;
+isso não conclui P03–P11 da arquitetura integrada. O workspace bruto, o CSV,
+a imagem anterior, os hashes, a configuração do instrumento e os limites da
+medição estão em
 [bancada DE10-Lite + AD2](bancada-de10-lite-ad2-2026-09-25.md). O WaveForms
 foi aberto e reconheceu o AD2; o `dwfcmd` não consegue adquirir enquanto a
 interface ocupa o dispositivo. Esta repetição não encerra P03/P04 dos tops

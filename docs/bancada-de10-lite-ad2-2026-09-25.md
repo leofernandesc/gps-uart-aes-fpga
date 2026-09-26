@@ -62,9 +62,50 @@ com código 139, sem gerar CSV. O aplicativo foi reaberto normalmente e voltou
 a reconhecer o AD2. Para a próxima captura, usar o Scope e a exportação CSV
 pela própria interface, sem repetir a chamada de script que falhou.
 
-Próximo passo: devolver a ponta positiva do canal 1 ao JP1 pino 2 (`W10`, TX),
-manter o retorno no GND e capturar novamente com o jumper em **DC**. Esperados:
-repouso perto de +3,3 V, bits baixos perto de 0 V, `0x55` em 8N1 e cerca de
-104 µs por bit. Se a placa for desligada para mover a ponta, reprogramar o SOF
-JTAG antes da captura. Esta medição é da UART autônoma; baseline, secure e GPS
-integrados continuam pendentes.
+## Captura da UART autônoma com o canal em DC
+
+O workspace `TesteAD2UART.dwf3work`, salvo às 23:15 de 25/09, contém dez
+aquisições de 8.192 amostras por canal. O canal 1 da aquisição 6 contém um
+quadro UART completo; as demais aquisições ficaram em repouso alto. O arquivo
+original foi preservado em
+[`evidence/de10-lite-uart-scope-ad2-dc-2026-09-25.dwf3work`](evidence/de10-lite-uart-scope-ad2-dc-2026-09-25.dwf3work)
+(SHA-256 `9fdc4c2b0c8ceb0410ca7ab0d7ccadf7dbb63301e15d7f880a5cb117ebc5cfb2`).
+As amostras do canal 1 foram extraídas sem alterar o original para
+[`evidence/de10-lite-uart-scope-ad2-dc-2026-09-25.csv`](evidence/de10-lite-uart-scope-ad2-dc-2026-09-25.csv)
+(SHA-256 `b3dc2c2a771e882ca3802ea17c3c1c9085ef78e90e8f0eabd203be2274650264`).
+O CSV contém índice, tempo em µs desde a primeira amostra e tensão em V.
+A extração interpretou a entrada comprimida `/scope0buffer/6.0.data` como
+8.192 valores `float64` little-endian e conferiu a taxa no campo `.info`
+correspondente; essa interpretação é corroborada pela configuração salva e
+pelo quadro UART observado.
+
+Os metadados da aquisição informam taxa real de **3,125 MHz**, ou 0,32 µs
+por amostra; a janela de 8.192 amostras dura **2,62144 ms**. O canal 1
+estava configurado com atenuação `1×`; o arquivo indica acoplamento DC, e o
+jumper físico do adaptador BNC já havia sido movido para DC. O trigger do
+workspace ainda estava em modo automático, borda de subida e 0 V; não é uma
+captura disparada pelo start bit, embora o quadro esteja completo na janela.
+
+| Medida | Resultado no canal 1 |
+| --- | ---: |
+| Repouso/nível alto, mediana das amostras acima de 1,65 V | **3,308 V** |
+| Nível baixo, mediana das amostras abaixo de 1,65 V | **−0,072 V**, próximo de GND |
+| Extremos da aquisição | −0,101 a 3,360 V |
+| Transições sucessivas | 325 ou 326 amostras |
+| Período médio entre nove transições | **104,18 µs/bit** |
+| Taxa serial derivada | aproximadamente **9.599 baud** |
+| Quadro | start `0`, dados LSB-first `10101010`, stop `1` |
+| Byte decodificado | **`0x55`** |
+
+Os dez bits amostrados nos centros são `0 | 1 0 1 0 1 0 1 0 | 1`.
+O tempo de um quadro 8N1, inferido de dez períodos, é aproximadamente
+**1,042 ms**. A pequena leitura negativa no patamar baixo é uma leitura do
+instrumento; ela não indica que o FPGA produza alimentação negativa. A
+captura em DC confirma os níveis e a temporização do **TX da UART autônoma**
+na DE10-Lite e complementa o teste de repetição e loopback de 18/09.
+
+Esta janela de 2,62 ms contém apenas um quadro e não mede o intervalo de
+100 ms entre quadros, taxa de erro em longa duração, FIFO, AES-CTR ou GPS.
+P03–P11 dos sistemas integrados continuam dependentes dos seus próprios
+ensaios físicos. Para capturas subsequentes, configurar trigger na borda de
+descida do canal 1 em aproximadamente 1,6 V facilita enquadrar o start bit.
