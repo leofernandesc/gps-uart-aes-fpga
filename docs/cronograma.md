@@ -7,6 +7,17 @@ até 30/09.**
 
 ## Situação em 22/09/2026
 
+**Atualização de bancada em 25/09:** a DE10-Lite foi reprogramada com
+`uart_scope` e o Analog Discovery 2 capturou um quadro completo `0x55`, com
+aproximadamente 104 µs por bit. A referência diferencial da captura ainda
+precisa ser corrigida: a tensão apareceu entre 0 e −2,77 V, portanto o nível
+elétrico do TX não foi validado por esse registro. O CSV bruto, o hash, a
+configuração do instrumento e a próxima verificação estão em
+[bancada DE10-Lite + AD2](bancada-de10-lite-ad2-2026-09-25.md). O WaveForms
+foi aberto e reconheceu o AD2; o `dwfcmd` não consegue adquirir enquanto a
+interface ocupa o dispositivo. Esta repetição não encerra P03/P04 dos tops
+integrados, nem os ensaios secure/GPS.
+
 **Revisão técnica:** as duas plataformas são obrigatórias. A segunda FPGA é a
 Cyclone IV E `EP4CE6E22C8N`, montada na placa ZRTECH/WXEDA V2.00. O perfil de
 48 MHz, 9600/8N1 e a pinagem de bancada foram confirmados pelo JTAG, pela
