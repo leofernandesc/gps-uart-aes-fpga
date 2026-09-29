@@ -1,35 +1,25 @@
 # Aquisição e Transmissão Segura de Dados GPS em FPGA usando UART e AES-128-CTR
 
 **Leonardo Fernandes Cavalcante**, **Edgard Luciano Oliveira Silva**<br>
-Rascunho de trabalho para o BTSym’26. Os resultados de GPS físico e da
-integração em bancada são identificados explicitamente como pendentes quando
-aplicável.
-
-Revisão editorial de 20/09: o replay nominal foi regenerado sem pausas
-artificiais do TX após a reconciliação da validação. O segundo alvo obrigatório é
-o EP4CE6E22C8; o resultado atual é apenas de capacidade até que o clock e a
-pinagem da placa sejam confirmados. Ver [revisão técnica](revisao-completa-2026-09-20.md).
+Rascunho de trabalho para o BTSym’26. Escopo atualizado em 29/09: u-blox
+NEO-M9N-00B-00, somente DE10-Lite/MAX 10, 50 MHz e UART 38400/8N1. Medições
+anteriores a 9600 baud são históricas, não resultados do ponto de operação
+final. Resultados de GPS físico permanecem pendentes até sua captura.
 
 ## Resumo
 
-Receptores GPS frequentemente disponibilizam seus dados de navegação por uma
-interface serial assíncrona, mas o fluxo de bytes resultante não possui
-confidencialidade. Este trabalho apresenta uma arquitetura RTL própria para
-adquirir dados no formato NMEA por uma UART de 9600 baud, 8N1, e aplicar
-AES-128 no modo contador (CTR) antes da transmissão serial. A arquitetura é
-organizada como um caminho comum de UART e FIFO com duas variantes elaboradas:
-uma baseline, que encaminha os bytes recebidos, e uma secure, que insere um
-fluxo AES-128-CTR entre a recepção e a transmissão. As duas variantes foram
-sintetizadas e ajustadas para um alvo DE10-Lite/MAX 10 com clock de 50 MHz.
-A verificação independente no PC foi usada para comparar os bytes observados na
-saída serial e recuperar o fluxo cifrado. Um replay NMEA público de 309 bytes
-também foi executado no clock de produção de 50 MHz/9600 baud, sem divergência
-de bytes ou overflow da FIFO. Os relatórios pós-fit do Quartus indicam 347
-elementos lógicos e 216 registradores para a baseline, contra 5.622 elementos
-lógicos e 917 registradores para a secure; a menor Fmax reportada diminui de
-123,00 MHz para 98,23 MHz, enquanto as duas variantes permanecem acima do
-clock de operação de 50 MHz. A aquisição física de dados do NEO-M8N e o ensaio
-integrado na placa permanecem como etapa final de validação.
+Receptores GPS frequentemente disponibilizam dados de navegação por uma
+interface serial assíncrona, que não fornece confidencialidade. Este trabalho
+avalia uma arquitetura RTL que recebe dados NMEA do u-blox NEO-M9N e os
+transmite por uma FPGA DE10-Lite. Duas variantes elaboradas compartilham UART
+50 MHz, 38400 baud, 8N1 e FIFO de 1.024 bytes: a baseline encaminha os bytes,
+enquanto a secure insere AES-128-CTR. O estudo combina verificação AES/CTR
+independente, replay NMEA público de 309 bytes e análise pós-fit no Quartus. A
+baseline usa 331 elementos lógicos e 212 registradores; a secure usa 5.603
+elementos lógicos e 913 registradores. As Fmax mínimas são 117,56 e 103,38 MHz,
+respectivamente, acima do clock comum de 50 MHz. O replay NMEA simulado não
+apresentou divergência nem overflow e atingiu ocupação máxima de uma posição da
+FIFO. A aquisição física do M9N continua pendente e não é inferida do replay.
 
 **Palavras-chave:** FPGA, GPS, UART, AES-128-CTR, segurança embarcada,
 hardware reconfigurável.
@@ -54,7 +44,7 @@ do bloco criptográfico do custo do sistema de comunicação.
 As contribuições são:
 
 1. uma integração UART–FIFO–AES-CTR orientada a bytes, projetada para o ponto
-   fixo de operação de 50 MHz, 9600 baud e 8N1;
+   fixo de operação de 50 MHz, 38400 baud e 8N1;
 2. duas elaborações, baseline e secure, para um alvo DE10-Lite/MAX 10;
 3. um oráculo independente no PC e um replay NMEA reproduzível para verificar
    os bytes observados na saída serial; e
@@ -98,7 +88,7 @@ aceite, evitando a perda de um pulso `valid` durante uma pausa da UART.
 
 ### 2.2 UART e armazenamento
 
-O ponto fixo de operação é clock de 50 MHz na FPGA, 9600 baud e enquadramento
+O ponto fixo de operação é clock de 50 MHz na FPGA, 38400 baud e enquadramento
 8N1. O receptor UART sincroniza a entrada assíncrona e amostra o quadro em seu
 centro. Bytes válidos entram em uma FIFO síncrona de 1.024 bytes. Erros de
 framing e overflow da FIFO invalidam a captura ativa e permanecem visíveis até
@@ -140,14 +130,13 @@ A avaliação separa três tipos de evidência:
    ajustados separadamente para o dispositivo MAX 10, e recursos, Fmax e slacks
    temporais são coletados dos relatórios pós-fit.
 
-As evidências atuais de software/RTL compreendem 27 simulações HDL, nove
-configurações de lint e os testes Python do replay público, da bancada serial
-com CP2102 e do contrato de validação da captura bruta; não representam um
-ensaio físico de GPS.
+`make check` passou na configuração UART atualizada, incluindo vetores
+independentes de AES/CTR, integração baseline/secure, checagens estruturais e
+36 testes Python. Esses resultados não constituem um ensaio físico de GPS.
 
 A evidência atual não substitui o ensaio físico final. Os bitstreams integrados
-baseline e secure ainda precisam ser programados e testados na DE10-Lite, e a
-entrada do NEO-M8N deve ser capturada eletricamente.
+baseline e secure precisam ser gerados a 38400 e testados na DE10-Lite. A
+entrada do NEO-M9N ainda não foi capturada eletricamente nessa configuração.
 
 ### 3.2 Cargas e condições de teste
 
@@ -165,8 +154,8 @@ a origem elétrica do arquivo.
 
 | Teste | Clock/UART | Dados | Objetivo |
 | --- | --- | ---: | --- |
-| Regressão RTL | acelerado e 50 MHz/9600 | fluxos curtos e de fronteira | cobertura funcional e de falhas |
-| Replay NMEA | 50 MHz/9600 | 309 bytes | caminho da aplicação no clock de produção |
+| Regressão RTL | acelerado e 50 MHz/38400 | fluxos curtos e de fronteira | cobertura funcional e de falhas |
+| Replay NMEA | 50 MHz/38400 | 309 bytes | caminho da aplicação no clock de produção |
 | Quartus baseline | restrição de 50 MHz | UART + FIFO | recursos e timing de referência |
 | Quartus secure | restrição de 50 MHz | UART + FIFO + AES-CTR | custo criptográfico |
 
@@ -175,7 +164,7 @@ a origem elétrica do arquivo.
 ### 4.1 Replay serial e resultados funcionais
 
 O replay NMEA completo foi processado pelas duas elaborações no clock de
-produção de 50 MHz/9600 baud. A saída baseline coincidiu com os bytes de
+produção de 50 MHz/38400 baud. A saída baseline coincidiu com os bytes de
 entrada. A saída secure foi recuperada com o contexto AES-CTR independente e
 coincidiu com os mesmos 309 bytes de entrada.
 
@@ -184,8 +173,8 @@ coincidiu com os mesmos 309 bytes de entrada.
 | Bytes reproduzidos | 309 | 309 |
 | Ocupação máxima da FIFO | 1 byte | 1 byte |
 | RX válido até início do TX | 80 ns | 80 ns |
-| RX válido até fim do TX | 1.041.680 ns | 1.041.680 ns |
-| Início do quadro de entrada até início do TX | 989.643 ns | 989.643 ns |
+| RX válido até fim do TX | 260.480 ns | 260.480 ns |
+| Início do quadro de entrada até início do TX | 247.503 ns | 247.503 ns |
 | Divergências de bytes | 0 | 0 após recuperação |
 | Overflow da FIFO | 0 | 0 |
 
@@ -201,15 +190,15 @@ verificada com um fluxo GPS físico.
 
 | Métrica | Baseline | Secure | Secure − baseline |
 | --- | ---: | ---: | ---: |
-| Elementos lógicos | 347 | 5.622 | +5.275 (+1.520,17%) |
-| Registradores | 216 | 917 | +701 (+324,54%) |
+| Elementos lógicos | 331 | 5.603 | +5.272 (+1.592,75%) |
+| Registradores | 212 | 913 | +701 (+330,66%) |
 | Bits de memória | 8.192 | 8.192 | 0 |
 | Pinos | 14 | 14 | 0 |
-| Fmax mínima | 123,00 MHz | 98,23 MHz | −24,77 MHz (−20,14%) |
-| Pior slack de setup | 11,870 ns | 9,820 ns | positivo |
-| Pior slack de hold | 0,102 ns | 0,101 ns | positivo |
-| Pior slack de recovery | 14,454 ns | 13,688 ns | positivo |
-| Pior slack de removal | 0,439 ns | 2,256 ns | positivo |
+| Fmax mínima | 117,56 MHz | 103,38 MHz | −14,18 MHz (−12,06%) |
+| Pior slack de setup | 11,494 ns | 10,327 ns | positivo |
+| Pior slack de hold | 0,103 ns | 0,102 ns | positivo |
+| Pior slack de recovery | 13,962 ns | 13,416 ns | positivo |
+| Pior slack de removal | 0,440 ns | 2,230 ns | positivo |
 
 As duas configurações atendem à restrição de clock de 50 MHz nos três cantos
 auditados. A variante secure apresenta um custo significativo de lógica e
@@ -220,37 +209,33 @@ frequência de operação selecionada.
 ## 5. Discussão e limitações
 
 Os resultados mostram um compromisso claro. A inclusão do AES-128-CTR aumenta a
-quantidade de lógica e registradores e reduz a Fmax pós-fit, enquanto a carga da
-UART permanece muito abaixo da margem temporal disponível na FPGA. A taxa de
-9600 baud também torna o intervalo de comunicação muito maior que as operações
-internas do AES para o fluxo testado, o que explica a baixa ocupação da FIFO.
+lógica e os registradores e reduz a Fmax pós-fit, enquanto as duas variantes
+precisam atender ao mesmo clock de operação de 50 MHz. A 38400 baud, um quadro
+8N1 de dez bits dura aproximadamente 260,4 µs; o replay RTL de 309 bytes
+registrou ocupação máxima de uma posição da FIFO em ambas as variantes. Isso
+vale para a carga simulada e não é uma afirmação sobre todo receptor GPS ou
+ensaio físico prolongado.
 
-A avaliação atual possui quatro limitações importantes. Primeiro, a entrada
-NMEA usada no RTL é um replay público/sintético, e não uma captura ao vivo do
-NEO-M8N. Segundo, os designs integrados baseline e secure foram compilados, mas
-ainda precisam ser programados e testados fisicamente na DE10-Lite. Terceiro, a
-comparação com a Cyclone IV ainda não faz parte da tabela quantitativa: o
-estudo de capacidade do EP4CE6E22C8 passou (351 LE/216 registradores na
-baseline e 5.626 LE/917 registradores na secure), mas faltam confirmar clock e
-pinagem da placa. Por fim,
-AES-CTR sozinho não autentica os dados; um modo autenticado ou mecanismo de
-integridade separado seria necessário para um protocolo completo de telemetria
-segura.
+A carga NMEA reproduzível no RTL é um replay público/sintético, não uma captura
+ao vivo do NEO-M9N. Resultados físicos da DE10-Lite e do GPS a 38400 permanecem
+pendentes e devem ser distinguidos da simulação e da implementação Quartus. Por
+fim, AES-CTR sozinho não autentica os dados; um modo autenticado
+ou mecanismo de integridade separado seria necessário para um protocolo
+completo de telemetria segura.
 
 ## 6. Plano de validação final
 
 O ensaio físico restante é:
 
-1. programar o bitstream baseline e verificar uma sequência serial conhecida;
-2. conectar o TX do NEO-M8N ao RX configurado da FPGA, com terra comum e níveis
-   lógicos confirmados;
-3. registrar uma referência GPS independente, validá-la com o verificador NMEA
-   e preservar seu relatório/hash;
-4. comparar a referência validada com a saída baseline;
-5. programar o bitstream secure, registrar o ciphertext e recuperá-lo no PC com
-   um nonce novo devidamente registrado; e
-6. repetir o teste durante um intervalo contínuo, registrando perdas, erros de
-   framing, overflow da FIFO, latência e recuperação após reset.
+1. recompilar e programar baseline e secure a 38400/8N1;
+2. repetir a forma de onda/loopback UART e os ensaios conhecidos P03–P06 na
+   DE10-Lite;
+3. confirmar alimentação e níveis do breakout NEO-M9N e capturar sua UART;
+4. validar sentenças NMEA completas e preservar o hash da captura privada;
+5. executar aquisição GPS direta e replay determinístico pelas variantes
+   baseline e secure, recuperando o ciphertext no PC com nonce novo; e
+6. executar intervalo contínuo e registrar bytes, framing, overflow e reset.
+Qualquer medida não realizada permanece explicitamente pendente.
 
 Os resultados físicos devem substituir ou complementar a Seção 4 sem alterar a
 metodologia RTL/PC. Simulação, síntese e análise pós-fit devem continuar
@@ -262,15 +247,15 @@ Este trabalho define e avalia uma arquitetura reutilizável em FPGA para
 aquisição de dados seriais orientados a GPS com confidencialidade AES-128-CTR.
 O caminho RTL comum torna as variantes baseline e secure diretamente
 comparáveis, enquanto o verificador independente no PC e o replay NMEA público
-tornam o experimento reproduzível antes do acesso completo ao hardware. Os
-resultados atuais da DE10-Lite quantificam o custo do estágio criptográfico e
-indicam atendimento ao requisito de 50 MHz na análise pós-fit. A aquisição
-física do GPS e a validação integrada na placa são os passos restantes antes de
-o manuscrito poder afirmar operação de hardware de ponta a ponta.
+tornam o experimento reproduzível. Os resultados da DE10-Lite a 38400 baud
+quantificam o custo do estágio criptográfico e mostram que ambos os builds
+atendem ao clock de 50 MHz na análise pós-fit. A aquisição física do M9N e a
+validação integrada de ponta a ponta permanecem pendentes; não se afirma
+operação GPS física antes de obtê-las.
 
 ## Referências para reprodução
 
-- [`docs/metricas-fpga-2026-09-20.md`](metricas-fpga-2026-09-20.md)
+- [`docs/metricas-fpga-2026-09-29.md`](metricas-fpga-2026-09-29.md)
 - [`docs/validacao-replay-nmea-2026-09-20.md`](validacao-replay-nmea-2026-09-20.md)
 - [`docs/validacao-captura-nmea-2026-09-20.md`](validacao-captura-nmea-2026-09-20.md)
 - [`docs/plano-de-testes.md`](plano-de-testes.md)

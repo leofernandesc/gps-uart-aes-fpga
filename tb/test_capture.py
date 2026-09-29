@@ -96,13 +96,18 @@ class SerialTests(unittest.TestCase):
         finally:
             sender.join(timeout=3)
         self.assertEqual(result["status"], "CAPTURED")
+        self.assertEqual(result["baud"], 38400)
+        self.assertEqual(result["format"], "38400/8N1")
         self.assertEqual(self.path.read_bytes(), payload)
         self.assertEqual(termios.tcgetattr(self.slave), previous)
         self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
 
     def test_timeout_preserves_partial(self):
-        result = capture.record_serial(self.port, self.path, 4, 0.05, lambda: os.write(self.master, b"ab"))
+        result = capture.record_serial(self.port, self.path, 4, 0.05,
+                                       lambda: os.write(self.master, b"ab"), baud=9600)
         self.assertEqual(result["status"], "INCOMPLETE")
+        self.assertEqual(result["baud"], 9600)
+        self.assertEqual(result["format"], "9600/8N1")
         self.assertEqual(result["error"], "timeout")
         self.assertEqual(self.path.read_bytes(), b"ab")
 
@@ -113,6 +118,10 @@ class SerialTests(unittest.TestCase):
             capture.record_serial(self.port, self.path, 4, 0.05)
         self.assertEqual(self.path.read_bytes(), b"old capture")
         self.assertEqual(termios.tcgetattr(self.slave), previous)
+
+    def test_rejects_unavailable_baud(self):
+        with self.assertRaisesRegex(ValueError, "unsupported host baud rate"):
+            capture.record_serial(self.port, self.path, 1, 0.05, baud=12345)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,9 @@ independente no PC. Nenhum dos scripts programa a FPGA nem transmite chave,
 nonce ou comandos de configuração para ela.
 
 O adaptador deve estar em nível lógico de 3,3 V, com TXD, RXD e GND conectados.
-O padrão fixo do projeto é 9600/8N1. O módulo USB não alimenta a FPGA.
+O padrão ativo é 38400/8N1, correspondente à configuração de fábrica do
+u-blox NEO-M9N-00B-00. `--baud` permite selecionar taxas históricas, mas os
+resultados atuais do artigo usam 38400. O módulo USB não alimenta a FPGA.
 
 ## Gravar um canal
 
@@ -22,7 +24,7 @@ python3 scripts/capture.py record \
 ```
 
 O diretório deve existir e os arquivos devem ser novos. O programa configura
-9600/8N1, sem controle de fluxo, eco, conversão de quebra de linha ou tratamento
+38400/8N1 por padrão, sem controle de fluxo, eco, conversão de quebra de linha ou tratamento
 de caracteres especiais. Limpa a fila anterior e imprime `READY` quando está
 pronto. Somente então iniciar a fonte. Os nomes de porta são exemplos: conferir
 qual interface corresponde à saída da FPGA.
@@ -42,7 +44,7 @@ inclui USB/SO e **não é uma medida de latência da FPGA**.
 
 ## Validar uma captura bruta do GPS
 
-Depois de gravar o TX do NEO-M8N com `capture.py record`, validar o arquivo
+Depois de gravar o TX do NEO-M9N com `capture.py record`, validar o arquivo
 antes de usá-lo como referência do experimento:
 
 ```bash
@@ -59,7 +61,7 @@ sobrescrito.
 
 Esse comando comprova a integridade formal do arquivo, não sua origem física:
 um arquivo sintético bem formado também pode passar. A evidência de que os
-bytes vieram do NEO-M8N deve permanecer no registro de bancada, com módulo,
+bytes vieram do NEO-M9N deve permanecer no registro de bancada, com módulo,
 alimentação, porta, data e montagem. Para executar apenas a validação sem
 gerar relatório:
 

@@ -9,7 +9,7 @@ pela simulação RTL e pelo verificador independente no PC.
 ## Fixture e contrato
 
 O arquivo público
-`reference/gps/neo-m8n-nmea-sample.txt` contém cinco sentenças ASCII:
+`reference/gps/nmea-public-sample.txt` contém cinco sentenças ASCII:
 RMC, GGA, GSA, GSV e TXT. Cada sentença tem checksum NMEA válido e fica em uma
 linha LF no arquivo de referência. `scripts/gps_fixture.py` valida o checksum,
 o limite de 82 caracteres e a codificação ASCII; na transmissão, cada linha é

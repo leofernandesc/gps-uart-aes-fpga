@@ -1,347 +1,116 @@
 # Plano de execução e colaboração
 
-Atualizado em 22/09/2026. O [cronograma](cronograma.md) registra o andamento e
-as evidências; este plano detalha as entregas e como aceitá-las.
-A [apresentação](proposta_btsym_gps_fpga.html) reúne proposta, arquitetura,
-materiais e datas em quatro telas.
+Atualizado em **29/09/2026**. O andamento e as evidências ficam em
+[`cronograma.md`](cronograma.md); este plano define o experimento vigente e as
+tarefas restantes para a submissão BTSym’26 até 30/09.
 
-## Objetivo e desenho experimental
+## Escopo e pergunta experimental
 
-Receber dados reais do GPS **NEO-M8N-010**, aplicar AES-128-CTR em hardware e
-comparar o custo da cifra em **MAX 10 e Cyclone IV**, com o mesmo RTL.
+Avaliar o custo de acrescentar AES-128-CTR em hardware à aquisição e transmissão
+serial de dados GPS, comparando duas elaborações do mesmo RTL na DE10-Lite:
 
-| Plataforma | Sem cifra | Com cifra | Clock |
-| --- | --- | --- | --- |
-| DE10-Lite / MAX 10 | UART + FIFO | Mesmo sistema + AES-CTR | 50 MHz |
-| Cyclone IV E / EP4CE6E22C8N, ZRTECH/WXEDA V2.00 | UART + FIFO | Mesmo sistema + AES-CTR | 48 MHz, confirmado no P01 |
-
-UART fixa em 9600/8N1, FIFO de 1.024 bytes, AES iterativo próprio e decifragem
-independente no PC. AES-CTR oferece confidencialidade, sem autenticação.
-A [arquitetura detalhada](arquitetura.md) especifica o fluxo e as fronteiras.
-
-As duas placas permanecem na `main`. O código de UART/FIFO/AES/CTR é único;
-cada alvo tem wrapper, QSF/SDC e saídas próprias. Usar branches temporárias para
-suporte e integração. Os dois builds da DE10-Lite e os três alvos Cyclone IV
-(`uart_scope`, baseline e secure) possuem projetos próprios e foram compilados.
-Na Cyclone IV, P01/P02 e o baseline externo P03 já foram aprovados; P04–P11
-continuam pendentes.
-
-As duas plataformas são obrigatórias. A [revisão completa de 20/09](revisao-completa-2026-09-20.md)
-identificou excesso de área no secure anterior. A otimização do AES comum
-passou nos testes e no fit exploratório do EP4CE6. Os projetos de bancada com
-clock de 48 MHz passaram no Quartus. JTAG, clock, pinos de bancada, nível alto
-e período do TX já foram confirmados em P01–P03. Isso não substitui concluir a
-forma de onda do baseline, o secure e o GPS. O prazo até 25/09 continua
-concentrado na bancada.
-
-## Estado atual
-
-- UART v2, FIFO e ponte sem cifra implementados; ponte compilada para MAX 10.
-- AES conferido em 866 vetores e analisado isoladamente no Quartus.
-- CTR por byte conferido em 60 fluxos / 19.009 bytes por biblioteca independente.
-- UART autônoma para osciloscópio implementada, simulada e compilada.
-- Integração baseline/secure validada novamente: 2.681 bytes por modo conferidos
-  no PC, incluindo o replay NMEA estruturado de 309 bytes.
-- Replay GPS completo validado em RTL no clock de produção: 309 bytes a 50 MHz/
-  9600 baud, FIFO máxima de 2 bytes e recuperação sem divergência nos dois modos.
-- Métricas de recursos, Fmax e slacks consolidadas por `make metrics`; potência
-  permanece sem estimativa representativa até haver atividade de bancada.
-- Rascunhos do manuscrito em inglês e português consolidados com os resultados
-  RTL/PC e Quartus; os campos de validação física continuam explicitamente
-  pendentes e `make manuscript-check` passou.
-- Replay NMEA público estruturado validado: cinco sentenças com checksum e CRLF,
-  usado no vetor comum de integração; isso é preparação de teste, não GPS físico.
-- Gravador/comparador PC testado com porta virtual; ainda sem adaptador físico.
-- Regressão atual: 27 simulações, nove configurações de lint e 34 testes Python.
-- Validador de captura NMEA pronto: confere a integridade formal do arquivo
-  bruto antes do ensaio; a origem física continua sendo registrada na bancada.
-- DE10-Lite detectada, `uart_scope` programada, TX medido e loopback TX→RX aprovado.
-- Tops baseline/secure da DE10-Lite compilados com recursos e timing registrados.
-- Tops parametrizados para substituir contexto de elaboração; `CONTEXT_FILE` gera
-  o pacote privado usado pelos builds Quartus.
-- NEO-M8N disponível; geração/registro persistente de contexto no PC concluídos,
-  mas a aquisição física ainda não foi registrada.
-- Provisionamento estático no wrapper/bitstream concluído; configuração em tempo
-  de execução e aquisição GPS física permanecem pendentes.
-- Cyclone IV identificada como `EP4CE6E22C8N` na placa ZRTECH/WXEDA V2.00.
-  Clock de 48 MHz, TX J3 `PIN_100` e RX J3 `PIN_103` foram validados; P01/P02
-  e P03 estão registrados.
-- O host físico do protocolo é um único adaptador USB–TTL CP2102 (ou equivalente)
-  em full-duplex. O script `scripts/serial_bench.py` transmite o vetor conhecido
-  ou um replay GPS, recebe a saída e compara o resultado no PC. A referência GPS
-  e o caminho da FPGA são executados em duas etapas controladas, porque um único
-  adaptador não captura duas saídas simultaneamente.
-- WaveForms 3.25.1 e Adept Runtime 2.30.1 foram instalados no Ubuntu amd64.
-  O Analog Discovery 2 será usado como instrumentação alternativa para P04/P06;
-  sua enumeração física e as capturas ainda estão pendentes. O procedimento
-  está em [analog-discovery-2-waveforms.md](analog-discovery-2-waveforms.md).
-- O replay nominal sem pausas artificiais foi medido nos dois modos: 80 ns de
-  RX válido até início do TX, 1.041.680 ns até o fim do TX e 989.643 ns do
-  início do quadro de entrada ao início do TX.
-- As correções sem hardware de métricas, NMEA e rearmamento do contexto estão
-  registradas em `validacao-correcoes-2026-09-20.md`; `make check`, os dois
-  builds DE10-Lite, `make integration-gps` e `make metrics` foram repetidos
-  após o merge.
-
-Relatórios: [AES](validacao-aes-2026-09-09.md),
-[CTR](validacao-ctr-2026-09-10.md), [revisão de 14/09](revisao-2026-09-14.md)
-e [integração de 16/09](validacao-integracao-2026-09-16.md),
-[bancada DE10-Lite de 18/09](bancada-de10-lite-2026-09-18.md),
-[validação do replay NMEA de 20/09](validacao-replay-nmea-2026-09-20.md) e
-[métricas FPGA de 20/09](metricas-fpga-2026-09-20.md) e
-[validação da captura NMEA de 20/09](validacao-captura-nmea-2026-09-20.md) e
-[validação das correções sem hardware de 20/09](validacao-correcoes-2026-09-20.md) e
-[validação dos manuscritos de 20/09](validacao-manuscrito-2026-09-20.md) e
-[instrumentação de 22/09](validacao-instrumentacao-2026-09-22.md) e
-[instalação e uso do Analog Discovery 2](analog-discovery-2-waveforms.md) e
-[rascunho do manuscrito BTSym](manuscrito-btsym-draft.md) e
-[versão em português](manuscrito-btsym-rascunho-pt.md).
-
-## Datas e entregas
-
-**Freeze físico em 25/09. Redação em 26–27/09. Submissão até 30/09.**
-
-| Data | Frente | Entrega verificável |
-| --- | --- | --- |
-| 16–18/09 | Bancada UART | SOF programado; TX medido e RX por jumper registrados |
-| 20–21/09 | Identificação Cyclone IV | Placa ZRTECH/WXEDA V2.00 e `EP4CE6E22C8N` identificadas; confirmar clock/pinagem no P01 |
-| 20–21/09 | Adequação e revisão | Wrappers, QSF/SDC e builds Cyclone IV preparados; métricas comparáveis aprovadas |
-| 16/09 | Integração / PC | Concluído em simulação/PTY: fluxo serial e comparação independente |
-| 17/09 | Contexto / preparação FPGA | Estrutura do wrapper e contexto de bring-up |
-| 18/09 | FPGA / Quartus | Dois builds DE10-Lite, relatórios de recursos e auditoria temporal |
-| 19/09 | Contexto / registro no PC | Gerador privado, registro persistente e wrapper parametrizado; `make check` aprovado |
-| 20/09 | Contexto / Quartus | `CONTEXT_FILE` aplicado aos builds baseline/secure; SOFs e timing aprovados |
-| 20/09 | Replay NMEA / captura | Fixture integrado ao RTL/PC e validador de captura bruta pronto; GPS físico continua pendente |
-| 21/09 | Preparação física | C0/P01/P02 e P03 Cyclone IV concluídos; clock, JTAG, pinos e baseline externo confirmados |
-| 22/09 | Baseline físico | Instrumentação concluída; fechar P04 nas duas plataformas com waveform e comparação no PC |
-| 23/09 | Secure físico | P05/P06 nas duas plataformas: ciphertext, decifragem, latência e reset/contexto |
-| 24/09 | GPS físico | P07–P09 nos quatro casos e início da estabilidade contínua P10 |
-| 25/09 | Fechamento de bancada | P10/P11, repetição dos casos instáveis, matriz de evidências e freeze físico |
-| 26–27/09 | Artigo | Tabelas, gráficos, resultados, discussão, referências e versões PT/EN |
-| 28/09 | Revisão com orientador | Comentários incorporados e versão congelada |
-| 29–30/09 | Submissão e contingência | Template, envio, comprovante e eventual correção |
-
-Introdução, trabalhos relacionados e metodologia avançam junto da implementação.
-A integração prevista inicialmente para 13/09 foi validada em RTL em 16/09.
-A bancada prevista para 15/09 foi reagendada para 18/09; a placa foi
-identificada, programada e validada no TX/loopback. Os novos tops integrados
-foram então compilados para iniciar a etapa de comparação.
-Definir colaboradores para RTL, PC e bancada em paralelo. Registrar atrasos e
-ajustar as dependências no cronograma sem alterar o freeze físico de 25/09.
-
-## 1. UART isolada e identificação da segunda placa — 16–18/09
-
-`make uart-fpga` e a programação JTAG da UART autônoma foram concluídos em
-18/09. `jtagconfig` encontrou a placa correta e `quartus_pgm` confirmou o SOF.
-O [relatório de bancada](bancada-de10-lite-2026-09-18.md) contém a evidência
-do osciloscópio e do loopback. Usar também o
-[guia da UART](../fpga/de10_lite/uart_scope/README.md).
-A FPGA gera 0x55 a cada 100 ms; observar TX no osciloscópio. Um jumper externo
-TX → RX permite verificar recepção nos LEDs.
-
-Critérios de aceite:
-
-- bit de aproximadamente 104,16 µs e quadro 8N1 de 1,0416 ms;
-- níveis elétricos e ordem dos bits conferidos; captura com escalas;
-- RX mostra 0x55 após reset/jumper, LED 8 aceso e LED 9 apagado;
-- registrar versão, SOF, montagem e resultado; completar com fonte independente
-  para testar RX assíncrono.
-
-Não é necessário USB–UART para observar o TX desse gerador. Para comparação de
-fluxos no PC, usar um CP2102 em duas etapas: capturar a referência GPS e depois
-retransmitir essa mesma captura para a FPGA, recebendo a saída no mesmo módulo.
-
-Na Cyclone IV, consultar os [dados do alvo](../fpga/cyclone4/README.md) e o
-[roteiro de bancada](bancada-cyclone4-2026-09-21.md). Os wrappers/QSF/SDC e o
-`uart_scope` usam o perfil validado de 48 MHz. JTAG, TX/RX em J3, nível alto,
-bit time e loopback foram confirmados antes do baseline externo P03.
-
-## 2. Integração do fluxo por byte — 16–17/09
-
-Concluída em simulação em 16/09 no `uart_ctr_bridge`; ver
-[contrato e evidências](integracao-uart-ctr.md). O caminho implementado é
-UART RX → FIFO → retenção de byte → estágio selecionado → UART TX.
-
-- Reservar espaço antes de solicitar a leitura síncrona da FIFO.
-- Reter `rd_data` e flag válida até o handshake; não perder a resposta de um ciclo.
-- Consumir máscara apenas quando o TX/estágio seguinte aceitar o byte.
-- Garantir reset/abort sem bytes antigos, incluindo um TX já em andamento.
-- Testar comprimentos 1, 15, 16, 17, 255 e superiores à profundidade da FIFO,
-  pausas, overflow, stop inválido e cancelamento.
-- Usar uma fonte/decodificador serial independente; decifrar a saída efetiva do
-  testbench no PC e comparar byte a byte.
-
-Aceite: regressão completa aprovada e replay serial recuperado sem divergências.
-O AES isolado, CTR isolado e ponte separados não comprovam essa integração.
-
-## 3. Captura e software de PC — 16–19/09
-
-Gravador binário e comparador implementados; uso em [captura PC](captura-pc.md).
-Os testes de software e a comparação da saída serial simulada foram aprovados.
-`scripts/context.py` agora cria contextos privados baseline/AES-CTR, gera nonce
-quando necessário e mantém um registro que rejeita o mesmo nonce com a mesma
-chave. O wrapper de bring-up já carrega um contexto fixo por padrão e aceita
-substituição por parâmetros de elaboração. O build Quartus aplica um JSON
-privado com `CONTEXT_FILE`; isso gera um bitstream estático e não substitui
-configuração em tempo de execução. A validação do adaptador físico depende de
-bancada; PTY não representa esse dispositivo.
-
-Definir o procedimento de captura separado do fluxo cifrado. Cada ensaio terá
-chave de teste, nonce, contador inicial e quantidade N de bytes registradas no PC.
-
-Antes de aceitar uma referência do GPS, executar `scripts/gps_capture.py` sobre
-o arquivo binário produzido pelo gravador. O comando rejeita captura vazia,
-sentença incompleta, conversão para LF, bytes não ASCII, checksum inválido e
-linhas acima do limite NMEA. O relatório inclui tipos de sentença, quantidade,
-tamanho e SHA-256, mas não prova que a fonte foi um GPS real; essa evidência
-continua sendo o registro da montagem física.
-
-- Iniciar a captura antes do replay e contar exatamente N bytes no PC.
-- Gerar/registrar nonce novo por captura, inclusive após reset; o registro no PC
-  já bloqueia a reutilização do par chave/nonce.
-- Bloquear ultrapassagem do contador de 32 bits; invalidar a captura em framing,
-  overflow, perda ou reset.
-- Manter os parâmetros de bancada separados dos dados cifrados.
-- Capturar referência, ciphertext e texto recuperado; salvar metadados, hashes,
-  contagens, primeira divergência e flags de erro.
-- Não versionar chaves privadas, capturas reais ou coordenadas pessoais.
-
-Aceite: nenhuma reutilização acidental de contexto, comparação do PC aprovada
-em fluxo vindo da simulação e build privado reproduzível. A programação do
-bitstream e a comparação física ainda dependem da bancada.
-
-## 4. Builds comparáveis — DE10-Lite e Cyclone IV atualizados em 22/09
-
-Os projetos seguem `fpga/<placa>/baseline/` e `fpga/<placa>/secure/`; saídas em
-`build/<placa>/<configuracao>/`. Cada projeto seleciona suas fontes e top,
-sem precisar excluir outros módulos do repositório.
-
-- Mesmo RTL, FIFO, interfaces, fronteiras de medida e instrumentação dentro de cada par.
-- Remover o AES por elaboração no baseline; não usar apenas um bypass em execução.
-- Usar dispositivo, clock e I/O corretos de cada placa.
-- Rodar síntese, fit e auditoria de setup/hold/recovery/removal; revisar
-  cobertura temporal e exceções de I/O assíncrono.
-- Registrar versão Quartus, SHA do RTL, seed, clock e condições dos modelos.
-- Extrair LEs, registradores, bits/blocos de memória, Fmax e slacks do pós-fit.
-- Não copiar as exceções de portas virtuais do AES isolado para o sistema completo.
-
-Resultado DE10-Lite: baseline e secure compilados no commit reconciliado, com
-timing positivo. O baseline usou 347 LE/216 registradores/8.192 bits de memória
-e Fmax mínima de 123,00 MHz; o secure usou 5.622 LE/917 registradores/8.192 bits
-e Fmax mínima de 98,23 MHz. Os dois operam a 50 MHz sem violação.
-
-Resultado Cyclone IV: `make cyclone4-baseline-fpga` e
-`make cyclone4-secure-fpga` passaram no `EP4CE6E22C8`, usando 48 MHz. Depois
-do remapeamento dos LEDs de erro, o baseline usou 299 LE/189 registradores/
-8.192 bits e Fmax mínima de 104,08 MHz; o secure usou 5.580 LE/889
-registradores/8.192 bits e Fmax mínima de 83,56 MHz. O `uart_scope` também
-gerou SOF. A matriz física só será concluída quando P04–P11 forem executados.
-
-## 5. GPS real e experimentos — 21–25/09
-
-Enquanto a aquisição física não for registrada, o fluxo de aplicação usa
-`reference/gps/neo-m8n-nmea-sample.txt`. O script `scripts/gps_fixture.py`
-confere ASCII, checksum NMEA e o limite de 82 caracteres e transforma cada
-linha em uma transmissão CRLF. Esse replay é consumido pelo mesmo vetor usado
-na simulação baseline/secure e pelo verificador independente no PC. Ele valida
-o contrato de dados, mas não substitui a aquisição do NEO-M8N.
-
-O replay completo também foi executado com o divisor real de 50 MHz/9600 baud
-nos dois modos. A FIFO atingiu no máximo 1 byte; a recuperação no PC coincidiu
-com os 309 bytes de entrada. No replay nominal, a latência `RX válido → início
-TX` foi 80 ns, `RX válido → fim TX` foi 1.041.680 ns e `início do quadro →
-início TX` foi 989.643 ns. Esses valores são de RTL e não incluem USB, sistema
-operacional ou a propagação elétrica da bancada.
-
-Após conferir módulo, alimentação e montagem:
-
-1. Validar GPS diretamente e guardar uma referência.
-2. Rodar o validador NMEA sobre a referência e registrar seu relatório/hash.
-3. Testar o baseline integrado na primeira placa.
-4. Executar a captura com AES e decifrar no PC.
-5. Comparar todos os bytes com a referência independente.
-6. Repetir o protocolo na Cyclone IV.
-
-Executar três repetições do mesmo replay físico por configuração, preservando bytes e
-intervalos. Acrescentar captura contínua do GPS com duração registrada; almejar
-uma hora por configuração quando a bancada permitir. Se houver impedimento
-físico, registrá-lo e revisar o experimento com o orientador; replay sintético
-não é aquisição GPS real.
-
-Registrar perdas, framing, overflow, latência e ocupação máxima da FIFO. Uma
-forma de onda correta é evidência temporal/elétrica; não prova ausência de
-perdas em uma aquisição longa. Um eco visual no terminal também não substitui
-a comparação automática de todos os bytes.
-
-## 6. Resultados e escrita — 26–28/09
-
-Comparar primeiro o acréscimo `secure − baseline` em cada FPGA; depois,
-discutir diferenças entre plataformas.
-
-- Latência em ciclos **e** µs, identificando o clock de cada placa.
-- Taxa útil UART separada do throughput AES; 9600/8N1 tem teto nominal de
-  960 bytes/s por direção antes de pausas e overhead.
-- Recursos absolutos e percentuais; não somar LEs e registradores.
-- Fmax estimada separada do clock de operação e de medidas de bancada.
-- Potência opcional, estimada com atividade e condições documentadas; não
-  usar estimativas genéricas para concluir eficiência energética entre famílias.
-- Builds SignalTap separados das medições oficiais de recursos.
-
-Aceite: tabelas/figuras rastreáveis, metodologia reproduzível e texto revisado
-pelo orientador em 23/09. Não declarar nova cifra nem garantir segurança além
-da confidencialidade implementada.
-
-## Colaboração e Git
-
-| Frente | Entrega |
-| --- | --- |
-| Coordenação | Manter cronograma, dependências e decisões com o orientador |
-| RTL | Integração, retenção de bytes e controle de fluxo |
-| Verificação | Oráculo independente, erros, reset e replay |
-| FPGA | Wrappers, QSF/SDC, builds e recursos/timing |
-| Bancada | UART no osciloscópio, placa Cyclone IV e GPS real |
-| PC/artigo | Captura, decifragem, métricas e manuscrito |
-
-Definir responsáveis em issues/PRs. Uma pessoa pode assumir mais de uma frente.
-
-Antes de cada entrega, revisar o diff e executar os testes afetados. Para RTL,
-rodar `make check`. Seguir [AGENTS.md](../AGENTS.md) para fetch/pull e revisar
-todo o intervalo recebido antes de continuar. Não fazer force-push nem
-sobrescrever alterações de outro colaborador.
-
-Atualizar cronograma, plano, README e HTML na mesma entrega quando mudarem
-datas ou arquitetura. Preservar relatórios históricos; gerar novos manifestos
-para novas fontes/resultados. `build/` permanece local e ignorado pelo Git.
-
-## Comandos
-
-```bash
-make uart          # RX/TX e teste de bancada
-make uart-waves    # VCD dos sinais públicos
-make uart-fpga     # SOF UART autônoma DE10-Lite
-make fpga          # ponte UART + FIFO DE10-Lite
-make baseline-fpga # build integrado sem AES na DE10-Lite
-make secure-fpga   # build integrado com AES-128-CTR na DE10-Lite
-make cyclone4-uart-fpga     # SOF UART autônoma Cyclone IV
-make cyclone4-baseline-fpga # build integrado sem AES na Cyclone IV
-make cyclone4-secure-fpga   # build integrado com AES-128-CTR na Cyclone IV
-make cyclone4-metrics       # métricas pós-fit dos dois builds Cyclone IV
-make aes
-make ctr
-make integration
-make pc
-make context
-make manuscript-check
-make aes-fpga
-make check
-git diff --check
+```text
+NEO-M9N-00B-00 → UART RX → FIFO → [baseline | AES-128-CTR] → UART TX → PC
 ```
 
-## Freeze físico e encerramento
+Baseline e secure usam o MAX 10 `10M50DAF484C7G`, clock de 50 MHz, UART
+38400/8N1, FIFO e interfaces idênticas. A presença do AES é a única diferença
+arquitetural do par. A FPGA é o objeto experimental; o PC recebe bytes via
+CP2102 e verifica eco ou decifragem. O teste de sistema pode usar primeiro uma
+captura NMEA real reproduzida pelo CP2102 para tornar a comparação byte a byte
+repetível, e depois uma conexão GPS direta para demonstrar a aquisição real.
 
-Até 25/09, concluir P01–P11 nas duas plataformas ou registrar cada caso como
-aprovado, reprovado ou bloqueado com causa objetiva. Em 26–27/09, concentrar o
-trabalho exclusivamente no manuscrito e nas tabelas. Em 28/09 revisar com o
-orientador e em 29–30/09 preparar a submissão e a contingência. Relatar
-limitações de hardware explicitamente, sem transformar planos ou simulação em
-medições.
+O sensor é exclusivamente o **u-blox NEO-M9N-00B-00**. A UART ativa é
+38400/8N1, taxa padrão do M9N; não se fará comparação de baud rates. O módulo
+receptor tem VCC de 2,7–3,6 V e I/O referido a VCC. Isso não define a entrada
+de alimentação do breakout: confirmar carrier, pinagem, VCC e níveis antes de
+conectar. A Cyclone IV e o NEO-M8 foram retirados do escopo e não participam
+da metodologia nem da comparação do artigo; os registros datados permanecem
+preservados como histórico.
+
+AES-CTR fornece confidencialidade, mas não autenticação/integridade nem proteção
+contra replay ou spoofing GNSS. Não fazer alegações mais amplas.
+
+## O que deve ser refeito e o que continua válido
+
+Os ensaios físicos anteriores da UART e dos tops integrados foram realizados a
+9600 baud. Como a duração do bit muda de aproximadamente 104,17 µs para
+26,04 µs, repetir na DE10-Lite:
+
+| Ensaio | Repetir? | Razão / evidência exigida |
+| --- | --- | --- |
+| P01/P02 UART autônoma e loopback | Sim | Nova temporização; quadro 0x55, 26,04 µs/bit, LEDs e captura |
+| P03/P04 baseline | Sim | Rebuild 38400, eco do vetor conhecido e captura RX/TX |
+| P05/P06 secure | Sim | Rebuild 38400, ciphertext e recuperação PC; novo nonce por captura |
+| AES-128/CAVP e CTR oracle | Não isoladamente | Independentes da UART; reexecutados como parte de `make check` |
+| Replay NMEA RTL, métricas e Quartus | Sim | Regenerar resultados no ponto real 50 MHz/38400 |
+| Captura física NEO-M9N | Primeira execução | Validar taxa, níveis, NMEA e aquisição serial real |
+
+Os resultados antigos em 9600 permanecem no diário, identificados como
+históricos; não devem ser apresentados como resultados da configuração final.
+Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
+
+## Tarefas de implementação e validação
+
+1. **Concluído em 29/09:** atualizar defaults e tops da UART, host e captura
+   para 38400/8N1, mantendo o clock da DE10-Lite em 50 MHz.
+2. **Concluído em 29/09:** `make check`, `make integration-gps` e
+   `make manuscript-check` passaram; fixture NMEA e integração foram
+   conferidas nos modos baseline/secure.
+3. **Concluído em 29/09:** `make baseline-fpga`, `make secure-fpga` e
+   `make metrics` passaram; ambos os SOFs e relatórios pós-fit foram gerados,
+   sem programação física da placa.
+4. **Pendente:** na bancada, repetir P01–P06 em 38400 com DE10-Lite, CP2102 e AD2. Registrar
+   vetor, byte time/frame, canal/pino, escala, trigger, arquivo bruto, versão do
+   SOF e resultado dos LEDs. Reprogramar entre baseline e secure.
+5. **Pendente:** conferir o breakout do M9N e capturar sua UART diretamente pelo CP2102. Validar
+   bytes NMEA completos, CRLF, checksums e SHA-256; proteger coordenadas pessoais.
+6. **Pendente:** demonstrar GPS→FPGA→PC diretamente, observando entrada e saída. Para uma
+   comparação determinística baseline/secure, reapresentar a mesma captura real
+   validada como estímulo CP2102→FPGA e conferir eco/decifragem byte a byte.
+7. **Pendente:** fazer teste contínuo com duração e total de bytes registrados; relatar erros,
+   perdas/overflow e limites da medição. Se a etapa GPS física não couber antes
+   da submissão, descrevê-la explicitamente como pendente e não inventar dados.
+8. **Pendente até 30/09:** atualizar manuscritos PT/EN com apenas resultados reproduzidos, revisar template,
+   referências, figuras e limitações e submeter até 30/09. Preservar comprovante.
+
+## Cronograma final
+
+| Data | Prioridade | Critério de saída |
+| --- | --- | --- |
+| 29/09 | RTL/host 38400, regressão, replay GPS simulado, Quartus baseline/secure e métricas | Logs `PASS`, SOFs atuais, timing sem violações e dados novos no relatório |
+| 29/09 | P01–P06 na DE10-Lite | UART/loopback, eco baseline, CTR secure e capturas correspondentes; estados separados |
+| 29–30/09 | Captura M9N e integração | NMEA validado; conexão direta e/ou replay físico claramente identificados |
+| 30/09 | Artigo e submissão | Revisão PT/EN, números rastreáveis, limitações explícitas e comprovante BTSym |
+
+O prazo interno de bancada de 25/09 foi ultrapassado e não é mais o marco
+vigente. Se o tempo restante obrigar priorização, manter como mínimo: regressão
+e builds a 38400, baseline/secure físicos com vetor conhecido, métricas
+reproduzidas e manuscrito sem alegações de GPS físico que não tenham evidência.
+
+## Colaboração e controle de mudanças
+
+- `docs/cronograma.md` é a fonte de verdade do andamento. Atualizá-lo após cada
+  implementação, build, teste, decisão ou revisão do artigo.
+- Cada registro inclui data efetiva, commit/configuração, comando, resultado e
+  caminho/hash da evidência; simulação, Quartus e bancada nunca se substituem.
+- Alterações em arquitetura, materiais ou datas devem ser refletidas no README e
+  em `docs/proposta_btsym_gps_fpga.html`; manter a cópia em Documents sincronizada
+  quando existir.
+- Antes de commit/pull, revisar diffs completos, preservar trabalho local/alheio
+  e rodar `git diff --check`. Para RTL, rodar `make check`.
+- Não versionar chave privada, contexto real, captura GPS com coordenadas ou
+  relatórios sensíveis. Guardar bitstreams/logs locais salvo decisão explícita.
+
+## Comandos ativos
+
+```bash
+make check
+make integration-gps
+make baseline-fpga
+make secure-fpga
+make metrics
+make serial-bench CP2102_PORT=/dev/ttyUSB0 CONTEXT_FILE=contexto.json RECEIVED=saida.bin REPORT=relatorio.json
+make gps-capture-check GPS_CAPTURE=data/private/ensaio/gps-reference.bin
+make manuscript-check
+```

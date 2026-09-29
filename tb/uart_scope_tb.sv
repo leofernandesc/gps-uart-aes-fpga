@@ -3,9 +3,10 @@
 
 module uart_scope_tb #(
     parameter integer CLK_FREQ = 307200,
+    parameter integer BAUD_RATE = 38400,
     parameter integer PERIOD_CYCLES = CLK_FREQ / 10
 );
-    localparam integer CPB = CLK_FREQ / 9600;
+    localparam integer CPB = CLK_FREQ / BAUD_RATE;
     localparam time BIT_NS = CPB * 20;
     localparam time PERIOD_NS = PERIOD_CYCLES * 20;
     reg clk = 0;
@@ -14,7 +15,7 @@ module uart_scope_tb #(
     wire tx, rx_seen, error_sticky;
     wire rx = loopback ? tx : external_rx;
     wire [7:0] last_rx_data;
-    uart_scope #(.CLK_FREQ(CLK_FREQ), .PERIOD_CYCLES(PERIOD_CYCLES)) dut (
+    uart_scope #(.CLK_FREQ(CLK_FREQ), .BAUD_RATE(BAUD_RATE), .PERIOD_CYCLES(PERIOD_CYCLES)) dut (
         .clk(clk), .arst(arst), .rx(rx), .tx(tx), .last_rx_data(last_rx_data),
         .rx_seen(rx_seen), .error_sticky(error_sticky)
     );

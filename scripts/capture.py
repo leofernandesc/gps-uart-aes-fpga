@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Linux 9600/8N1 binary capture and independent baseline/AES-CTR comparison.
+"""Linux binary UART capture and independent baseline/AES-CTR comparison.
 
 This utility does NOT provision or arm the FPGA. Start both input/output
 recorders before enabling a replay with matching FPGA configuration.
@@ -19,6 +19,21 @@ import time
 
 from ctr_vectors import crypt
 from context import claim_capture, validate_context
+
+DEFAULT_BAUD = 38400
+
+
+def baud_constant(baud):
+    if type(baud) is not int or baud <= 0:
+        raise ValueError("baud must be a positive integer")
+    constant = getattr(termios, f"B{baud}", None)
+    if constant is None:
+        raise ValueError(f"unsupported host baud rate: {baud}")
+    return constant
+
+
+def serial_format(baud):
+    return f"{baud}/8N1"
 
 
 def private_file(path, binary=False):
@@ -72,9 +87,10 @@ def compare(reference, received, context, invalid_reasons=()):
     return report, recovered
 
 
-def record_serial(port, output, count, timeout, ready=None):
+def record_serial(port, output, count, timeout, ready=None, baud=DEFAULT_BAUD):
     if type(count) is not int or count <= 0 or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("Capture length and timeout must be positive")
+    baud_value = baud_constant(baud)
     fd = os.open(port, os.O_RDONLY | os.O_NOCTTY | os.O_NONBLOCK)
     previous = None
     started = time.monotonic()
@@ -89,7 +105,7 @@ def record_serial(port, output, count, timeout, ready=None):
             config[1] = 0
             config[2] = termios.CS8 | termios.CREAD | termios.CLOCAL
             config[3] = 0
-            config[4] = config[5] = termios.B9600
+            config[4] = config[5] = baud_value
             config[6][termios.VMIN] = 0
             config[6][termios.VTIME] = 0
             termios.tcsetattr(fd, termios.TCSANOW, config)
@@ -126,7 +142,8 @@ def record_serial(port, output, count, timeout, ready=None):
             os.close(fd)
     return {
         "status": "CAPTURED" if received == count else "INCOMPLETE",
-        "port": str(port), "format": "9600/8N1", "expected_bytes": count,
+        "port": str(port), "format": serial_format(baud), "baud": baud,
+        "expected_bytes": count,
         "received_bytes": received, "sha256": digest.hexdigest(), "error": error,
         "host_elapsed_seconds": time.monotonic() - started,
         "note": "Host acquisition time, not FPGA latency. CAPTURED is not byte verification.",
@@ -134,7 +151,7 @@ def record_serial(port, output, count, timeout, ready=None):
 
 
 def record_pair(reference_port, received_port, reference_output, received_output,
-                count, timeout, ready=None, before_ready=None):
+                count, timeout, ready=None, before_ready=None, baud=DEFAULT_BAUD):
     """Arm both raw ports before a single READY; source MUST start afterwards.
 
     No bytes are removed to align streams, and no automatic GPS/CTR framing is
@@ -142,6 +159,7 @@ def record_pair(reference_port, received_port, reference_output, received_output
     """
     if type(count) is not int or count <= 0 or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("Capture length and timeout must be positive")
+    baud_value = baud_constant(baud)
     if os.path.samefile(reference_port, received_port):
         raise ValueError("reference and received ports must be different devices")
     started = time.monotonic()
@@ -159,7 +177,7 @@ def record_pair(reference_port, received_port, reference_output, received_output
             config = termios.tcgetattr(fd)
             config[0] = config[1] = config[3] = 0
             config[2] = termios.CS8 | termios.CREAD | termios.CLOCAL
-            config[4] = config[5] = termios.B9600
+            config[4] = config[5] = baud_value
             config[6][termios.VMIN] = config[6][termios.VTIME] = 0
             termios.tcsetattr(fd, termios.TCSANOW, config)
             channels.append({"label": label, "port": str(port), "fd": fd, "stream": stream,
@@ -201,7 +219,8 @@ def record_pair(reference_port, received_port, reference_output, received_output
             os.fsync(channel["stream"].fileno())
     return {
         "status": "CAPTURED" if all(c["received_bytes"] == count for c in channels) else "INCOMPLETE",
-        "format": "9600/8N1", "expected_bytes_per_port": count, "error": error,
+        "format": serial_format(baud), "baud": baud,
+        "expected_bytes_per_port": count, "error": error,
         "context_claim": claimed, "host_elapsed_seconds": time.monotonic() - started,
         "channels": {c["label"]: {"port": c["port"], "received_bytes": c["received_bytes"], "sha256": c["digest"].hexdigest()} for c in channels},
         "note": "Source inactive until READY is an operator precondition, not measured. CAPTURED is not comparison or FPGA latency.",
@@ -216,6 +235,8 @@ def main():
     record.add_argument("--output", type=Path, required=True)
     record.add_argument("--bytes", type=int, required=True)
     record.add_argument("--timeout", type=float, required=True, help="Overall deadline in seconds")
+    record.add_argument("--baud", type=int, default=DEFAULT_BAUD,
+                        help=f"UART baud rate (default: {DEFAULT_BAUD})")
     record.add_argument("--report", type=Path, required=True)
     pair = commands.add_parser("record-pair", help="Arm reference and FPGA output together; release source only after READY")
     pair.add_argument("--reference-port", required=True)
@@ -225,6 +246,8 @@ def main():
     pair.add_argument("--context", type=Path, required=True)
     pair.add_argument("--registry", type=Path, help="original nonce registry; required for secure")
     pair.add_argument("--timeout", type=float, required=True)
+    pair.add_argument("--baud", type=int, default=DEFAULT_BAUD,
+                      help=f"UART baud rate (default: {DEFAULT_BAUD})")
     pair.add_argument("--report", type=Path, required=True)
     pair.add_argument("--source-inactive", action="store_true", required=True, help="confirm source is not transmitting and will be released only after READY")
     verify = commands.add_parser("compare", help="Compare previously captured binary files")
@@ -244,7 +267,7 @@ def main():
                     result = record_pair(args.reference_port, args.received_port,
                         args.reference_output, args.received_output, context["bytes"], args.timeout,
                         ready=lambda: print("READY: both ports armed; release the previously inactive source now", flush=True),
-                        before_ready=lambda: claim_capture(context, args.registry))
+                        before_ready=lambda: claim_capture(context, args.registry), baud=args.baud)
                 except Exception as exc:
                     json.dump({"status": "ERROR", "error": str(exc)}, report_file, indent=2)
                     raise
@@ -256,7 +279,8 @@ def main():
             with private_file(args.report) as report_file:
                 try:
                     result = record_serial(args.port, args.output, args.bytes, args.timeout,
-                                           ready=lambda: print("READY: start the configured replay now", flush=True))
+                                           ready=lambda: print("READY: start the configured replay now", flush=True),
+                                           baud=args.baud)
                 except Exception as exc:
                     json.dump({"status": "ERROR", "error": str(exc)}, report_file, indent=2)
                     raise

@@ -62,7 +62,7 @@ class GPSReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "checksum"):
             parse_window(b"fragment\r\n" + valid + corrupt + b"$GPRMC,tail")
 
-    def test_public_m8_nmea_replay_is_well_formed(self):
+    def test_public_nmea_replay_is_well_formed(self):
         result = metadata(DEFAULT_FIXTURE)
         payload = load_replay(DEFAULT_FIXTURE)
         self.assertEqual(result["status"], "PASS")

@@ -1,10 +1,20 @@
 # Analog Discovery 2 e WaveForms
 
+## Configuração ativa (29/09/2026)
+
+Os testes atuais são somente na DE10-Lite, com o u-blox NEO-M9N-00B-00 e UART
+38400/8N1. As capturas de 9600 baud e da Cyclone IV documentadas abaixo são
+evidência histórica; não representam a configuração atual nem precisam ser
+apagadas. Para novas capturas, selecione 38400/8N1 no decodificador e use
+26,04 µs como duração nominal do bit. Verifique a faixa elétrica antes de
+conectar o breakout do GPS.
+
 Este documento registra a instalação do WaveForms no Ubuntu e define como o
 Analog Discovery 2 (AD2) deve ser usado como instrumento de validação física do
-projeto GPS + UART + AES-128-CTR. Ele é complementar aos roteiros de bancada da
-[DE10-Lite](bancada-de10-lite-integrada-2026-09-22.md) e da
-[Cyclone IV](bancada-cyclone4-2026-09-21.md).
+projeto GPS + UART + AES-128-CTR. Ele é complementar ao roteiro de bancada da
+[DE10-Lite](bancada-de10-lite-integrada-2026-09-22.md). As instruções e
+capturas da Cyclone IV abaixo são somente registros históricos; a placa não
+faz parte do experimento atual.
 
 O AD2 fornece evidência elétrica e temporal. Ele não substitui a fonte serial,
 o receptor no PC, o adaptador USB–UART ou o GPS. Uma forma de onda
@@ -180,7 +190,7 @@ instrumento.
 | AD2 — Scope | Forma de onda analógica, níveis, bit time, bordas e RX→TX |
 | AD2 — Logic/Protocol UART | Decodificação digital opcional dos bytes UART |
 | CP2102 | Fonte/receptor serial e log de bytes no PC |
-| GPS NEO-M8N | Fonte física das sentenças NMEA |
+| GPS u-blox NEO-M9N-00B-00 | Fonte física das sentenças NMEA |
 | Quartus/USB-Blaster | Programação e identificação da FPGA |
 
 O AD2 não é um USB–UART. Ele não deve ser usado como fonte única para provar
@@ -237,7 +247,7 @@ referência para níveis, overshoot e undershoot.
 Para todos os ensaios deste artigo:
 
 ```text
-UART:       9600 baud, 8N1, idle alto
+UART:       38400 baud, 8N1, idle alto (ensaios atuais)
 Analógico:  DC, entrada de alta impedância, faixa compatível com 0–3,3 V
 Trigger:    borda de descida no RX, aproximadamente 1,65 V
 CH1:        RX da FPGA
@@ -249,11 +259,11 @@ uma janela de 10–20 ms. Para avaliar as bordas, usar uma taxa maior disponíve
 com pontas/cabos curtos e referência de terra curta. O AD2 possui dois canais
 analógicos, resolução de 14 bits e taxa nominal de até 100 MS/s; a largura de
 banda anunciada de 30 MHz ou mais depende do adaptador BNC e das pontas usadas.
-Para esta UART de 9600 baud, a taxa é suficiente para o quadro completo, mas
+Para as capturas atuais de UART a 38400 baud, a taxa é suficiente para o quadro completo, mas
 não deve ser apresentada como equivalente a um osciloscópio de bancada de alta
 largura de banda em medições de integridade de sinal.
 
-No Protocol Analyzer/Logic, selecionar UART, 9600, oito bits, sem paridade, um
+No Protocol Analyzer/Logic, selecionar UART, 38400, oito bits, sem paridade, um
 stop bit e linha ociosa alta. Confirmar o número do DIO e a direção antes de
 iniciar a captura.
 
@@ -310,13 +320,13 @@ Repetir o P04 no SOF secure e comparar com o baseline:
 
 ## GPS e ensaios P07–P11
 
-Para o GPS, primeiro capturar o TX do NEO-M8N diretamente no receptor serial e
+Para o GPS, primeiro capturar o TX do NEO-M9N diretamente no receptor serial e
 guardar uma referência bruta. Depois observar simultaneamente a entrada e a
 saída da FPGA com o AD2.
 
 O AD2 pode ser usado para confirmar:
 
-- UART do GPS em 9600/8N1;
+- UART do GPS em 38400/8N1 (NEO-M9N, configuração padrão atual);
 - nível lógico compatível;
 - presença das sentenças NMEA;
 - perda, truncamento ou framing na entrada;
@@ -398,7 +408,8 @@ Depois:
 1. ler este documento e o roteiro específico da placa;
 2. conferir JTAG, SOF, pinagem e GND;
 3. conectar o AD2 primeiro ao GND e depois aos sinais;
-4. configurar 9600/8N1 e armar a captura;
+4. configurar 38400/8N1 e armar a captura para ensaios atuais; registros antigos
+   de 9600 baud devem permanecer identificados como históricos;
 5. executar o teste do host;
 6. salvar CSV, imagem, log, hash e condições;
 7. atualizar `docs/cronograma.md` somente com a evidência produzida;

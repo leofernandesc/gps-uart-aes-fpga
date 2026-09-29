@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_FIXTURE = ROOT / "reference/gps/neo-m8n-nmea-sample.txt"
+DEFAULT_FIXTURE = ROOT / "reference/gps/nmea-public-sample.txt"
 
 
 def _parse_sentence(line: str, line_number: int, max_sentence_bytes: int = 82) -> str:

@@ -136,7 +136,7 @@ def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT,
 
 def markdown(result: dict[str, object]) -> str:
     board = result["board"]
-    board_label = {"de10_lite": "DE10-Lite", "cyclone4": "Cyclone IV"}.get(board, board)
+    board_label = "DE10-Lite"
     designs = result["designs"]
     comparison = result["comparison"]
     lines = [
@@ -170,7 +170,7 @@ def markdown(result: dict[str, object]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--board", choices=("de10_lite", "cyclone4"), default="de10_lite")
+    parser.add_argument("--board", choices=("de10_lite",), default="de10_lite")
     parser.add_argument("--build-root", type=Path, default=DEFAULT_BUILD)
     parser.add_argument("--json", type=Path)
     parser.add_argument("--markdown", type=Path)

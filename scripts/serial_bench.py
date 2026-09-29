@@ -2,7 +2,7 @@
 """Run the physical UART bench through one PC USB-TTL adapter.
 
 The CP2102 is the only external host in the current bench. It opens one
-full-duplex 9600/8N1 port, sends a known stimulus or a previously captured GPS
+full-duplex 38400/8N1 port by default, sends a known stimulus or captured GPS
 stream, records the FPGA response, and compares it independently on the PC.
 This utility does not provision the FPGA: program the selected baseline or
 secure SOF first and use a fresh context for every secure capture.
@@ -18,11 +18,8 @@ import sys
 import termios
 import time
 
-from capture import compare, private_file
+from capture import DEFAULT_BAUD, baud_constant, compare, private_file, serial_format
 from context import claim_capture, validate_context
-
-
-FORMAT = "9600/8N1"
 
 
 def _timestamp():
@@ -60,12 +57,13 @@ def _reserve_files(output, report):
     return streams[0][1], streams[1][1]
 
 
-def _configure(fd):
+def _configure(fd, baud):
+    baud_value = baud_constant(baud)
     previous = termios.tcgetattr(fd)
     config = termios.tcgetattr(fd)
     config[0] = config[1] = config[3] = 0
     config[2] = termios.CS8 | termios.CREAD | termios.CLOCAL
-    config[4] = config[5] = termios.B9600
+    config[4] = config[5] = baud_value
     config[6][termios.VMIN] = config[6][termios.VTIME] = 0
     termios.tcsetattr(fd, termios.TCSANOW, config)
     termios.tcflush(fd, termios.TCIOFLUSH)
@@ -141,7 +139,7 @@ def _transaction(fd, payload, timeout, guard, output):
     }, response + extra
 
 
-def _run(port, transactions, context, registry, output, timeout, guard, interval):
+def _run(port, transactions, context, registry, output, timeout, guard, interval, baud):
     claimed = claim_capture(context, registry if context.get("mode") == "aes-128-ctr" else None)
     fd = os.open(port, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
     previous = None
@@ -150,7 +148,7 @@ def _run(port, transactions, context, registry, output, timeout, guard, interval
     invalid = []
     started = time.monotonic()
     try:
-        previous = _configure(fd)
+        previous = _configure(fd, baud)
         print(f"READY: CP2102 armed on {port}; send/replay may start now", flush=True)
         for index, payload in enumerate(transactions):
             try:
@@ -188,7 +186,7 @@ def _run(port, transactions, context, registry, output, timeout, guard, interval
     return claimed, records, bytes(received), invalid, time.monotonic() - started
 
 
-def _build_result(operation, port, context, claimed, transactions, received,
+def _build_result(operation, port, baud, context, claimed, transactions, received,
                   reference, invalid, elapsed):
     comparison, recovered = compare(reference, received, context, invalid)
     return {
@@ -196,7 +194,8 @@ def _build_result(operation, port, context, claimed, transactions, received,
         "created_utc": _timestamp(),
         "operation": operation,
         "port": str(port),
-        "format": FORMAT,
+        "format": serial_format(baud),
+        "baud": baud,
         "mode": context["mode"],
         "expected_bytes": context["bytes"],
         "received_bytes": len(received),
@@ -208,7 +207,7 @@ def _build_result(operation, port, context, claimed, transactions, received,
         "received_sha256": comparison["received_sha256"],
         "recovered_sha256": comparison["recovered_sha256"],
         "note": (
-            "One CP2102 full-duplex host at 9600/8N1. Host timing includes the "
+            f"One CP2102 full-duplex host at {serial_format(baud)}. Host timing includes the "
             "Linux driver and USB bridge; it is not FPGA latency. The adapter "
             "does not expose FPGA framing flags; use the FPGA diagnostics and "
             "oscilloscope/AD2 for electrical evidence."
@@ -248,9 +247,9 @@ def _execute(args, operation, payloads, reference):
         try:
             claimed, transactions, received, invalid, elapsed = _run(
                 args.port, payloads, context, args.registry, output_stream,
-                args.timeout, args.response_guard, args.interval
+                args.timeout, args.response_guard, args.interval, args.baud
             )
-            result = _build_result(operation, args.port, context, claimed,
+            result = _build_result(operation, args.port, args.baud, context, claimed,
                                    transactions, received, reference, invalid, elapsed)
         except Exception as exc:
             result = {
@@ -258,7 +257,8 @@ def _execute(args, operation, payloads, reference):
                 "created_utc": _timestamp(),
                 "operation": operation,
                 "port": str(args.port),
-                "format": FORMAT,
+                "format": serial_format(args.baud),
+                "baud": args.baud,
                 "mode": context["mode"],
                 "error": str(exc),
                 "note": "A secure context is consumed before READY and must not be reused after a failed attempt.",
@@ -278,6 +278,8 @@ def main():
 
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--port", required=True, help="CP2102 port, e.g. /dev/ttyUSB0")
+    common.add_argument("--baud", type=int, default=DEFAULT_BAUD,
+                        help=f"UART baud rate (default: {DEFAULT_BAUD})")
     common.add_argument("--context", type=Path, required=True)
     common.add_argument("--registry", type=Path, help="nonce registry for secure contexts")
     common.add_argument("--received", type=Path, required=True, help="private binary response")

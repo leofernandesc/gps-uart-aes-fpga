@@ -13,7 +13,8 @@ module de10_lite_uart_ctr_top_tb;
     localparam [31:0] CONTEXT_COUNTER = 32'h000000ff;
     localparam [7:0] PLAINTEXT = 8'h55;
     localparam [7:0] EXPECTED_CIPHERTEXT = 8'he2;
-    localparam integer BIT_NS = 5208 * 20;
+    localparam integer CLKS_PER_BIT = 50_000_000 / 38_400;
+    localparam integer BIT_NS = CLKS_PER_BIT * 20;
 
     reg clk = 1'b0;
     always #10 clk = !clk;
@@ -75,19 +76,19 @@ module de10_lite_uart_ctr_top_tb;
 
         // uart_rx requires one complete idle bit after datapath reset before
         // it arms the start-bit detector.
-        repeat (5208 + 50) @(posedge clk);
+        repeat (CLKS_PER_BIT + 50) @(posedge clk);
         send_byte(PLAINTEXT);
         wait (first_byte_done);
-        repeat (5208) @(negedge clk);
+        repeat (CLKS_PER_BIT) @(negedge clk);
         // A second plaintext after reset must not reuse the first CTR mask.
         key0_n = 1'b0;
         repeat (10) @(negedge clk);
         key0_n = 1'b1;
-        repeat (5208 + 100) @(negedge clk);
+        repeat (CLKS_PER_BIT + 100) @(negedge clk);
         if (leds[1] || leds[5] || !leds[9])
             $fatal(1, "Used context did not lock after reset");
         send_byte(8'haa);
-        repeat (12 * 5208) @(negedge clk);
+        repeat (12 * CLKS_PER_BIT) @(negedge clk);
         if (tx_starts != 1 || uart_tx !== 1'b1 || leds[1])
             $fatal(1, "Reset reused a consumed context");
         $display("PASS DE10-Lite wrapper aes=%0d: power-up, custom context, pre-data reset, post-data reset lockout", ENABLE_AES);

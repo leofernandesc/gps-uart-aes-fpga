@@ -18,7 +18,7 @@ SCRIPT = ROOT / "scripts/serial_bench.py"
 class SerialBenchTests(unittest.TestCase):
     stimulus = bytes.fromhex("55 A5 00 FF 3C")
 
-    def _run_fake_fpga(self, mode, context, registry=None, trials=4):
+    def _run_fake_fpga(self, mode, context, registry=None, trials=4, baud=38400):
         master, slave = pty.openpty()
         port = os.ttyname(slave)
         received = bytearray()
@@ -58,6 +58,7 @@ class SerialBenchTests(unittest.TestCase):
                     sys.executable, str(SCRIPT), "run", "--port", port,
                     "--context", str(context_path), "--received", str(output),
                     "--report", str(report), "--trials", str(trials),
+                    "--baud", str(baud),
                     "--response-guard", "0.002", "--interval", "0.001",
                 ]
                 if registry:
@@ -67,6 +68,8 @@ class SerialBenchTests(unittest.TestCase):
                 self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
                 result = json.loads(report.read_text(encoding="utf-8"))
                 self.assertEqual(result["status"], "PASS")
+                self.assertEqual(result["baud"], baud)
+                self.assertEqual(result["format"], f"{baud}/8N1")
                 self.assertEqual(result["received_bytes"], len(output.read_bytes()))
                 self.assertEqual(output.stat().st_mode & 0o777, 0o600)
                 self.assertEqual(report.stat().st_mode & 0o777, 0o600)
@@ -87,6 +90,16 @@ class SerialBenchTests(unittest.TestCase):
         result = self._run_fake_fpga("baseline", context)
         self.assertEqual(result["comparison"]["recovered_sha256"],
                          result["comparison"]["reference_sha256"])
+
+    def test_legacy_9600_setting_remains_selectable(self):
+        context = {
+            "schema": 1,
+            "context_id": "baseline-legacy-baud-test",
+            "mode": "baseline",
+            "bytes": len(self.stimulus),
+        }
+        result = self._run_fake_fpga("baseline", context, trials=1, baud=9600)
+        self.assertEqual(result["format"], "9600/8N1")
 
     def test_secure_full_duplex_known_vector(self):
         context = {

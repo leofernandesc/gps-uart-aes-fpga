@@ -52,16 +52,17 @@ versionado quando ela existir.
 
 ## Alvos de FPGA e testes
 
-- A `main` reúne as placas; branches de suporte são temporárias. Compartilhe
-  o RTL e mantenha QSF, SDC, wrappers e saídas próprios para cada alvo.
+- O experimento ativo usa somente a DE10-Lite MAX 10 `10M50DAF484C7G`, clock
+  de 50 MHz e u-blox NEO-M9N-00B-00 a 38400/8N1. NEO-M8 e Cyclone IV estão fora
+  do escopo atual; seus registros anteriores são históricos.
 - `make uart-fpga` é o teste autônomo de UART; `make fpga` é a ponte com FIFO.
   Nenhum dos dois representa o sistema integrado com AES-CTR.
-- A Cyclone IV depende de placa, part number, oscilador e pinagem confirmados.
-  O dispositivo usado para verificar a instalação do Quartus não identifica
-  a placa do experimento. Não criar SOF de bancada com valores hipotéticos.
-- O comparativo possui quatro builds: baseline/secure em MAX 10 e Cyclone IV.
-  Preserve clock, FIFO, interfaces e instrumentação dentro de cada par; explique
-  as diferenças de clock ao comparar latência entre placas.
+- O comparativo tem dois builds: baseline e secure na DE10-Lite, ambos a
+  50 MHz/38400/8N1. Mantenha clock, FIFO, interfaces e instrumentação iguais;
+  o AES é a única diferença arquitetural.
+- O módulo NEO-M9N-00B-00 opera com VCC de 2,7–3,6 V e I/O referido a VCC; isso
+  não define a entrada VCC do breakout. Verificar seu rótulo/documentação antes
+  de ligar alimentação ou sinal à FPGA.
 - A instalação e o uso do Analog Discovery 2 estão documentados em
   `docs/analog-discovery-2-waveforms.md`. WaveForms/Adept instalados ou uma
   enumeração USB bem-sucedida não equivalem a P04/P06 concluídos: preserve CSV,

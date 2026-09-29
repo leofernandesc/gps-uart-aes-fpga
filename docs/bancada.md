@@ -1,103 +1,75 @@
-# Primeira bancada
+# Bancada DE10-Lite + NEO-M9N
 
-O primeiro ensaio previsto para 15/09 é a
-[UART isolada com osciloscópio e jumper](../fpga/de10_lite/uart_scope/README.md):
-`make uart-fpga`, padrão 0x55 a cada 100 ms. Esse teste não precisa de USB–UART.
-O roteiro abaixo trata da etapa seguinte, com GPS e captura no PC.
+O ensaio físico ativo usa uma única FPGA, a DE10-Lite/MAX 10, e o receptor
+u-blox **NEO-M9N-00B-00**. A UART do sistema é 38400/8N1, alinhada à taxa
+padrão do receptor. Registros anteriores a 9600 baud e de outras placas são
+históricos; consulte o [plano de testes](plano-de-testes.md) para distinguir
+repetições pendentes de resultados já obtidos.
 
-Esta etapa física ainda não foi executada. A ponte sem cifra já foi simulada e
-compilada no Quartus Linux, com `.sof` e relatórios pós-fit disponíveis.
-O módulo utilizado é o **NEO-M8N-010**, com alimentação indicada de 3,3 V.
-Ainda será conferida a pinagem da placa de suporte (carrier), que não é
-determinada pelo código impresso no receptor u-blox.
+## Materiais e segurança elétrica
 
-## Materiais
-
-| Material | Uso | Verificação antes de ligar |
+| Material | Uso | Verificação antes de conectar |
 | --- | --- | --- |
-| DE10-Lite + cabo USB | FPGA e programação USB-Blaster | Placa enumerada e identificada no Quartus |
-| GPS NEO-M8N-010 + antena correspondente, disponíveis | Fonte real dos dados | Conector do carrier, VCC e tensão da saída UART |
-| Um adaptador USB–TTL (CP2102 ou equivalente) | Fonte/receptor serial e captura no PC | Confirmar **nível lógico de I/O 3,3 V**, não apenas pino VCC selecionável |
-| Osciloscópio e pontas | Níveis e duração dos bits; teste UART isolado | Terra em GND, fator da ponta correto e instrumento acessível na bancada |
-| Analog Discovery 2 + WaveForms, opcional | Captura CSV, decodificação UART e medidas repetíveis de RX/TX | WaveForms instalado; AD2 físico deve ser enumerado antes do P04/P06 |
-| Jumpers e conexões firmes, disponíveis | Sinais e terra comum | Continuidade, identificação dos pinos e ausência de curto |
-| Multímetro; fonte 3,3 V regulada com limite de corrente | Conferência inicial | Um único suprimento para cada dispositivo; não unir fontes |
-| PC com Quartus e suporte MAX 10 | Compilação e programação | Quartus Linux já compila; USB-Blaster e permissões/driver dependem da placa |
-| Analisador lógico/osciloscópio, se disponível | Diagnóstico de sinais/latência | Entradas compatíveis com os níveis da montagem |
+| DE10-Lite + USB-Blaster | FPGA e programação | MAX 10 `10M50DAF484C7G`, JTAG reconhecido |
+| NEO-M9N-00B-00 + antena | Fonte real de NMEA | Identificar carrier, pinos, tensão de entrada e nível UART |
+| Adaptador USB–TTL CP2102 | Capturar GPS e transmitir/recolher ensaios | TXD/RXD em lógica 3,3 V; sem unir fontes de alimentação |
+| Analog Discovery 2 ou osciloscópio | Medidas elétricas/temporais e capturas | GND comum, ponta/configuração corretas, limite de entrada respeitado |
+| Jumpers, cabos e multímetro | Conexões e conferência elétrica | Identificar JP1 e testar continuidade/níveis antes de energizar |
+| PC com Quartus e WaveForms | Compilar, programar, registrar e comparar | Confirmar porta serial e instrumento enumerados |
 
-USB-Blaster não fornece uma porta serial de dados para o experimento. O projeto
-usa um único adaptador USB–TTL full-duplex conectado ao PC: ele transmite
-vetores/replays e recebe a saída da FPGA. O adaptador deve preservar bytes
-binários, ordem e 9600/8N1, sem conversão de texto ou perdas. Não usar RS-232 de tensões
-positivas/negativas, UART de 5 V ou alimentação direta de bateria no GPIO/GPS.
+O datasheet do módulo NEO-M9N especifica VCC de 2,7–3,6 V e I/O referido a
+VCC; isso **não** determina a tensão de entrada do breakout. Verifique a
+serigrafia e a documentação da carrier antes de alimentá-la. Nunca aplique 5 V
+a GPIO da DE10-Lite nem conecte saídas TX entre si.
 
-O Analog Discovery 2 pode substituir o osciloscópio de bancada para as medidas
-de timing e captura, desde que o GND seja comum e o dispositivo seja
-enumerado pelo WaveForms. Ele não substitui a fonte/receptor serial nem a
-verificação independente do AES. O procedimento de instalação, conexões e
-registro das evidências está em
-[Analog Discovery 2 e WaveForms](analog-discovery-2-waveforms.md).
-Um único adaptador USB–TTL basta para a bancada. Ele é usado em full-duplex nos
-testes baseline/secure e, no ensaio GPS, em duas etapas: primeiro captura a
-referência do GPS; depois transmite essa mesma captura para a FPGA e recebe a
-saída. Dois adaptadores só seriam necessários para observar referência e saída
-simultaneamente, o que não é requisito do protocolo atual.
+## Pinagem ativa na DE10-Lite
 
-## Ordem de execução
+| Sinal | DE10-Lite | Uso |
+| --- | --- | --- |
+| UART RX | V10 / JP1, posição física 1 | Entrada do CP2102 TXD ou GPS TX |
+| UART TX | W10 / JP1, posição física 2 | Saída para CP2102 RXD ou AD2 |
+| GND | JP1, posição física 12 ou 30 | Referência comum |
+| Clock | P11 | Oscilador de 50 MHz na placa |
 
-1. **Sem conectar o GPS:** abrir o Quartus, conferir dispositivo da DE10-Lite e
-   detecção do USB-Blaster no Programmer. Guardar versão do Quartus e captura da
-   identificação. Não é necessário apagar ou sobrescrever memória não volátil.
-2. Identificar a porta do adaptador no PC, verificar os níveis reais de TX/RX e
-   executar um loopback local em 9600 8N1 antes de conectá-lo à FPGA.
-3. Conferir pinagem do carrier NEO-M8N e sua alimentação. Com terra comum e
-   conexão adequada, capturar o GPS diretamente no PC pelo adaptador antes de
-   envolver a FPGA.
-4. Guardar alguns minutos de bytes crus e confirmar presença de sentenças NMEA.
-   A aquisição pode funcionar sem fix válido; registrar separadamente aquisição
-   serial e obtenção de posição. Proteger coordenadas pessoais nos dados públicos.
-5. Conferir na placa a [pinagem preparada](../fpga/de10_lite/README.md). Abrir o
-   projeto Quartus e usar o `.sof` da ponte sem cifra, já gerado, ou executar
-   `make fpga`. Programar via JTAG e pressionar/soltar KEY0 antes de enviar dados.
-6. Reproduzir a captura GPS pelo mesmo adaptador, executar GPS → FPGA → PC sem
-   AES e comparar com a referência. Overflow e erro de stop precisam ser
-   observáveis.
-
-**Primeiro ponto de validação:** Quartus reconhecendo a DE10-Lite via USB-Blaster.
-Confirmado isso, seguir para os canais seriais e a captura direta. Não energizar um
-carrier sem confirmar seu modelo/pinagem apenas para cumprir o cronograma.
-
-## Ligações lógicas previstas para o sistema completo
+Confirme a orientação do pino 1 no conector. O caminho full-duplex conhecido é:
 
 ```text
-CP2102 TXD ────────────> FPGA / UART RX
-FPGA / UART TX ────────> CP2102 RXD
-CP2102 GND ────────────> FPGA GND
+CP2102 TXD ──> V10 / FPGA RX
+CP2102 RXD <── W10 / FPGA TX
+CP2102 GND ─── GND DE10-Lite
 ```
 
-Para a captura direta, use GPS TX → CP2102 RXD e GND; o RX do GPS não é
-necessário para as mensagens periódicas. Para o replay, remova esse fio e use
-CP2102 TXD → FPGA UART RX, mantendo FPGA UART TX → CP2102 RXD. Nunca una duas
-saídas TX. Não alimentar o GPS simultaneamente pela placa, pelo adaptador e por
-uma fonte de bancada.
+O CP2102 é a fonte/receptor de bytes ligada ao PC. O Analog Discovery 2 observa
+os sinais, mas não substitui o caminho serial do host nem o comparador
+criptográfico.
 
-A ponte atual retransmite continuamente os bytes válidos, sem AES ou comandos
-do PC. Erro de stop e overflow permanecem indicados nos LEDs até reset e
-invalidam a captura. O roteiro de comandos e a política de arquivos estão em
-[bancada serial com um CP2102](cp2102-serial-bench.md).
+## Ordem dos ensaios
 
-## GPS utilizado
+1. **P01/P02 — UART autônoma:** programar `make uart-fpga`, observar TX W10
+   (`0x55` a cada 100 ms) e depois fechar o loopback W10→V10. Em 38400 baud,
+   esperar 26,04 µs por bit e 260,4 µs por quadro. Guardar captura e LEDs.
+2. **P03/P04 — baseline:** programar `make baseline-fpga`, enviar o vetor
+   `55 A5 00 FF 3C` pelo CP2102, receber o mesmo vetor e capturar RX/TX no AD2.
+   LEDs de overflow/framing devem permanecer apagados.
+3. **P05/P06 — secure:** criar contexto privado com nonce novo, compilar e
+   programar o secure, enviar os mesmos bytes e verificar ciphertext e
+   recuperação independente no PC. Capturar também RX/TX.
+4. **P07 — GPS direto:** confirmar primeiro tensão/pinagem do breakout; ligar
+   GPS TX→CP2102 RXD e GND comum, capturar bytes a 38400 e validar NMEA/CRLF/
+   checksums com `scripts/gps_capture.py`. Fix GPS não é necessário para
+   confirmar recepção serial; posição válida é um resultado separado.
+5. **P08–P10 — integração com GPS:** reproduzir a mesma captura pelo CP2102 à
+   DE10-Lite e comparar baseline (eco exato) e secure (decifragem exata no PC).
+   Executar uma captura contínua e registrar perdas, framing, overflow e
+   condições. Não apresentar o tempo do Linux/USB como latência isolada da FPGA.
 
-A documentação oficial do u-blox para o **NEO-M8N-0-10** está na
-[nota oficial UBX-20013367](https://content.u-blox.com/sites/default/files/NEO-8Q-M8Q-M8N-M8P-M8T_PCN_%28UBX-20013367%29.pdf).
+Os detalhes reproduzíveis, IDs e campos de evidência estão em
+[`plano-de-testes.md`](plano-de-testes.md), e os comandos host em
+[`cp2102-serial-bench.md`](cp2102-serial-bench.md). Nunca reutilize contexto
+AES-CTR/nonce em nova captura; gere nonce novo e reprograme o bitstream.
 
-O [datasheet da família NEO-M8](https://content.u-blox.com/sites/default/files/NEO-M8-FW3_DataSheet_UBX-15031086.pdf),
-seções 4.2 e 8, informa VCC de 2,7 a 3,6 V para o M8N e UART padrão 9600/8N1
-com mensagens NMEA habilitadas. Portanto, a marcação 3,3 V é compatível com essa
-faixa. Isso não comprova a alimentação nem a configuração persistida do exemplar:
-ambas serão verificadas na bancada. Não há necessidade de alterar o RTL UART.
+## Referências do módulo
 
-Para a captura, o TX do GPS alimentará a entrada RX da FPGA; o RX do GPS não é
-necessário para receber as mensagens periódicas. Antena e recepção de satélites
-serão verificadas separadamente da recepção de bytes. O transporte no RTL não
-dependerá de latitude, longitude, talker ID específico ou interpretação de NMEA.
+- [u-blox NEO-M9N-00B datasheet](https://content.u-blox.com/sites/default/files/NEO-M9N-00B_DataSheet_UBX-19014285.pdf)
+- [u-blox NEO-M9N integration manual](https://content.u-blox.com/sites/default/files/NEO-M9N_Integrationmanual_UBX-19014286.pdf)
+- [Terasic DE10-Lite User Manual](https://www.mouser.com/datasheet/2/598/DE10-Lite_User_Manual-1100361.pdf)

@@ -16,12 +16,12 @@ CP2102 RXD  <─────────  UART_TX da FPGA
 CP2102 GND  ──────────  GND da placa
 ~~~
 
-Na DE10-Lite, UART_RX=V10 e UART_TX=W10 nos pinos de bancada já preparados.
-Na Cyclone IV, use UART_RX=J3 PIN_103 e UART_TX=J3 PIN_100. O CP2102 não
-alimenta nenhuma FPGA. Não conecte o pino de 5 V ao GPIO e não una fontes de
-alimentação; confirme que TXD/RXD estão em 3,3 V antes de ligar.
+Na única placa do escopo ativo, a DE10-Lite, UART_RX=V10 e UART_TX=W10 nos
+pinos de bancada já preparados. O CP2102 não alimenta a FPGA. Não conecte o
+pino de 5 V ao GPIO e não una fontes de alimentação; confirme que TXD/RXD
+estão em 3,3 V antes de ligar.
 
-O mesmo módulo serve para as duas placas, uma por vez. A porta Linux pode ser
+O ensaio ativo usa apenas a DE10-Lite a 38400/8N1. A porta Linux pode ser
 /dev/ttyUSB0, /dev/ttyUSB1 ou outro nome atribuído pelo sistema; confirmar
 com dmesg e ls -l /dev/ttyUSB*.
 
@@ -118,7 +118,7 @@ controladas:
    Para o secure, use um contexto novo com bytes igual ao tamanho da captura,
    compile o SOF secure com esse contexto e informe também --registry.
 
-Esse procedimento usa dados realmente adquiridos do NEO-M8N e os reapresenta
+Esse procedimento usa dados realmente adquiridos do NEO-M9N e os reapresenta
 em uma segunda execução, evitando comparar duas sequências GPS diferentes.
 Com um único CP2102 não se capturam referência e saída simultaneamente; para
 isso seriam necessários dois canais independentes ou o Analog Discovery 2

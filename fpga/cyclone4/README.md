@@ -1,4 +1,13 @@
-# Alvo Cyclone IV — ZRTech/WXEDA V2.00
+# Arquivo histórico — Cyclone IV ZRTech/WXEDA V2.00
+
+> Este alvo foi abandonado em 29/09/2026 e não faz parte do artigo nem da
+> matriz experimental atual. Os projetos, restrições e dados abaixo foram
+> preservados para consulta histórica; os alvos Makefile foram removidos do
+> fluxo ativo. O antigo script isolado de estudo de capacidade também é apenas
+> arquivo histórico.
+
+O único alvo vigente do projeto é a DE10-Lite/MAX 10. Não use os comandos,
+pinagem, clocks ou resultados desta página para os ensaios atuais.
 
 O pacote Cyclone IV já foi adicionado ao Quartus Lite 25.1 deste computador.
 A placa recebida corresponde ao perfil **ZRTECH V2.00 / DESIGNED BY WXEDA**, com

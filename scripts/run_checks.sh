@@ -43,13 +43,13 @@ test_uart() {
     run_test uart_tx_tb uart_tx_cpb32
     run_test uart_tx_tb uart_tx_cpb33 -Puart_tx_tb.CLKS_PER_BIT=33
     run_test uart_top_tb uart_top_fast
-    run_test uart_top_tb uart_top_50mhz_9600 -Puart_top_tb.CLK_FREQ=50000000 -Puart_top_tb.NUM_BYTES=16
+    run_test uart_top_tb uart_top_50mhz_38400 -Puart_top_tb.CLK_FREQ=50000000 -Puart_top_tb.NUM_BYTES=16
     # Rename only a generated build copy; the historical source remains untouched.
     sed 's/\<uart_tx\>/uart_tx_v1/g' reference/uart-v1/rtl/uart_tx.v >build/uart_tx_v1.v
     # Only the legacy modules have no timescale declaration.
     run_test uart_v1_regression_tb uart_v1_regression -Wno-timescale build/uart_tx_v1.v reference/uart-v1/rtl/baud_gen.v
     run_test uart_scope_tb uart_scope_fast
-    run_test uart_scope_tb uart_scope_50mhz_9600 -Puart_scope_tb.CLK_FREQ=50000000
+    run_test uart_scope_tb uart_scope_50mhz_38400 -Puart_scope_tb.CLK_FREQ=50000000
 }
 
 lint_uart() {
@@ -63,7 +63,7 @@ test_bridge() {
     run_test sync_fifo_tb sync_fifo_depth8
     run_test sync_fifo_tb sync_fifo_depth1024 -Psync_fifo_tb.DEPTH=1024
     run_test uart_bridge_tb uart_bridge_fast
-    run_test uart_bridge_tb uart_bridge_50mhz_9600 \
+    run_test uart_bridge_tb uart_bridge_50mhz_38400 \
         -Puart_bridge_tb.CLK_FREQ=50000000 -Puart_bridge_tb.FIFO_DEPTH=1024 -Puart_bridge_tb.STRESS=0
 }
 

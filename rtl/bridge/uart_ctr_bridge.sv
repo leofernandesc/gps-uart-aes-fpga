@@ -7,7 +7,7 @@
 module uart_ctr_bridge #(
     parameter integer ENABLE_AES = 1,
     parameter integer CLK_FREQ = 50000000,
-    parameter integer BAUD_RATE = 9600,
+    parameter integer BAUD_RATE = 38400,
     parameter integer CLKS_PER_BIT = CLK_FREQ / BAUD_RATE,
     parameter integer FIFO_DEPTH = 1024,
     parameter integer LEVEL_WIDTH = $clog2(FIFO_DEPTH + 1)

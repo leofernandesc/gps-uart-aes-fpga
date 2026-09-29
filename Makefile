@@ -1,12 +1,7 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics cyclone4-metrics fpga baseline-fpga secure-fpga cyclone4-uart-fpga cyclone4-j3-uart-fpga cyclone4-baseline-fpga cyclone4-secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
-
-.PHONY: cyclone4-capacity
-# Provisional EP4CE6 / 48 MHz resource study, NOT a board/programming target.
-cyclone4-capacity:
-	python3 scripts/cyclone4_capacity.py
 
 # HDL_RUNNER=auto (default), native, or docker.
 check:
@@ -52,19 +47,6 @@ uart-fpga:
 de10-nano-uart-fpga:
 	bash scripts/quartus_build.sh de10_nano uart_scope
 
-cyclone4-uart-fpga:
-	bash scripts/quartus_build.sh cyclone4 uart_scope
-
-# UART scope test with TX/RX routed to accessible J3 PIN_100/PIN_103.
-cyclone4-j3-uart-fpga:
-	bash scripts/quartus_build.sh cyclone4 j3_scope
-
-cyclone4-baseline-fpga:
-	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh cyclone4 baseline
-
-cyclone4-secure-fpga:
-	CONTEXT_FILE="$(CONTEXT_FILE)" bash scripts/quartus_build.sh cyclone4 secure
-
 aes:
 	bash scripts/hdl.sh aes
 
@@ -74,7 +56,7 @@ ctr:
 integration:
 	bash scripts/hdl.sh integration
 
-# Full public NMEA replay at the production 50 MHz/9600 baud timing; slower
+# Full public NMEA replay at the production 50 MHz/38400 baud timing; slower
 # than the regular regression and intentionally kept as a separate target.
 integration-gps:
 	bash scripts/hdl.sh integration-gps
@@ -98,6 +80,7 @@ serial-bench:
 	python3 scripts/serial_bench.py run \
 		--port "$(CP2102_PORT)" \
 		--context "$(CONTEXT_FILE)" \
+		--baud "$(or $(BAUD),38400)" \
 		--received "$(RECEIVED)" \
 		--report "$(REPORT)" $(if $(REGISTRY),--registry "$(REGISTRY)") \
 		--trials "$(or $(TRIALS),4)"
@@ -107,10 +90,6 @@ manuscript-check:
 
 metrics:
 	python3 scripts/fpga_metrics.py --json build/de10_lite/metrics.json --markdown build/de10_lite/metrics.md
-
-cyclone4-metrics:
-	python3 scripts/fpga_metrics.py --board cyclone4 --build-root build/cyclone4 \
-		--json build/cyclone4/metrics.json --markdown build/cyclone4/metrics.md
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:

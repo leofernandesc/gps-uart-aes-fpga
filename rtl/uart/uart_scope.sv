@@ -6,7 +6,7 @@
 // Connect TX to RX with a physical jumper to exercise both GPIOs.
 module uart_scope #(
     parameter integer CLK_FREQ = 50_000_000,
-    parameter integer BAUD_RATE = 9600,
+    parameter integer BAUD_RATE = 38400,
     parameter integer PERIOD_CYCLES = CLK_FREQ / 10,
     parameter [7:0] TEST_BYTE = 8'h55
 ) (

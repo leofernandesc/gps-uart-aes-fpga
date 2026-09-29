@@ -1,5 +1,9 @@
 # DE10-Lite + Analog Discovery 2 — 25/09/2026
 
+Registro histórico: as capturas desta página foram feitas a **9600 baud**.
+Desde 29/09, o ponto de operação é 38400/8N1 para o NEO-M9N; estes dados
+documentam a bancada anterior e não substituem a repetição P01/P02 nessa taxa.
+
 ## Captura preliminar da UART autônoma
 
 A DE10-Lite foi programada por JTAG com `build/de10_lite/uart_scope/uart_scope.sof`
@@ -109,3 +113,33 @@ Esta janela de 2,62 ms contém apenas um quadro e não mede o intervalo de
 P03–P11 dos sistemas integrados continuam dependentes dos seus próprios
 ensaios físicos. Para capturas subsequentes, configurar trigger na borda de
 descida do canal 1 em aproximadamente 1,6 V facilita enquadrar o start bit.
+
+## P02 — loopback TX→RX com AD2
+
+Em 25/09 às 23:56, com o top `uart_scope` programado e o jumper entre JP1
+pino físico 2 (`UART_TX`, W10) e pino físico 1 (`UART_RX`, V10), foram salvos
+dez buffers no workspace do WaveForms. A captura do canal 1 foi exportada para
+[`evidence/de10-lite-p02-ad2-2026-09-25.csv`](evidence/de10-lite-p02-ad2-2026-09-25.csv)
+(SHA-256 `ed5f93be2901d836b89af4e29d15d18731a2d44f3135aca882864e5dd890c645`);
+o workspace original está em
+[`evidence/de10-lite-p02-ad2-2026-09-25.dwf3work`](evidence/de10-lite-p02-ad2-2026-09-25.dwf3work)
+(SHA-256 `79822ffa7e5cc9a8394503c03c9b0dc3c4767e070c6846e7eab973cc928a2658`).
+
+O CSV registra 8.192 amostras a **2,94118 MHz** (0,34 µs/amostra), numa janela
+de **2,78494 ms**. A captura exportada e os dez buffers do workspace decodificam
+como `0x55` em 8N1: start `0`, dados LSB-first `10101010`, stop `1`. As nove
+distâncias entre transições da captura exportada medem **104,153 µs/bit** em
+média (104,04–104,38 µs), equivalente a aproximadamente **9.601 baud**. A
+mediana dos níveis é **3,325 V** em alto e **−0,026 V** em baixo; os extremos
+do CSV são −0,054 a 3,352 V. A aquisição usou trigger de subida a 2,7 V,
+500 mV/div, offset −1,7 V e modo Average.
+
+Na confirmação do ensaio em 26/09, os LEDs apresentaram o padrão esperado:
+heartbeat em LEDR[0], transmissão indicada em LEDR[1], bits 7:2 de `0x55` em LEDR[7:2]
+(LEDs 2, 4 e 6 acesos), recepção válida em LEDR[8] e nenhum erro em LEDR[9].
+Assim, a forma de onda confirma TX e os indicadores confirmam a recepção pelo
+RX no loopback.
+
+**P02 DE10-Lite: aprovado em 26/09/2026** (capturas feitas em 25/09). Este
+resultado cobre a UART autônoma e o caminho físico TX→RX; não valida os tops
+baseline/secure, FIFO, AES-CTR nem GPS.

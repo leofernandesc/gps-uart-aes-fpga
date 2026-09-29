@@ -30,28 +30,8 @@ case "$board/$design" in
         target_dir="$project_dir/fpga/de10_nano/uart_scope"
         output_dir="$project_dir/build/de10_nano/uart_scope"
         ;;
-    cyclone4/uart_scope)
-        quartus_project=uart_scope
-        target_dir="$project_dir/fpga/cyclone4/uart_scope"
-        output_dir="$project_dir/build/cyclone4/uart_scope"
-        ;;
-    cyclone4/j3_scope)
-        quartus_project=uart_scope_j3
-        target_dir="$project_dir/fpga/cyclone4/j3_scope"
-        output_dir="$project_dir/build/cyclone4/j3_scope"
-        ;;
-    cyclone4/baseline)
-        quartus_project=uart_baseline
-        target_dir="$project_dir/fpga/cyclone4/baseline"
-        output_dir="$project_dir/build/cyclone4/baseline"
-        ;;
-    cyclone4/secure)
-        quartus_project=uart_secure
-        target_dir="$project_dir/fpga/cyclone4/secure"
-        output_dir="$project_dir/build/cyclone4/secure"
-        ;;
     *)
-        echo "Unavailable target: $board/$design. Available: de10_lite/{bridge,uart_scope,baseline,secure}, cyclone4/{uart_scope,j3_scope,baseline,secure}, de10_nano/uart_scope." >&2
+        echo "Unavailable target: $board/$design. Available: de10_lite/{bridge,uart_scope,baseline,secure}, de10_nano/uart_scope." >&2
         exit 2 ;;
 esac
 quartus_shell="${QUARTUS_SH:-}"

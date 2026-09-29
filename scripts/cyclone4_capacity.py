@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproducible EP4CE6 capacity study; map/fit only, never assembly/programming."""
+"""Archived EP4CE6 capacity study; not part of the active article/build flow."""
 import json
 import os
 from pathlib import Path

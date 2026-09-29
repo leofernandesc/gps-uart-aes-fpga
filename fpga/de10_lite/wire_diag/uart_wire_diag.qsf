@@ -1,0 +1,22 @@
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M50DAF484C7G
+set_global_assignment -name TOP_LEVEL_ENTITY uart_wire_diag_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ../../../build/de10_lite/wire_diag
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+set_global_assignment -name SYSTEMVERILOG_FILE uart_wire_diag_top.sv
+set_global_assignment -name SDC_FILE uart_wire_diag.sdc
+
+set_location_assignment PIN_P11 -to MAX10_CLK1_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to MAX10_CLK1_50
+set_location_assignment PIN_V10 -to UART_RX
+set_location_assignment PIN_W10 -to UART_TX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to UART_TX
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to UART_RX
+set_instance_assignment -name CURRENT_STRENGTH_NEW "8MA" -to UART_TX
+set_location_assignment PIN_A8 -to LEDR0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LEDR0
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"

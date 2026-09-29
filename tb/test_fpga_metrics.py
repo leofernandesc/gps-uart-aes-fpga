@@ -35,7 +35,7 @@ class MetricsTests(unittest.TestCase):
                 (path / name).write_text("fixture\n")
             manifest = {"schema": 1, "status": "PASS", "board": "de10_lite", "design": design,
                         "device": "10M50DAF484C7G", "seed": 1, "clock_hz": 50_000_000,
-                        "baud": 9600, "fifo_depth": 1024, "shared_rtl_sha256": "same",
+                        "baud": 38400, "fifo_depth": 1024, "shared_rtl_sha256": "same",
                         "sources_sha256": {"source.sv": digest(self.root / "source.sv")},
                         "artifacts_sha256": {p.name: digest(p) for p in path.iterdir() if p.name != "build-status.txt"}}
             (path / "build-manifest.json").write_text(json.dumps(manifest))
