@@ -7,14 +7,16 @@ diferentes e não devem ser misturados.
 
 Atualização de escopo em 29/09: sensor u-blox NEO-M9N-00B-00; somente
 DE10-Lite/MAX 10 no experimento ativo; Cyclone IV abandonada e M8 fora do
-escopo. A UART muda de 9600 para 38400/8N1. P01/P02, P03/P04 e P05/P06 que
-foram aprovados antes continuam como evidência histórica a 9600 e precisam ser
-repetidos na nova configuração. Os testes funcionais AES independentes do link
+escopo. A UART mudou de 9600 para 38400/8N1. Os resultados P01/P02, P03/P04 e
+P05/P06 anteriores continuam como evidência histórica a 9600; P01 já foi
+repetido a 38400 para quadro e temporização, enquanto P02–P06 ainda precisam
+ser executados na configuração vigente. Os testes funcionais AES independentes do link
 serial permanecem válidos. Em 29/09, `make check` passou com 36 testes Python
 e oráculos AES/CTR; `make integration-gps` passou para baseline e secure em
-50 MHz/38400 nos 309 bytes sintéticos. Nenhum teste físico a 38400 ou captura
-do M9N foi feito ainda. Tempos de host incluem PC/USB e não são latência
-isolada da FPGA.
+50 MHz/38400 nos 309 bytes sintéticos. O P01 físico a 38400 passou no nível de
+quadro: o AD2 capturou e permitiu decodificar `0x55` em 8N1; a periodicidade
+entre quadros não foi medida. P02–P06 e a captura física do M9N seguem
+pendentes. Tempos de host incluem PC/USB e não são latência isolada da FPGA.
 
 ## Configuração fixa
 
@@ -187,11 +189,51 @@ Antes de conectar GPS ou fonte serial externa, executar C0 e P01 conforme o
 [roteiro da bancada Cyclone IV](bancada-cyclone4-2026-09-21.md). Com 48 MHz,
 o período esperado de cada bit em 9600 baud é aproximadamente `104,17 µs`.
 
-## Registros de bancada anteriores — DE10-Lite e Cyclone IV
+## Registros de bancada — DE10-Lite e Cyclone IV
 
-O cronograma fechado para executar P01–P11 nas duas plataformas entre 21 e
-25/09 está em [`docs/cronograma.md`](cronograma.md). O freeze físico ocorre na
-sexta-feira; o fim de semana fica reservado à redação do artigo.
+O cronograma de 21–25/09 para duas plataformas foi supersedido pela decisão de
+29/09: a matriz ativa é somente a DE10-Lite e o prazo vigente é 30/09. A seguir,
+P01 registra primeiro a captura atual a 38400; os resultados antigos a 9600
+ficam identificados separadamente como históricos.
+
+### P01 — UART autônoma a 38400 baud — 29/09/2026
+
+**Resultado: aprovado para temporização e conteúdo do quadro.** O `uart_scope`
+na DE10-Lite/MAX 10 (50 MHz) transmite `0x55` em 38400/8N1. A captura AD2
+corrigida mostra o sinal no CH2; a análise usou cruzamentos de 1,65 V e os
+centros de bit.
+
+| Dado | Resultado |
+| --- | ---: |
+| Instrumento/configuração | AD2, 10 MS/s, 8.192 amostras, 0,1 µs/amostra, CH2, 1 V/div, offset 0 V, modo Average |
+| Janela da aquisição | 819,1 µs; insuficiente para medir o intervalo de repetição de 100 ms |
+| Cadência configurada no estímulo | 100 ms entre inícios de quadro (`PERIOD_CYCLES = CLK_FREQ / 10`), independente do baud |
+| Níveis observados | −0,0787 a 3,3728 V (patamares próximos de 0 e 3,33 V) |
+| Período médio de bit | 26,0381 µs, calculado a partir de 9 intervalos de borda |
+| Baud inferido | 38.405 baud; erro aproximado −0,014% contra 38400 |
+| Decodificação nos centros | start 0, dados LSB-first `1 0 1 0 1 0 1 0`, stop 1 = `0x55` |
+| Trigger no arquivo | Channel 1, falling, 1,5 V; traço exportado no Channel 2 — alinhar fonte de trigger ao CH2 no próximo ensaio |
+| Conclusão | Quadro, padrão de dados e temporização aprovados; periodicidade de 100 ms não medida |
+
+O erro de baud é aproximado: a amostragem é de 0,1 µs e o instrumento estava
+em modo Average. O pequeno mínimo negativo observado (−78,7 mV) não representa
+o patamar lógico; os níveis estáveis estão claramente próximos de 0/3,3 V.
+Para referência, o MAX 10 especifica, em 3,3-V LVTTL, VIL máximo de 0,8 V,
+VIH mínimo de 1,7 V e faixa de entrada até 3,6 V ([datasheet Intel MAX 10](https://www.intel.com/programmable/technical-pdfs/max10-handbook.pdf)).
+Como este P01 mede o TX em circuito aberto, isso contextualiza os níveis para
+uma futura entrada/loopback, sem substituir a verificação elétrica sob carga.
+
+Capturas preservadas em `docs/evidence/`:
+
+- CSV: `de10-lite-m9-p01-2026-09-29.csv`, SHA-256
+  `99faee86e72e23bc8652dcbb39aa6477e52d05f97090e9b3c18fc3e233ac4e7d`.
+- Workspace WaveForms: `de10-lite-m9-p01-2026-09-29.dwf3work`, SHA-256
+  `08493f88224cffa9e925ee9a8585f61e85febc0a3da22fe6423367647d8793b2`.
+
+**Limite e próximo passo:** os 819,1 µs capturam só um quadro e não confirmam
+que o `uart_scope` repete a transmissão a cada 100 ms. P02 é o próximo teste:
+TX→RX por jumper, observação dos indicadores de recepção/erro e captura física
+a 38400.
 
 ### Evidências físicas históricas — executadas a 9600 baud
 
@@ -642,11 +684,11 @@ python3 scripts/gps_capture.py \
   --report data/private/de10-2026-09-29/p07-gps-direct-512b-01-nmea-report.json
 ```
 
-**Situação em 29/09/2026:** nenhum teste físico a 38400 foi executado ainda.
-O baseline programado anteriormente é de 9600 baud e não deve ser conectado ao
-TX do M9N antes de ser recompilado e programado com a configuração nova. A
-pinagem/alimentação do breakout deve ser conferida; nenhum dado GPS foi
-capturado nesta etapa.
+**Situação em 29/09/2026:** P01 da UART autônoma foi medido a 38400, mas nenhum
+teste físico do GPS foi feito. O baseline programado anteriormente é de 9600
+baud e não deve ser conectado ao TX do M9N antes de ser recompilado e programado
+com a configuração nova. A pinagem/alimentação do breakout deve ser conferida;
+nenhum dado GPS foi capturado nesta etapa.
 
 ### P08 — GPS no baseline
 

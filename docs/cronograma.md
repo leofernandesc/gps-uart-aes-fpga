@@ -16,13 +16,15 @@ Submissão BTSym’26: até 30/09/2026.
   FIFO máxima de 1 byte, 80 ns de RX válido até início do TX e 260.480 ns até
   fim do quadro TX. Baseline e secure também passaram no Quartus e nos três
   cantos temporais. Recursos: 331/5.603 LE, 212/913 registradores e Fmax mínima
-  117,56/103,38 MHz. Os SOFs foram gerados, não programados. Ainda não há nova
-  evidência física a 38400.
-- Antes do M9N, os testes físicos da DE10-Lite foram executados a 9600 baud.
-  Repetir P01/P02 (UART elétrica/loopback), P03/P04 (baseline) e P05/P06
-  (secure e forma de onda). Os testes independentes do algoritmo AES não
-  dependem do baud e não precisam ser repetidos isoladamente; `make check` foi
-  reexecutado após a atualização para cobrir a integração atualizada.
+  117,56/103,38 MHz. Os SOFs baseline/secure foram gerados, mas ainda não
+  programados; o `uart_scope` de bancada foi programado para o P01.
+- **P01 físico a 38400: aprovado no nível de quadro** em 29/09, com captura AD2
+  no CH2: bit médio 26,038 µs, byte `0x55` decodificado corretamente e níveis
+  próximos de 0/3,33 V. A aquisição cobre apenas 819,1 µs; não mede o intervalo
+  de repetição de aproximadamente 100 ms. P02 (loopback), P03/P04 (baseline)
+  e P05/P06 (secure) ainda precisam ser repetidos a 38400. Os testes
+  independentes do algoritmo AES não dependem do baud e não precisam ser
+  repetidos isoladamente; `make check` já foi reexecutado após a atualização.
 - O NEO-M9N usa 38400/8N1 de fábrica. Seu módulo requer VCC de 2,7–3,6 V e tem
   I/O referido a VCC; a tensão de entrada do breakout ainda deve ser confirmada
   antes de alimentá-lo. Fontes oficiais: [datasheet](https://content.u-blox.com/sites/default/files/NEO-M9N-00B_DataSheet_UBX-19014285.pdf)
@@ -32,7 +34,8 @@ Submissão BTSym’26: até 30/09/2026.
 | --- | --- | --- |
 | 29/09 | RTL/host e regressão a 38400 | **Concluído** — `make check`, 36 testes Python; replay NMEA em 50 MHz aprovado nos dois modos |
 | 29/09 | Builds e métricas Quartus baseline/secure | **Concluído** — ambos os fits e auditorias temporais PASS; ver `metricas-fpga-2026-09-29.md` |
-| 29/09 | P01/P02, UART autônoma + loopback a 38400 | Pendente; capturar bit/frame e LEDs |
+| 29/09 | P01, UART autônoma a 38400 | **Concluído parcialmente** — quadro `0x55` e bit time aprovados na captura AD2; periodicidade de 100 ms não medida |
+| 29/09 | P02, loopback UART a 38400 | Pendente; confirmar RX válido/LEDs e ausência de erro |
 | 29/09 | P03/P04 baseline a 38400 | Pendente; eco CP2102 + captura AD2 |
 | 29/09 | P05/P06 secure a 38400 | Pendente; comparar ciphertext/decifragem e captura AD2 |
 | 29/09 | P07–P10 com M9N real | Pendente de validação elétrica, NMEA, baseline/secure e estabilidade |
@@ -251,6 +254,37 @@ LEDR6/LEDR7 como indicadores de overflow/framing. Ainda não houve conexão ou
 aquisição física do GPS, portanto P07 permanece **em preparação**, não aprovado.
 Próximo passo: identificar os pinos do breakout, verificar alimentação e TX,
 então capturar 512 bytes com `scripts/capture.py record` e validar NMEA.
+
+**P01 — captura UART autônoma em 29/09, 15:45 (WaveForms):** foi programado
+`uart_scope` na DE10-Lite, com clock de 50 MHz e TX emitindo `0x55` em 38400/8N1.
+O USB-Blaster programou o dispositivo MAX 10 `10M50DAF484@1`; o SOF programado
+tem SHA-256
+`34c79d78eb2c37014fe78d9212bace8e2bf740ef83dd80b0c1c2d6f1f3d7e48d`. O CSV
+corrigido contém o sinal no **Channel 2** (1 V/div, offset 0 V, modo Average),
+amostrado a 10 MS/s por 8.192 pontos (janela de 819,1 µs). A metadata ainda
+indica trigger de borda de descida no Channel 1, nível 1,5 V; alinhar a fonte
+de trigger ao CH2 na próxima aquisição.
+
+Com limiar de análise de 1,65 V, foram encontrados dez cruzamentos alternados
+ao longo do start, dos oito bits de dados e do início do stop. Os nove
+intervalos entre bordas têm média **26,038 µs** (taxa inferida **38.405 baud**,
+erro aproximado de **−0,014%** ante 38400; resolução temporal de 0,1 µs por
+amostra). A leitura nos centros do quadro confirma start `0`, dados LSB-first
+`1 0 1 0 1 0 1 0` e stop `1`, isto é, **`0x55`, 8N1 — aprovado**. Os patamares
+medianos foram −0,049 V (baixo) e 3,332 V (alto); a faixa extrema observada foi
+−0,079 a 3,373 V. O pequeno mínimo negativo deve ser tratado como excursão
+medida, não como nível lógico nominal.
+
+A aquisição termina muito antes dos 100 ms entre quadros; portanto, P01 passa
+para baud, enquadramento, padrão de dados e níveis observados, mas a
+periodicidade/autonomia não foi confirmada. Os 100 ms permanecem a meta do
+estímulo de bancada: o RTL usa `PERIOD_CYCLES = CLK_FREQ / 10`, independente de
+`BAUD_RATE`; a troca de baud não exige alterar a cadência. Arquivos brutos em
+`docs/evidence/`: `de10-lite-m9-p01-2026-09-29.csv` (SHA-256
+`99faee86e72e23bc8652dcbb39aa6477e52d05f97090e9b3c18fc3e233ac4e7d`) e
+`de10-lite-m9-p01-2026-09-29.dwf3work` (SHA-256
+`08493f88224cffa9e925ee9a8585f61e85febc0a3da22fe6423367647d8793b2`).
+Próximo ensaio: P02, loopback TX→RX na DE10-Lite a 38400.
 
 ## Situação em 26/09/2026
 

@@ -39,7 +39,8 @@ Os ensaios físicos anteriores da UART e dos tops integrados foram realizados a
 
 | Ensaio | Repetir? | Razão / evidência exigida |
 | --- | --- | --- |
-| P01/P02 UART autônoma e loopback | Sim | Nova temporização; quadro 0x55, 26,04 µs/bit, LEDs e captura |
+| P01 UART autônoma | Repetido parcialmente em 29/09 | Quadro `0x55`/8N1 e 26,038 µs/bit confirmados; janela curta não confirma repetição de 100 ms |
+| P02 loopback UART | Sim | Confirmar recepção física e LEDs a 38400; captura do retorno |
 | P03/P04 baseline | Sim | Rebuild 38400, eco do vetor conhecido e captura RX/TX |
 | P05/P06 secure | Sim | Rebuild 38400, ciphertext e recuperação PC; novo nonce por captura |
 | AES-128/CAVP e CTR oracle | Não isoladamente | Independentes da UART; reexecutados como parte de `make check` |
@@ -60,9 +61,13 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
 3. **Concluído em 29/09:** `make baseline-fpga`, `make secure-fpga` e
    `make metrics` passaram; ambos os SOFs e relatórios pós-fit foram gerados,
    sem programação física da placa.
-4. **Pendente:** na bancada, repetir P01–P06 em 38400 com DE10-Lite, CP2102 e AD2. Registrar
-   vetor, byte time/frame, canal/pino, escala, trigger, arquivo bruto, versão do
-   SOF e resultado dos LEDs. Reprogramar entre baseline e secure.
+4. **P01 concluído parcialmente em 29/09:** a captura AD2 do `uart_scope` na
+   DE10-Lite mostrou `0x55` em 8N1 e bit médio de 26,038 µs a 38400; os dados,
+   configuração, hashes e limite da janela estão em `cronograma.md` e
+   `plano-de-testes.md`. A janela não confirma os 100 ms entre quadros.
+   **Pendente:** P02 loopback e P03–P06 com CP2102/AD2, registrando vetor,
+   tempo de bit/quadro, canal/pino, escala, trigger, arquivo bruto, SOF e LEDs;
+   reprogramar entre baseline e secure.
 5. **Pendente:** conferir o breakout do M9N e capturar sua UART diretamente pelo CP2102. Validar
    bytes NMEA completos, CRLF, checksums e SHA-256; proteger coordenadas pessoais.
 6. **Pendente:** demonstrar GPS→FPGA→PC diretamente, observando entrada e saída. Para uma
@@ -79,7 +84,7 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
 | Data | Prioridade | Critério de saída |
 | --- | --- | --- |
 | 29/09 | RTL/host 38400, regressão, replay GPS simulado, Quartus baseline/secure e métricas | Logs `PASS`, SOFs atuais, timing sem violações e dados novos no relatório |
-| 29/09 | P01–P06 na DE10-Lite | UART/loopback, eco baseline, CTR secure e capturas correspondentes; estados separados |
+| 29/09 | P02–P06 na DE10-Lite | Loopback, eco baseline, CTR secure e capturas correspondentes; P01 já validado no nível de quadro |
 | 29–30/09 | Captura M9N e integração | NMEA validado; conexão direta e/ou replay físico claramente identificados |
 | 30/09 | Artigo e submissão | Revisão PT/EN, números rastreáveis, limitações explícitas e comprovante BTSym |
 

@@ -34,8 +34,11 @@ baseline não contenha um AES apenas desabilitado em tempo de execução.
 
 ## Teste UART de bancada
 
-O gerador interno de `uart_scope` solicita um byte `0x55` a cada 100 ms.
-O TX o transmite mesmo com o RX desconectado; um osciloscópio basta para
+O gerador interno de `uart_scope` solicita um byte `0x55` a cada 100 ms,
+configurados por `PERIOD_CYCLES = CLK_FREQ / 10`. Esse intervalo entre inícios
+de quadro é independente do baud rate: mudar de 9600 para 38400 encurta o
+quadro 8N1 de aproximadamente 1,04 ms para 260 µs, mas mantém os 100 ms entre
+transmissões. O TX opera mesmo com o RX desconectado; um osciloscópio basta para
 observar o sinal. O RX entrega o último byte aos LEDs. Com um jumper externo
 TX → RX, o teste também passa pelos pinos físicos de entrada e saída.
 

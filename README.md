@@ -16,13 +16,13 @@ biblioteca independente; ver
 O teste UART autônomo gera 0x55 a cada 100 ms para observar TX no osciloscópio,
 com RX e LEDs para loopback por jumper. Seu SOF e a auditoria temporal passaram;
 ver [revisão e resultados de 14/09](docs/revisao-2026-09-14.md).
-Os testes físicos anteriores da UART autônoma e das variantes baseline/secure
-foram feitos na DE10-Lite a 9600 baud. A configuração ativa agora é 38400/8N1
-para corresponder ao NEO-M9N; P01–P06 precisam ser repetidos nessa taxa antes de
-serem citados como evidência física atual. Os vetores independentes de AES/CTR
+Os ensaios físicos anteriores da UART e das variantes baseline/secure foram
+feitos na DE10-Lite a 9600 baud. Na configuração vigente, o P01 da UART
+autônoma foi repetido a 38400/8N1: o AD2 capturou e decodificou `0x55`, com
+26,038 µs/bit. A janela curta não confirma a repetição a cada 100 ms. P02–P06
+e a captura do GPS real ainda estão pendentes. Os vetores independentes AES/CTR
 continuam válidos e foram reexecutados na regressão. A Cyclone IV foi retirada
-da matriz experimental; seu código e resultados anteriores ficam arquivados,
-sem builds ativos. A captura do GPS real continua pendente. Ver o
+da matriz experimental; seus registros permanecem arquivados. Ver o
 [plano de testes](docs/plano-de-testes.md).
 
 Em 29/09, o replay NMEA público de cinco sentenças (309 bytes com CRLF) passou
@@ -279,9 +279,9 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo da bancada DE10-Lite: repetir a UART a 38400, validar o enlace com
-o NEO-M9N e então executar P07–P10. O procedimento e os critérios estão no
-[plano de testes](docs/plano-de-testes.md).
+Próximo passo da bancada DE10-Lite: executar P02 (loopback) a 38400; depois,
+validar baseline/secure e o enlace com o NEO-M9N. O procedimento e os critérios
+estão no [plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.
 Simulação, fit e programação não substituem a medição física nem a captura GPS.
