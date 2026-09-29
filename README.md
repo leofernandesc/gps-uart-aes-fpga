@@ -19,10 +19,11 @@ ver [revisão e resultados de 14/09](docs/revisao-2026-09-14.md).
 Os ensaios físicos anteriores da UART e das variantes baseline/secure foram
 feitos na DE10-Lite a 9600 baud. Na configuração vigente, o P01 da UART
 autônoma foi repetido a 38400/8N1: o AD2 capturou e decodificou `0x55`, com
-26,038 µs/bit. A janela curta não confirma a repetição a cada 100 ms. P02–P06
-e a captura do GPS real ainda estão pendentes. Os vetores independentes AES/CTR
-continuam válidos e foram reexecutados na regressão. A Cyclone IV foi retirada
-da matriz experimental; seus registros permanecem arquivados. Ver o
+26,038 µs/bit. Uma segunda captura também decodificou `0x55`, medindo
+26,0388 µs/bit. As duas janelas curtas não confirmam a repetição a cada 100 ms.
+P02–P06 e a captura do GPS real ainda estão pendentes. Os vetores independentes
+AES/CTR continuam válidos e foram reexecutados na regressão. A Cyclone IV foi
+retirada da matriz experimental; seus registros permanecem arquivados. Ver o
 [plano de testes](docs/plano-de-testes.md).
 
 Em 29/09, o replay NMEA público de cinco sentenças (309 bytes com CRLF) passou

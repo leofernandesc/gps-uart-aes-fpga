@@ -210,7 +210,7 @@ centros de bit.
 | Cadência configurada no estímulo | 100 ms entre inícios de quadro (`PERIOD_CYCLES = CLK_FREQ / 10`), independente do baud |
 | Níveis observados | −0,0787 a 3,3728 V (patamares próximos de 0 e 3,33 V) |
 | Período médio de bit | 26,0381 µs, calculado a partir de 9 intervalos de borda |
-| Baud inferido | 38.405 baud; erro aproximado −0,014% contra 38400 |
+| Baud inferido | 38.405 baud; erro aproximado +0,014% contra 38400 |
 | Decodificação nos centros | start 0, dados LSB-first `1 0 1 0 1 0 1 0`, stop 1 = `0x55` |
 | Trigger no arquivo | Channel 1, falling, 1,5 V; traço exportado no Channel 2 — alinhar fonte de trigger ao CH2 no próximo ensaio |
 | Conclusão | Quadro, padrão de dados e temporização aprovados; periodicidade de 100 ms não medida |
@@ -231,9 +231,29 @@ Capturas preservadas em `docs/evidence/`:
   `08493f88224cffa9e925ee9a8585f61e85febc0a3da22fe6423367647d8793b2`.
 
 **Limite e próximo passo:** os 819,1 µs capturam só um quadro e não confirmam
-que o `uart_scope` repete a transmissão a cada 100 ms. P02 é o próximo teste:
-TX→RX por jumper, observação dos indicadores de recepção/erro e captura física
-a 38400.
+que o `uart_scope` repete a transmissão a cada 100 ms. Antes de P02, fazer uma
+captura em Record mode no CH2 a aproximadamente 400 kS/s por pelo menos 250 ms
+(cerca de 100 mil amostras), com trigger de descida a 1,5 V. Critério: observar
+ao menos três inícios de quadro e medir dois intervalos próximos de 100 ms.
+Depois, P02 verifica TX→RX por jumper, LEDs de recepção/erro e o quadro a 38400.
+
+#### Repetição P01 — captura AD2 às 16:39:36.927
+
+O segundo CSV preserva metadados e amostras em volts, facilitando a análise:
+CH2, 10 MS/s, 8.192 pontos, 1 V/div, offset 0 V e modo Average. Com limiar de
+1,65 V e interpolação linear, foram medidos dez cruzamentos e nove intervalos
+de bit; a média foi **26,03881 µs** (**38.404,21 baud**, erro aproximado
+**+0,011%** contra 38400). A amostragem nos centros confirma `0x55` em 8N1.
+As tensões extremas foram −0,086045 e 3,372845 V. A janela continua em 819,1 µs,
+insuficiente para medir a repetição de 100 ms; portanto P01 segue aprovado para
+baud e quadro, mas parcial quanto à cadência.
+
+- CSV: `de10-lite-m9-p01-repeat-2026-09-29-1639.csv` (SHA-256
+  `f19ebb8ca50fab6f051f1688020b21fb14feaa58be837641188aaa5a714639c0`).
+- O CSV não registra a configuração do trigger; a captura não substitui uma
+  aquisição longa destinada a medir o intervalo entre quadros.
+- Próxima aquisição de P01: Record mode, CH2, ~400 kS/s, ≥250 ms e trigger de
+  descida a 1,5 V; registrar pelo menos três inícios de quadro.
 
 ### Evidências físicas históricas — executadas a 9600 baud
 

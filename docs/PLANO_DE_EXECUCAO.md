@@ -39,7 +39,7 @@ Os ensaios físicos anteriores da UART e dos tops integrados foram realizados a
 
 | Ensaio | Repetir? | Razão / evidência exigida |
 | --- | --- | --- |
-| P01 UART autônoma | Repetido parcialmente em 29/09 | Quadro `0x55`/8N1 e 26,038 µs/bit confirmados; janela curta não confirma repetição de 100 ms |
+| P01 UART autônoma | Repetido parcialmente em 29/09 | Duas capturas confirmam quadro `0x55`/8N1 e bit próximo de 26,039 µs; janelas curtas não confirmam repetição de 100 ms |
 | P02 loopback UART | Sim | Confirmar recepção física e LEDs a 38400; captura do retorno |
 | P03/P04 baseline | Sim | Rebuild 38400, eco do vetor conhecido e captura RX/TX |
 | P05/P06 secure | Sim | Rebuild 38400, ciphertext e recuperação PC; novo nonce por captura |
@@ -61,11 +61,13 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
 3. **Concluído em 29/09:** `make baseline-fpga`, `make secure-fpga` e
    `make metrics` passaram; ambos os SOFs e relatórios pós-fit foram gerados,
    sem programação física da placa.
-4. **P01 concluído parcialmente em 29/09:** a captura AD2 do `uart_scope` na
-   DE10-Lite mostrou `0x55` em 8N1 e bit médio de 26,038 µs a 38400; os dados,
-   configuração, hashes e limite da janela estão em `cronograma.md` e
-   `plano-de-testes.md`. A janela não confirma os 100 ms entre quadros.
-   **Pendente:** P02 loopback e P03–P06 com CP2102/AD2, registrando vetor,
+4. **P01 concluído parcialmente em 29/09:** duas capturas AD2 do `uart_scope`
+   na DE10-Lite confirmaram `0x55` em 8N1 e bit médio de 26,038/26,0388 µs a
+   38400; configuração, hashes e limite das janelas estão em `cronograma.md`
+   e `plano-de-testes.md`. As capturas não confirmam os 100 ms entre quadros.
+   **Pendente antes de P02:** aquisição longa em Record mode (CH2, ~400 kS/s,
+   ≥250 ms) para medir dois intervalos entre quadros. Depois, P02 loopback e
+   P03–P06 com CP2102/AD2, registrando vetor,
    tempo de bit/quadro, canal/pino, escala, trigger, arquivo bruto, SOF e LEDs;
    reprogramar entre baseline e secure.
 5. **Pendente:** conferir o breakout do M9N e capturar sua UART diretamente pelo CP2102. Validar

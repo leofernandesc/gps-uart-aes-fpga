@@ -18,13 +18,14 @@ Submissão BTSym’26: até 30/09/2026.
   cantos temporais. Recursos: 331/5.603 LE, 212/913 registradores e Fmax mínima
   117,56/103,38 MHz. Os SOFs baseline/secure foram gerados, mas ainda não
   programados; o `uart_scope` de bancada foi programado para o P01.
-- **P01 físico a 38400: aprovado no nível de quadro** em 29/09, com captura AD2
-  no CH2: bit médio 26,038 µs, byte `0x55` decodificado corretamente e níveis
-  próximos de 0/3,33 V. A aquisição cobre apenas 819,1 µs; não mede o intervalo
-  de repetição de aproximadamente 100 ms. P02 (loopback), P03/P04 (baseline)
-  e P05/P06 (secure) ainda precisam ser repetidos a 38400. Os testes
-  independentes do algoritmo AES não dependem do baud e não precisam ser
-  repetidos isoladamente; `make check` já foi reexecutado após a atualização.
+- **P01 físico a 38400: aprovado no nível de quadro** em duas capturas AD2 no
+  CH2: `0x55` decodificado corretamente, com médias de 26,0381 e 26,0388 µs/bit
+  e níveis próximos de 0/3,33 V. Cada aquisição cobre apenas 819,1 µs; nenhuma
+  mede o intervalo de repetição de aproximadamente 100 ms. Ainda falta uma
+  aquisição longa de P01; depois dela, P02 (loopback), P03/P04 (baseline) e
+  P05/P06 (secure) precisam ser repetidos a 38400. Os testes independentes do
+  algoritmo AES não dependem do baud e não precisam ser repetidos isoladamente;
+  `make check` já foi reexecutado após a atualização.
 - O NEO-M9N usa 38400/8N1 de fábrica. Seu módulo requer VCC de 2,7–3,6 V e tem
   I/O referido a VCC; a tensão de entrada do breakout ainda deve ser confirmada
   antes de alimentá-lo. Fontes oficiais: [datasheet](https://content.u-blox.com/sites/default/files/NEO-M9N-00B_DataSheet_UBX-19014285.pdf)
@@ -268,7 +269,7 @@ de trigger ao CH2 na próxima aquisição.
 Com limiar de análise de 1,65 V, foram encontrados dez cruzamentos alternados
 ao longo do start, dos oito bits de dados e do início do stop. Os nove
 intervalos entre bordas têm média **26,038 µs** (taxa inferida **38.405 baud**,
-erro aproximado de **−0,014%** ante 38400; resolução temporal de 0,1 µs por
+erro aproximado de **+0,014%** ante 38400; resolução temporal de 0,1 µs por
 amostra). A leitura nos centros do quadro confirma start `0`, dados LSB-first
 `1 0 1 0 1 0 1 0` e stop `1`, isto é, **`0x55`, 8N1 — aprovado**. Os patamares
 medianos foram −0,049 V (baixo) e 3,332 V (alto); a faixa extrema observada foi
@@ -284,7 +285,24 @@ estímulo de bancada: o RTL usa `PERIOD_CYCLES = CLK_FREQ / 10`, independente de
 `99faee86e72e23bc8652dcbb39aa6477e52d05f97090e9b3c18fc3e233ac4e7d`) e
 `de10-lite-m9-p01-2026-09-29.dwf3work` (SHA-256
 `08493f88224cffa9e925ee9a8585f61e85febc0a3da22fe6423367647d8793b2`).
-Próximo ensaio: P02, loopback TX→RX na DE10-Lite a 38400.
+
+**Repetição P01 — aquisição WaveForms às 16:39:36.927:** o novo CSV registra
+CH2 a 10 MS/s, 8.192 pontos, 1 V/div, offset 0 V e modo Average. A janela é
+819,1 µs, com eixo temporal de −211,010 a +608,090 µs. Com limiar de
+1,65 V e interpolação linear entre amostras, os dez cruzamentos produzem nove
+intervalos com média **26,03881 µs**, equivalente a **38.404,21 baud** (erro
+aproximado **+0,011%** ante 38400). A amostragem nos centros confirma start 0,
+dados LSB-first `1 0 1 0 1 0 1 0`, stop 1 (`0x55`). As extremidades observadas
+foram −0,086045 e 3,372845 V; o mínimo negativo é um extremo transitório, não
+o patamar lógico nominal. Esta repetição confirma novamente o quadro e a taxa,
+mas, por durar menos de 1 ms, não mede a cadência de 100 ms. Evidência:
+`docs/evidence/de10-lite-m9-p01-repeat-2026-09-29-1639.csv`, SHA-256
+`f19ebb8ca50fab6f051f1688020b21fb14feaa58be837641188aaa5a714639c0`.
+
+Próximo passo: fechar a cadência de P01 em Record mode, CH2, cerca de 400 kS/s
+por pelo menos 250 ms (aproximadamente 100 mil amostras), com trigger de borda
+de descida em 1,5 V. A captura deve mostrar ao menos três inícios de quadro e
+dois intervalos próximos de 100 ms. Depois, executar P02, loopback TX→RX.
 
 ## Situação em 26/09/2026
 
