@@ -20,9 +20,22 @@ Os ensaios físicos anteriores da UART e das variantes baseline/secure foram
 feitos na DE10-Lite a 9600 baud. Na configuração vigente, o P01 da UART
 autônoma foi repetido a 38400/8N1: o AD2 capturou e decodificou `0x55`, com
 26,038 µs/bit. Uma segunda captura também decodificou `0x55`, medindo
-26,0388 µs/bit. As duas janelas curtas não confirmam a repetição a cada 100 ms.
-P02–P06 e a captura do GPS real ainda estão pendentes. Os vetores independentes
-AES/CTR continuam válidos e foram reexecutados na regressão. A Cyclone IV foi
+26,0388 µs/bit. Em uma aquisição posterior, dez buffers no modo Repeated
+decodificaram `0x55`; os horários indicam intervalo médio de 99,33 ms entre
+quadros (93–107 ms). P01 está concluído, com ressalva sobre a seleção do
+trigger no arquivo salvo. A captura P02 a 38400 decodificou `0x55` em 10/10
+buffers, com bit time médio de 26,040 µs e intervalo médio de 99,56 ms entre
+quadros. A captura usa apenas C1, o que basta para observar a linha comum
+TX→RX unida pelo jumper. A verificação visual confirmou LEDR8 (recepção válida)
+aceso e LEDR9 (erro) apagado; P02 está concluído. P03 baseline passou no
+CP2102 com 20/20 bytes em quatro transações. P04 também passou: a captura AD2
+decodifica os cinco bytes em RX e TX a 38400 baud, com bit time de ~26,0 µs.
+P05 secure a 38400 passou: quatro transações, 20/20 bytes cifrados e recuperados
+exatamente no PC. P06 também passou: o CP2102 recebeu os cinco bytes cifrados e
+o AD2 decodificou simultaneamente estímulo em RX e ciphertext em TX. A captura
+física do GPS real continua pendente.
+Os vetores independentes AES/CTR continuam válidos e foram reexecutados na
+regressão. A Cyclone IV foi
 retirada da matriz experimental; seus registros permanecem arquivados. Ver o
 [plano de testes](docs/plano-de-testes.md).
 
@@ -280,9 +293,9 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo da bancada DE10-Lite: executar P02 (loopback) a 38400; depois,
-validar baseline/secure e o enlace com o NEO-M9N. O procedimento e os critérios
-estão no [plano de testes](docs/plano-de-testes.md).
+Próximo passo da bancada DE10-Lite: validar a entrada física do NEO-M9N. O
+procedimento, critérios e evidências estão no
+[plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.
 Simulação, fit e programação não substituem a medição física nem a captura GPS.

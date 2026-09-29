@@ -39,13 +39,13 @@ Os ensaios físicos anteriores da UART e dos tops integrados foram realizados a
 
 | Ensaio | Repetir? | Razão / evidência exigida |
 | --- | --- | --- |
-| P01 UART autônoma | Repetido parcialmente em 29/09 | Duas capturas confirmam quadro `0x55`/8N1 e bit próximo de 26,039 µs; janelas curtas não confirmam repetição de 100 ms |
-| P02 loopback UART | Sim | Confirmar recepção física e LEDs a 38400; captura do retorno |
-| P03/P04 baseline | Sim | Rebuild 38400, eco do vetor conhecido e captura RX/TX |
-| P05/P06 secure | Sim | Rebuild 38400, ciphertext e recuperação PC; novo nonce por captura |
-| AES-128/CAVP e CTR oracle | Não isoladamente | Independentes da UART; reexecutados como parte de `make check` |
-| Replay NMEA RTL, métricas e Quartus | Sim | Regenerar resultados no ponto real 50 MHz/38400 |
-| Captura física NEO-M9N | Primeira execução | Validar taxa, níveis, NMEA e aquisição serial real |
+| P01 UART autônoma | Concluído em 29/09 | Dez quadros `0x55` capturados em modo Repeated; intervalo médio ~99,33 ms |
+| P02 loopback UART | Concluído em 29/09 | Dez quadros `0x55` e LEDs RX válido/erro confirmados |
+| P03/P04 baseline | Concluído em 29/09 | CP2102 20/20; AD2 decodifica os cinco bytes em RX e TX |
+| P05/P06 secure | Concluído em 29/09 | P05 20/20 e P06 5/5 cifrados; PC recuperou a referência e AD2 confirmou os dois canais |
+| AES-128/CAVP e CTR oracle | Concluído em `make check` | Independentes da UART; regressão AES/CTR aprovada |
+| Replay NMEA RTL, métricas e Quartus | Concluído em 29/09 | Regressão, replay, recursos e timing atualizados para 50 MHz/38400 |
+| Captura física NEO-M9N | Primeira execução pendente | Validar taxa, níveis, NMEA e aquisição serial real |
 
 Os resultados antigos em 9600 permanecem no diário, identificados como
 históricos; não devem ser apresentados como resultados da configuração final.
@@ -61,15 +61,14 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
 3. **Concluído em 29/09:** `make baseline-fpga`, `make secure-fpga` e
    `make metrics` passaram; ambos os SOFs e relatórios pós-fit foram gerados,
    sem programação física da placa.
-4. **P01 concluído parcialmente em 29/09:** duas capturas AD2 do `uart_scope`
-   na DE10-Lite confirmaram `0x55` em 8N1 e bit médio de 26,038/26,0388 µs a
-   38400; configuração, hashes e limite das janelas estão em `cronograma.md`
-   e `plano-de-testes.md`. As capturas não confirmam os 100 ms entre quadros.
-   **Pendente antes de P02:** aquisição longa em Record mode (CH2, ~400 kS/s,
-   ≥250 ms) para medir dois intervalos entre quadros. Depois, P02 loopback e
-   P03–P06 com CP2102/AD2, registrando vetor,
-   tempo de bit/quadro, canal/pino, escala, trigger, arquivo bruto, SOF e LEDs;
-   reprogramar entre baseline e secure.
+4. **P01–P06 concluídos na DE10-Lite a 38400 em 29/09:** P01/P02 têm
+   capturas AD2 e validação do loopback; P03/P04 baseline passou por CP2102 e
+   captura dos pinos; P05 secure passou com 20/20 bytes cifrados e recuperação
+   exata no PC; P06 passou com 5/5 bytes, recuperação exata e decodificação
+   simultânea de V10/W10 no AD2. Configuração, hashes, limites e evidências
+   estão em `cronograma.md` e `plano-de-testes.md`. Próxima etapa: validar a
+   entrada física do M9N, registrando configuração, arquivos brutos, níveis e
+   estado dos LEDs.
 5. **Pendente:** conferir o breakout do M9N e capturar sua UART diretamente pelo CP2102. Validar
    bytes NMEA completos, CRLF, checksums e SHA-256; proteger coordenadas pessoais.
 6. **Pendente:** demonstrar GPS→FPGA→PC diretamente, observando entrada e saída. Para uma

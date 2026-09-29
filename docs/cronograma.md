@@ -16,14 +16,27 @@ Submissão BTSym’26: até 30/09/2026.
   FIFO máxima de 1 byte, 80 ns de RX válido até início do TX e 260.480 ns até
   fim do quadro TX. Baseline e secure também passaram no Quartus e nos três
   cantos temporais. Recursos: 331/5.603 LE, 212/913 registradores e Fmax mínima
-  117,56/103,38 MHz. Os SOFs baseline/secure foram gerados, mas ainda não
-  programados; o `uart_scope` de bancada foi programado para o P01.
-- **P01 físico a 38400: aprovado no nível de quadro** em duas capturas AD2 no
-  CH2: `0x55` decodificado corretamente, com médias de 26,0381 e 26,0388 µs/bit
-  e níveis próximos de 0/3,33 V. Cada aquisição cobre apenas 819,1 µs; nenhuma
-  mede o intervalo de repetição de aproximadamente 100 ms. Ainda falta uma
-  aquisição longa de P01; depois dela, P02 (loopback), P03/P04 (baseline) e
-  P05/P06 (secure) precisam ser repetidos a 38400. Os testes independentes do
+  117,56/103,38 MHz. O SOF baseline foi programado às 17:44 e usado no P03;
+  o SOF secure foi programado e o P05 repetido com contexto novo: 20/20 bytes
+  foram cifrados e recuperados exatamente no PC. O P06 também passou: cinco
+  bytes cifrados foram recuperados no PC e decodificados no AD2 em RX/TX. O
+  `uart_scope` de bancada foi programado para o P01.
+- **P01 físico a 38400: concluído**. Além das duas capturas iniciais, o workspace
+  AD2 mais recente guarda dez aquisições em modo Repeated; cada uma decodifica
+  `0x55`, com período médio de bit de 26,039 µs (38.402,85 baud). Os horários
+  dos buffers dão nove intervalos entre quadros, média de 99,33 ms (93–107 ms),
+  consistente com a cadência configurada de 100 ms. O arquivo salvo mostra
+  trigger em Channel 1 embora C1 esteja desligado e C2 ligado; manter essa
+  ressalva e selecionar CH2 nos próximos ensaios.
+- **P02 físico a 38400: concluído**. Dez buffers AD2 decodificam `0x55`, com
+  bit time médio de 26,040 µs e intervalo médio de 99,56 ms (94–107 ms). A
+  captura usa um canal, suficiente para observar a linha comum TX↔RX conectada
+  pelo jumper. Na verificação visual, LEDR8 (RX válido) acendeu e LEDR9 (erro)
+  permaneceu apagado, confirmando o loopback. **P03 baseline: eco CP2102
+  aprovado, 20/20 bytes em quatro transações. P04: captura completa de cinco
+  bytes em RX/TX, bit time ~26,0 µs, aprovada na DE10-Lite. P05 secure: 20/20
+  bytes cifrados, sem perdas, e recuperação CTR exata no PC. P06 secure no AD2
+  também está concluído; GPS físico segue pendente.** Os testes independentes do
   algoritmo AES não dependem do baud e não precisam ser repetidos isoladamente;
   `make check` já foi reexecutado após a atualização.
 - O NEO-M9N usa 38400/8N1 de fábrica. Seu módulo requer VCC de 2,7–3,6 V e tem
@@ -35,12 +48,51 @@ Submissão BTSym’26: até 30/09/2026.
 | --- | --- | --- |
 | 29/09 | RTL/host e regressão a 38400 | **Concluído** — `make check`, 36 testes Python; replay NMEA em 50 MHz aprovado nos dois modos |
 | 29/09 | Builds e métricas Quartus baseline/secure | **Concluído** — ambos os fits e auditorias temporais PASS; ver `metricas-fpga-2026-09-29.md` |
-| 29/09 | P01, UART autônoma a 38400 | **Concluído parcialmente** — quadro `0x55` e bit time aprovados na captura AD2; periodicidade de 100 ms não medida |
-| 29/09 | P02, loopback UART a 38400 | Pendente; confirmar RX válido/LEDs e ausência de erro |
-| 29/09 | P03/P04 baseline a 38400 | Pendente; eco CP2102 + captura AD2 |
-| 29/09 | P05/P06 secure a 38400 | Pendente; comparar ciphertext/decifragem e captura AD2 |
+| 29/09 | P01, UART autônoma a 38400 | **Concluído** — dez quadros `0x55`; intervalos dos buffers AD2: média 99,33 ms (93–107 ms), trigger a corrigir nos próximos ensaios |
+| 29/09 | P02, loopback UART a 38400 | **Concluído** — 10/10 quadros `0x55` e temporização no AD2; LEDR8 RX válido aceso, LEDR9 erro apagado |
+| 29/09 | P03/P04 baseline a 38400 | **Concluído na DE10-Lite** — P03 eco 20/20; P04 decodifica os cinco bytes em RX e TX, bit time ~26,0 µs, janela AD2 10,239 ms |
+| 29/09 | P05 secure a 38400 | **Concluído** — reteste 4/4 transações, 20/20 bytes cifrados e recuperados; relatório privado `p05-secure-20b-38400-report-02.json` |
+| 29/09 | P06 secure no AD2 | **Concluído** — CP2102 5/5 e decifragem exata; captura AD2 decodifica entrada e ciphertext em V10/W10 |
 | 29/09 | P07–P10 com M9N real | Pendente de validação elétrica, NMEA, baseline/secure e estabilidade |
 | 30/09 | Atualizar resultados, revisar manuscritos e submeter | Até a deadline; manter evidências e comprovante |
+
+**P05 — reteste secure, 29/09/2026 às 18:32 (Manaus):** após programar
+`build/de10_lite/secure/uart_secure.sof`, o CP2102 enviou quatro vezes
+`55 A5 00 FF 3C`; a FPGA devolveu 20/20 bytes de ciphertext, sem perdas,
+extras ou timeout. A recuperação CTR no PC coincide byte a byte com a
+referência (SHA-256 `1ec8f144575a9c265334dfa2c385532741170ab730f39f5e38a9fae7f8517e5d`).
+O ciphertext tem SHA-256
+`594d430e1a9e09a58cf6ff0e4a7f1f342a3ef1bb1b05a32a7e6823645793ad59`.
+Relatório privado: `data/private/de10-2026-09-29/p05-secure-20b-38400-report-02.json`.
+O ensaio anterior que retornou texto claro permanece registrado como tentativa
+reprovada e foi supersedido por este reteste aprovado. Os 0,260 s de host
+incluem Linux/USB e não medem latência isolada da FPGA.
+
+**P06 secure, 29/09/2026 às 19:03 (Manaus): PASS.** Com contexto AES-CTR
+privado novo de 5 bytes e SOF compilado/auditado, o CP2102 enviou
+`55 A5 00 FF 3C`; a DE10-Lite devolveu `14 D8 F4 3D 63`. O relatório registra
+5/5 bytes, sem timeout, perda, extra ou divergência, e recuperação exata do
+vetor original. SHA-256 do ciphertext:
+`e80f629d07586546353b05aa1d678916257dbc245442fb6f1e0bd554fca9e8e0`.
+Relatório e bytes recebidos permanecem em `data/private/de10-2026-09-29/`.
+
+A captura do AD2 foi feita em dois canais, 800 kS/s, 8.192 amostras (10,239 ms),
+escala 1 V/div, offset 0 V e trigger de descida CH1 em 1,5 V. Com CH1→V10/RX e
+CH2→W10/TX, a decodificação independente encontrou os mesmos cinco bytes de
+entrada e os cinco bytes de ciphertext, com stop bits válidos. O período de bit
+estimado foi ~26,00 µs no CH1 e ~26,04 µs no CH2; os níveis amostrados ficaram
+próximos de 0–3,4 V. A associação física dos canais decorre da montagem, pois o
+CSV não grava nomes de pinos FPGA.
+
+Capturas arquivadas no repositório: [CSV do AD2](evidence/de10-lite-m9-p06-secure-ad2-2026-09-29.csv)
+e [workspace WaveForms](evidence/de10-lite-m9-p06-secure-ad2-2026-09-29.dwf3work).
+SHA-256: CSV `cf33576897ec8a0db90663b26f8672ca95d05b13f33d307ac5b29a3eb2a74300`;
+workspace `87192a501969b109b35ec28d4c8bd7c88e1df370c8267d8a7ebb44b1adb0bf21`;
+relatório privado `b9e3da3deacb63f67d181e1380cd034212792e96c84cf2d2b4583af2b9f699ef`.
+O início do TX ocorreu cerca de 247,5 µs após o início do primeiro quadro RX;
+isso inclui a recepção serial do byte e não é latência isolada de AES. O tempo
+de 68,98 ms no relatório é do caminho host/Linux/USB e também não mede a
+latência interna da FPGA. Próxima etapa: entrada real do NEO-M9N (P07).
 
 O plano anterior de duas placas/M8 e o freeze de 25/09 foram supersedidos.
 Detalhes datados abaixo são registros históricos, não requisitos atuais.
@@ -205,11 +257,12 @@ entrada em CH1; isso é observação temporal do enlace, não latência isolada 
 computação AES/FPGA. Hashes: CSV
 `249f074f682950b91e95e5fd13aa1d5f01da967eb31f6deed4cc4bb2d301ebd0`, workspace
 `.dwf3work` `fbf92e6423d2c17ab2100f9b253d821433f14c8423d572af9b2d7aeca7ec7176`.
-P04 baseline integrado e instrumental está aprovado na DE10-Lite. Como as duas
-plataformas são obrigatórias, a captura equivalente do P04 na Cyclone IV ainda
-precisa ser registrada; depois, seguir para P05 (secure).
+P04 baseline integrado e instrumental está aprovado na DE10-Lite. Este bloco
+descreve os ensaios daquela configuração; a Cyclone IV foi retirada do escopo
+ativo e seus resultados não são requisito para o artigo atual.
 
-**P05/P06 secure na DE10-Lite, 29/09/2026, 14:02 (Manaus):** o build secure
+**Registro histórico P05/P06 secure na DE10-Lite, perfil 9600/8N1,
+29/09/2026, 14:02 (Manaus):** o build secure
 para MAX 10 `10M50DAF484C7G`, 50 MHz/9600 baud, passou no Quartus e na auditoria
 dos três cantos; pior slack de setup 8,621 ns, sem violações. O SOF
 `build/de10_lite/secure/uart_secure.sof` (SHA-256
@@ -240,9 +293,10 @@ baixos médios: −0,052 V (CH1) e 0,014 V (CH2); altos médios: 3,390 V (CH1) e
 3,350 V (CH2). Faixas de toda a captura: −0,096–3,433 V e −0,034–3,391 V.
 CSV SHA-256 `36a01fbab4b7ec70b6300afaaf4a9ec57d104c675a78661b899b5d45d28039ee`;
 workspace SHA-256 `7655dbf33123385b9cdcc6d005eab07bf60fb024af99db171ddcacf92c4aed9a`.
-Resultado: P05/P06 aprovados na DE10-Lite em uma transação de cinco bytes;
-P04/P05/P06 da Cyclone IV, estabilidade prolongada e aquisição GPS ainda
-pendentes. AES-CTR não oferece autenticação.
+Resultado histórico: cinco bytes cifrados/decifrados e capturados no perfil
+9600/8N1. Isso não fecha P05/P06 para o perfil vigente M9/38400. A anotação de
+falha P05 neste registro descreve o estado antes do reteste aprovado às 18:32;
+ver o resultado atual acima. AES-CTR não oferece autenticação.
 
 **Preparação P07 na DE10-Lite, 29/09/2026, 14:19 (Manaus):** `make
 baseline-fpga` passou e gerou `build/de10_lite/baseline/uart_baseline.sof` para
@@ -299,10 +353,91 @@ mas, por durar menos de 1 ms, não mede a cadência de 100 ms. Evidência:
 `docs/evidence/de10-lite-m9-p01-repeat-2026-09-29-1639.csv`, SHA-256
 `f19ebb8ca50fab6f051f1688020b21fb14feaa58be837641188aaa5a714639c0`.
 
-Próximo passo: fechar a cadência de P01 em Record mode, CH2, cerca de 400 kS/s
-por pelo menos 250 ms (aproximadamente 100 mil amostras), com trigger de borda
-de descida em 1,5 V. A captura deve mostrar ao menos três inícios de quadro e
-dois intervalos próximos de 100 ms. Depois, executar P02, loopback TX→RX.
+Na captura isolada das 16:39, o arquivo tinha apenas um quadro e por isso não
+permitia avaliar a cadência. Não era necessário usar Record: a aquisição
+Repeated guarda os buffers no PC em ordem temporal. A captura de 16:57 descrita
+abaixo resolveu essa lacuna. Próximo passo: executar P02, loopback TX→RX, com a
+fonte de trigger alinhada ao CH2.
+
+#### Aquisição repetida P01 — workspace WaveForms às 16:57
+
+O arquivo `M9-P01.dwf3work` contém dez buffers de 8.192 amostras, capturados a
+10 MS/s (janela de 819,2 µs cada) em modo Repeated. A análise do canal de sinal
+(CH2) encontrou dez transições por quadro; a amostragem nos centros de bit
+decodifica `0x55` em 8N1 nos dez buffers. Sobre 90 intervalos entre transições,
+o período médio foi **26,0397 µs** (baud inferido **38.402,85**, erro de
+**+0,0074%** contra 38400). As extremidades observadas foram −0,0934 e
+3,3802 V.
+
+Os horários associados aos dez buffers avançam de 16:57:06.244 a 16:57:07.138.
+Os nove intervalos são **95, 99, 107, 97, 95, 104, 106, 98 e 93 ms**: média
+**99,33 ms**, mínimo 93 ms e máximo 107 ms. Isso confirma, com resolução de
+1 ms e dez observações, uma repetição compatível com a meta de 100 ms. A
+aquisição Repeated grava capturas no buffer do PC em ordem temporal, conforme
+o [manual do WaveForms](https://digilent.com/reference/software/waveforms/waveforms-3/reference-manual); Record não é requisito para esse método.
+
+Ressalva de configuração: o workspace salvo indica CH1 desligado, CH2 ligado,
+mas a fonte de trigger como Channel 1. Os quadros de CH2 e os horários foram
+analisados, porém a próxima configuração deve usar CH2 como fonte de trigger
+para deixar o ensaio inequívoco.
+
+- Workspace: `docs/evidence/de10-lite-m9-p01-repeated-2026-09-29-1657.dwf3work`
+  (SHA-256 `005c6c286f53bbb735fb466b7fba0e1a0538ba52a60a0809e093a0585b4c10ea`).
+- O CSV em `Documents/testerecordad2.csv` não foi usado para medir cadência:
+  não contém cabeçalho, taxa de amostragem ou timestamps e registra apenas
+  parte do quadro.
+
+#### P03 — eco baseline e captura AD2 às 17:47
+
+O CP2102 transmitiu quatro vezes `55 A5 00 FF 3C`; a FPGA devolveu todos os
+20 bytes, sem perda, bytes extras ou timeout. O relatório informa 259,046 ms de
+tempo total do host, que inclui Linux/USB e não deve ser apresentado como
+latência da FPGA. Relatório privado
+`data/private/de10-2026-09-29/p03-baseline-20b-report-01.json` (SHA-256
+`e90e47e439c4eb87c3dfa56166fff061842e791e53aa5880e60baeb2e21c24d9`); arquivo
+recebido com 20 bytes (SHA-256
+`1ec8f144575a9c265334dfa2c385532741170ab730f39f5e38a9fae7f8517e5d`).
+
+A captura Single `M9-P03` foi feita a 11,11111 MS/s, com 8.192 amostras por
+canal e duração total de **0,737190 ms**. O trigger estava em CH1, borda de
+descida a 1,65 V. CH1 variou de −0,0956 a 3,4254 V; CH2, de −0,0529 a 3,3728 V.
+Há atividade serial nos dois canais, mas o quadro de cinco bytes requer
+aproximadamente **1,302 ms** em 38400/8N1; logo o recorte não contém a
+transferência completa. O resultado P03 de comparação de bytes permanece PASS;
+esta aquisição não fecha P04.
+
+Para uma forma de onda integral de um burst, usar Single a 1 MS/s com 8.192
+amostras (8,192 ms; cerca de 26 amostras por bit), trigger CH1 na descida a
+1,65 V e armar antes de transmitir. Para capturar as quatro transações
+espaçadas em 50 ms, usar Record durante pelo menos 300 ms.
+
+Capturas arquivadas em `docs/evidence/`: CSV
+`de10-lite-m9-p03-baseline-ad2-2026-09-29-1747.csv` (SHA-256
+`2ba21d94c607a4915fe3b60f5903da6f4434b8b4366255854f188ec5fa3bf574`) e
+workspace `de10-lite-m9-p03-baseline-ad2-2026-09-29-1747.dwf3work` (SHA-256
+`727b5e6a76773d578f6bc15a074dd6ca39ae20130c008b1d9c41e7526a9849e9`).
+
+#### Recaptura P03/P04 — AD2 e CP2102 às 18:00
+
+Uma transação baseline de cinco bytes foi capturada com 8.192 pontos a
+800 kS/s (10,23875 ms), trigger CH1 de descida a 1,65 V e dois canais. O
+CP2102 recebeu `55 A5 00 FF 3C` integralmente (5/5, sem timeout/extras; status
+`PASS`). A decodificação analógica recupera o mesmo vetor tanto em CH1 (RX,
+CP2102 TXD→V10) quanto em CH2 (TX, W10→CP2102 RXD), incluindo start e stop.
+O bit time estimado é ~26,00 µs no CH1 e ~26,03 µs no CH2, compatível com
+38400 baud; a média de espaçamento entre quadros de byte é ~260 µs. O início
+do TX aparece cerca de 247,5 µs após o início do RX. Essa medição de pino a pino
+inclui o tempo de recepção do quadro UART e não é a latência interna isolada do
+AES. Níveis registrados: CH1 −0,0919 a 3,4403 V; CH2 −0,0455 a 3,3876 V,
+próximos da lógica de 0–3,3 V.
+
+O teste de bytes e a forma de onda de baseline estão aprovados. Relatório
+privado `data/private/de10-2026-09-29/p03-baseline-5b-report-02.json` (SHA-256
+`3eb1644bbdf055ac7580be2fdcdafb2ee59eb793703e9fb6571534421e02b16f`).
+Capturas: [CSV](evidence/de10-lite-m9-p03-baseline-ad2-2026-09-29-1800.csv)
+(SHA-256 `6327bbff8d6feda1c301eaa672d60932cced5e95d69d66173c7d99e7361fb637`)
+e [workspace WaveForms](evidence/de10-lite-m9-p03-baseline-ad2-2026-09-29-1800.dwf3work)
+(SHA-256 `2652c30c0d41fb2abc2a1391288c4d507ffd5c92558209a1eec5b896046492e2`).
 
 ## Situação em 26/09/2026
 
