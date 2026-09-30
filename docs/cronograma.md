@@ -69,6 +69,7 @@ Submissão BTSym’26: até 30/09/2026.
 | 29–30/09 | P07–P11 GPS, replays e reset | **P07 aprovado** — aquisição e saída física baseline com NMEA válido; **P08 3/3**, **P09 secure** (4.096 bytes) e **P10 baseline/secure** (32.768 bytes) aprovados com recuperação CTR exata. P09/P10 foram replays da referência GPS armazenada, com GPS desconectado. **P11 reset/bloqueio/recuperação aprovado** com nonce novo e 5/5 bytes; LEDR6/7/8 pós-transmissão não registrados. |
 | 30/09 | P12/P13 GPS ao vivo | **P12 baseline aprovado** — 8.192 bytes, 127 sentenças NMEA. **P13 secure aprovado** — 8.192 bytes cifrados e recuperados; 127 sentenças NMEA válidas; LEDR6/7 apagados. Capturas e contexto permanecem privados. |
 | 30/09 | Seleção das métricas e checagem dos manuscritos | **Concluído** — hashes do par pós-fit congelados; tabelas e resumos PT/EN conferidos contra a seleção; 46 testes de software aprovados. Ver `metricas-fpga-2026-09-30.md`. |
+| 30/09 | Auditoria complementar de pulsos e sincronizadores | **Concluído** — minimum pulse width positivo nos três cantos dos fits selecionados; dois perfis de análise com sincronizadores explícitos recompilados e auditados; 53 testes de software aprovados. Sem programação física ou troca dos SOFs do artigo. |
 | 30/09 | Atualizar resultados, revisar manuscritos e submeter | Até a deadline; manter evidências e comprovante |
 
 ## Revisão das métricas e continuidade — 30/09/2026
@@ -95,14 +96,43 @@ O bloqueio após KEY0 depende da FPGA permanecer configurada e alimentada;
 novo ensaio secure exige contexto e bitstream novos, inclusive após desligar.
 
 Próximo passo de fechamento: revisar referências externas, template, figuras e
-PDF final e registrar o comprovante da submissão. Próxima melhoria técnica:
-reconhecimento explícito dos sincronizadores/MTBF e auditoria de minimum pulse
-width, seguida de nova análise Quartus, manifesto e seleção de métricas. Essas
-verificações não foram marcadas como implementadas ou medidas.
+PDF final e registrar o comprovante da submissão. A melhoria temporal prevista
+foi concluída na auditoria complementar abaixo. Não houve troca da seleção de
+métricas ou dos SOFs experimentais.
 
 A consulta ao remoto nesta revisão falhou por resolução de DNS de
 `github.com`. Commit local não equivale a publicação; conferir o remoto após
 restabelecer a conexão.
+
+### Auditoria temporal complementar — concluída em 30/09
+
+`make timing-review TIMING_REVIEW_OUTPUT=build/timing-review/de10-lite-2026-09-30-02`
+passou. A execução reaplicou setup, hold, recovery e removal ao banco pós-fit
+de cada projeto, exigindo igualdade com a seleção do artigo, e acrescentou
+minimum pulse width nos três cantos. O pior slack de pulso foi **9,266 ns**
+nos dois fits selecionados. Seus hashes de fontes e artefatos permaneceram
+iguais; AES, UART, contextos, QSFs originais e SOFs da bancada não mudaram.
+
+Dois projetos isolados receberam identificação explícita somente nos quatro
+registradores das cadeias UART RX/reset e foram recompilados. Ambos passaram
+nos cinco checks; o Quartus confirmou duas cadeias `User Specified`, dois
+estágios e as hipóteses de 38.400 transições/s em RX e 6.250.000/s em KEY0.
+As estimativas MTBF são de modelo, não de bancada. Os novos perfis ficaram em
+329/5.587 LEs e Fmax mínima 148,17/92,55 MHz, mas **não foram programados** nem
+promovidos ao artigo. O par selecionado continua em 331/5.591 LEs e
+117,56/92,61 MHz.
+
+Resultados e limites: [`auditoria-temporal-2026-09-30.md`](auditoria-temporal-2026-09-30.md).
+Registro público com hashes: `docs/evidence/de10-lite-timing-review-2026-09-30.json`.
+`make pc` passou em **53 testes**, incluindo sete testes novos que rejeitam
+cobertura ausente, dados não finitos, cadeia incorreta e atribuições ignoradas.
+`make metrics` e `make manuscript-check` continuam aprovados. Não foi rodada
+uma nova regressão HDL, pois não houve alteração do RTL.
+
+Próximo passo: fechar o PDF do artigo com a seleção vigente. Uma eventual
+promoção das atribuições de sincronização para os alvos de bancada exigiria
+contexto novo, nova seleção e revalidação física; os perfis gerados aqui são
+exclusivamente de análise.
 
 **P05 — reteste secure, 29/09/2026 às 18:32 (Manaus):** após programar
 `build/de10_lite/secure/uart_secure.sof`, o CP2102 enviou quatro vezes

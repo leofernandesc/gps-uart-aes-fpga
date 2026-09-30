@@ -91,11 +91,15 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
 9. **Pendente até 30/09:** revisar template, referências externas, figuras,
    limitações e PDF final e submeter. Preservar comprovante.
 
-A próxima melhoria de análise temporal é reconhecer os sincronizadores para
-MTBF e incluir minimum pulse width na auditoria automatizada. Essa etapa
-requer novos relatórios/manifestos Quartus; não altera os resultados físicos
-já registrados. Toda aquisição secure exige nonce/contexto novo e SOF
-correspondente, inclusive após ciclo de energia.
+**Auditoria temporal complementar concluída em 30/09:** minimum pulse width
+passou nos três cantos dos fits selecionados, com pior margem de 9,266 ns.
+Dois perfis isolados foram recompilados com identificação explícita dos
+sincronizadores e hipóteses de toggle rate; o Quartus reconheceu as duas
+cadeias e calculou estimativas MTBF. Esses SOFs não foram programados nem
+substituem os resultados físicos ou o par do artigo. Ver
+[`auditoria-temporal-2026-09-30.md`](auditoria-temporal-2026-09-30.md).
+`make pc` agora passou em 53 testes. Toda aquisição secure exige nonce/contexto
+novo e SOF correspondente, inclusive após ciclo de energia.
 
 ## Cronograma final
 
@@ -133,6 +137,7 @@ make integration-gps
 make baseline-fpga
 make secure-fpga
 make metrics
+make timing-review
 make serial-bench CP2102_PORT=/dev/ttyUSB0 CONTEXT_FILE=contexto.json RECEIVED=saida.bin REPORT=relatorio.json
 make gps-capture-check GPS_CAPTURE=data/private/ensaio/gps-reference.bin
 make manuscript-check

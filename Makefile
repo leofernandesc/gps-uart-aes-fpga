@@ -1,8 +1,14 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics metrics-snapshot fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics metrics-snapshot timing-review fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.DEFAULT_GOAL := check
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
 METRICS_SNAPSHOT ?= docs/evidence/de10-lite-postfit-2026-09-30.json
+TIMING_REVIEW_OUTPUT ?= build/timing-review/$(shell date -u +%Y%m%dT%H%M%SZ)
+
+# Isolated post-fit audit and explicit-synchronizer refits; no programming.
+timing-review:
+	python3 scripts/timing_review.py --output "$(TIMING_REVIEW_OUTPUT)"
 
 # HDL_RUNNER=auto (default), native, or docker.
 check:

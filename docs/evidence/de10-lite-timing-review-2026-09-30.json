@@ -1,0 +1,601 @@
+{
+  "analysis_sources_sha256": {
+    "scripts/build_manifest.py": "07d4f0c00924a6dc58b982521dcb319685a653513c293828d73266ef80f245cc",
+    "scripts/fpga_metrics.py": "1c867b28e71b93da506ee7cb7a26283f482d74f4cf8bff7126334089ce934b2f",
+    "scripts/manuscript_check.py": "9b6bb20c9b5e0314ecf81bd279716e86c42af5ce684ba006ac4689a32e91c295",
+    "scripts/quartus_timing.tcl": "b486016e18c6d23f9b1a91d17ecc9b98fa3d76b2831953d3b81f2add688a2a2b",
+    "scripts/quartus_timing_review.tcl": "bd57824eb22d4578d8c0942af08b267b60996d41d215a4f523f3779468facc86",
+    "scripts/timing_review.py": "893915fa6adc7241d159473972c784aeebb3423b182e8d00c8fb0b8b9b5ea9d3"
+  },
+  "artifacts_sha256": {
+    "baseline/identified-profile/check_timing.rpt": "f05087bc3403ddd30cb0afffb2375fe0fe09f7400fab72448499621dd780aecd",
+    "baseline/identified-profile/clocks.rpt": "a35bfd9983f188daac5f4905c1cece267e164adffaf4a33a0212ce880877dcf6",
+    "baseline/identified-profile/compile.log": "63d73dcabb6e743f43aab3d65debe3e536df3fde41301a1f78019dfffc78d687",
+    "baseline/identified-profile/exceptions.rpt": "46f6a49b5e5a1545974f180485a413f0dcbe00cbb6364a14979a28a160a0bad1",
+    "baseline/identified-profile/fmax_corner1.rpt": "b9c191686e6e4e5c215d0065518e0bdc6ed159a05de7807c04315032d528c848",
+    "baseline/identified-profile/fmax_corner2.rpt": "5ea240fef5c2563a552aeaee00a868a2a67fe942a5b3fa2ed6646db34a6e182e",
+    "baseline/identified-profile/fmax_corner3.rpt": "933ba5f00bd2d2c8029e237872c3d173d48dbc6c19cb43c5d4646b711d78c187",
+    "baseline/identified-profile/hold_corner1.rpt": "162f7b6aba2d55e0a56fd9b179e61e135d0e8d6013e941e822d4dec9799d710e",
+    "baseline/identified-profile/hold_corner2.rpt": "a0e2f8e152de468b957d98120202d4a6d3af7e69a894c498170409d8b08e2188",
+    "baseline/identified-profile/hold_corner3.rpt": "593c47c0a81c96390ab8bc5dc2bd767ae8f824798a451a3f25a4cc954b03cf4e",
+    "baseline/identified-profile/metastability.rpt": "86ab3f8cfc305b0d9f432b484f64dc29e2cd71fd29cb848499662900a229fa47",
+    "baseline/identified-profile/metastability_corner1.rpt": "86ab3f8cfc305b0d9f432b484f64dc29e2cd71fd29cb848499662900a229fa47",
+    "baseline/identified-profile/metastability_corner2.rpt": "467091106afd68fe5e612bc5512d74d14312575938a3446cd048667c65c2d810",
+    "baseline/identified-profile/metastability_corner3.rpt": "aef943738d9295a048e2e937623c9c0acc86af6dda7960cdbc49ed5d89598560",
+    "baseline/identified-profile/min_pulse_width_corner1.rpt": "f582b52ca28c6f651003dd659ec645e030423607613d41873cb84264c1cdf6fb",
+    "baseline/identified-profile/min_pulse_width_corner2.rpt": "8a47308f33999d67f4d4e435cd023765b333ca6952a3c59d07072807a9426be5",
+    "baseline/identified-profile/min_pulse_width_corner3.rpt": "d3feb8d498a3fd20bcdae921ec69fd0b30eb3c8250e399b21188c3b8ccbfe077",
+    "baseline/identified-profile/recovery_corner1.rpt": "3c4421aa240f34bcaf34b5d7cef00cc881e2f03d438c395f7df4a68ab96f526d",
+    "baseline/identified-profile/recovery_corner2.rpt": "fb0284735ec0763f55b8608bb55c217897a2db69fa9047eb4fb47e38c9f0f085",
+    "baseline/identified-profile/recovery_corner3.rpt": "b22e2343d497657bcb9ce0152c659b90dc3dc0e9be44ea3d542502931da617f9",
+    "baseline/identified-profile/removal_corner1.rpt": "8aac041ec1cf4d8033f9d8d5cec8772cec2aa3db60374c7bbe68a2d89c7aa69d",
+    "baseline/identified-profile/removal_corner2.rpt": "996892b9997d45321dfa94e90fd39ba40c5f6ce1e4921c965f8bcef187750722",
+    "baseline/identified-profile/removal_corner3.rpt": "6249118d4f61a40c41ba6ae0d38af9580195fc6bad4dcd6d5b1969f1c24a83a6",
+    "baseline/identified-profile/review.log": "8a051e85cf80282f8634d64f6c0f0e457e3479a5d92a564b779c06aba79c4b3e",
+    "baseline/identified-profile/setup_corner1.rpt": "4d5196f74b151f6534035ade87229a3482bdf5141973f3d2c67768c97d0fa8ce",
+    "baseline/identified-profile/setup_corner2.rpt": "43cb5818e436e7feb2a7ab5bb6628ef2f9e7a665f42b524c4f37cf6498037acb",
+    "baseline/identified-profile/setup_corner3.rpt": "6615ffc662c023970172d7bbe1652ea2869cea50e618a49c81b801a2a206bac1",
+    "baseline/identified-profile/timing-audit.log": "f464958a0c33c62ff892753b83746bcba278334a944fd76b1b6b0dba0aa5a2ec",
+    "baseline/identified-profile/uart_baseline.asm.rpt": "d6170be2b0808c1665c9d392208ff2c48d26ac72f3d02858e20b28d51e13fe2c",
+    "baseline/identified-profile/uart_baseline.fit.rpt": "eb5169ac0bac978d46eaf5a5fea7134f924097ec51438ed25ddd5a1423f56538",
+    "baseline/identified-profile/uart_baseline.fit.summary": "a050813c627e34251101c3016809f43fe0885af8ffd3081d8062b56d1f333400",
+    "baseline/identified-profile/uart_baseline.flow.rpt": "99ceacde0dbbf74b715ab6005a581b31abd975c6bc0f2f0187445676e649bc88",
+    "baseline/identified-profile/uart_baseline.map.rpt": "04d86975ade5678498aaba6311f24027bbf7ac52d556c0eca8f53ab64b88538d",
+    "baseline/identified-profile/uart_baseline.map.summary": "939c99817d492af8a5acfa62248aecd75a45040bc7e9183b4786c13ab1e0ce16",
+    "baseline/identified-profile/uart_baseline.sof": "aaa1dc8af0fbaac067bc2c73f2ab375d9474ac797c98d76611944d7b37028281",
+    "baseline/identified-profile/uart_baseline.sta.rpt": "855dc326763f4090e08c2cb404c7deebe4c1c7c4f01789489d03d6d9861afdc7",
+    "baseline/identified-profile/uart_baseline.sta.summary": "337d28d96d3c40d264047ddd0637d53b7440d09f9a314210c2540a4472d14231",
+    "baseline/identified-profile/unconstrained.rpt": "7015ad71e43b396919a8fb237c0b19f75623726adeca6c634d502dd57d2eb551",
+    "baseline/selected-fit/check_timing.rpt": "f05087bc3403ddd30cb0afffb2375fe0fe09f7400fab72448499621dd780aecd",
+    "baseline/selected-fit/clocks.rpt": "a35bfd9983f188daac5f4905c1cece267e164adffaf4a33a0212ce880877dcf6",
+    "baseline/selected-fit/exceptions.rpt": "46f6a49b5e5a1545974f180485a413f0dcbe00cbb6364a14979a28a160a0bad1",
+    "baseline/selected-fit/fmax_corner1.rpt": "4cc981a62aad71d9c697b8f231e027a8c1a8080cc0d250b0ad213afd55867adc",
+    "baseline/selected-fit/fmax_corner2.rpt": "f4ecd7ad7b871f28a5277a621c7cd23d36a2cb3258101e0772baae24138e9566",
+    "baseline/selected-fit/fmax_corner3.rpt": "6355cb2d4e1c360cb4a2ac32c62f0870cb5053053914fe508b08b424d82eb2d6",
+    "baseline/selected-fit/hold_corner1.rpt": "f7c745818a357a8ec4efea44e9a036f03443284d4b949f3923a94108c90c46f8",
+    "baseline/selected-fit/hold_corner2.rpt": "2cc277a9b37eb952a85a9aa17a2ea33cd7c60a6b85936a59bb8bd7e81bbccd15",
+    "baseline/selected-fit/hold_corner3.rpt": "df33b8ae3a51e06c9450940d54df9e6fb48e64e7c92766a61e688db03bd6c77a",
+    "baseline/selected-fit/metastability.rpt": "195b035632ae4836c2edeea09b99afc75e2c7dd20ea8a91a298bbd8866b02bbf",
+    "baseline/selected-fit/metastability_corner1.rpt": "195b035632ae4836c2edeea09b99afc75e2c7dd20ea8a91a298bbd8866b02bbf",
+    "baseline/selected-fit/metastability_corner2.rpt": "87e96bae6f6c710d0183a606f800566a8ac2c44bb8b477b223dee97714ed8b74",
+    "baseline/selected-fit/metastability_corner3.rpt": "ba9a2e04c20f1a83161fa2866de4c729b11bd0a4496fb0c24090bcd62bc86e0a",
+    "baseline/selected-fit/min_pulse_width_corner1.rpt": "7a9c0ab3d9d0cc6f486fec903bb3d117afce85829e5b2d30ac524cf11e2d00e1",
+    "baseline/selected-fit/min_pulse_width_corner2.rpt": "953747178096d3f148577bd5c81bfe4844ab0fb4921d85b80a6c4554206bc721",
+    "baseline/selected-fit/min_pulse_width_corner3.rpt": "3d1e915efbd79d25b421be5c59faf5a3dc04ddde0ceb68e56b888c2e05a947b9",
+    "baseline/selected-fit/recovery_corner1.rpt": "a3c61dde0355a12e5533f4fecdec8e0d61e71bc4173119b415673dcc40a788f6",
+    "baseline/selected-fit/recovery_corner2.rpt": "7daf1f6f02267b49a3be9c8174dd01c779d1119828e790ce22d235937477c102",
+    "baseline/selected-fit/recovery_corner3.rpt": "157fc5fbf268428849af861dd1dd1f8419f17088e9f56c08ad97cb7093e69461",
+    "baseline/selected-fit/removal_corner1.rpt": "f26bdbba66cd1673bf633cb7631f53f7cab0531c971816f35a1b40799a053e0d",
+    "baseline/selected-fit/removal_corner2.rpt": "74fcb19f876ee4e6c18f222b4ccdc8dbb37da43dd318fd31a8a8f8e0dc5a1bf4",
+    "baseline/selected-fit/removal_corner3.rpt": "6019b1d82fd4bd64c55e615d3b7c97bc323d82ac2eb7aec96828f3fb6389ed66",
+    "baseline/selected-fit/review.log": "33447ec617b60261a790dfcc4718c6b8aab5d4a3ad77e232c34f449b5ec3765e",
+    "baseline/selected-fit/setup_corner1.rpt": "f7f1ce52e61e657ee4ca1c572c2954a38b166b72fb7f4d63d3311edb3084661e",
+    "baseline/selected-fit/setup_corner2.rpt": "6ba2efcff8c67dc42b0ca04f55d16d02c6a0ec1bdd01e4b33e0a203f997b2e92",
+    "baseline/selected-fit/setup_corner3.rpt": "6dfe08a142892fb747d74564145f2a9cec9e5241bcce8e022cd3a5392d58f0e6",
+    "baseline/selected-fit/timing-audit.log": "45507a1f73c906b10e847e0db49aa896299ccfab5cdab64e67ca1507b68bc49d",
+    "baseline/selected-fit/uart_baseline.fit.summary": "5f300fddf0f62615080859c8e0fb7436947386712b5f609f57470e3ffd2fb833",
+    "baseline/selected-fit/unconstrained.rpt": "7015ad71e43b396919a8fb237c0b19f75623726adeca6c634d502dd57d2eb551",
+    "secure/identified-profile/check_timing.rpt": "f05087bc3403ddd30cb0afffb2375fe0fe09f7400fab72448499621dd780aecd",
+    "secure/identified-profile/clocks.rpt": "a35bfd9983f188daac5f4905c1cece267e164adffaf4a33a0212ce880877dcf6",
+    "secure/identified-profile/compile.log": "70f960586674d76537e93d6d4519cdfee2dda519a347903713fd5fb031052b8a",
+    "secure/identified-profile/exceptions.rpt": "46f6a49b5e5a1545974f180485a413f0dcbe00cbb6364a14979a28a160a0bad1",
+    "secure/identified-profile/fmax_corner1.rpt": "0890b38389109fe83bc5164f7e13638f4ea76bbbb7ab653bd1a9aacd9b20a8d2",
+    "secure/identified-profile/fmax_corner2.rpt": "9bafe3d61c56ddf36b627aac6ab79e59bd0fb05e7900608341947dae1c490a98",
+    "secure/identified-profile/fmax_corner3.rpt": "649d18ccae4cab9ad9b2ab2c4b597e43abf2a7b0e9b1f8d63a87f4ad61b33fe7",
+    "secure/identified-profile/hold_corner1.rpt": "ffd3ac94d5b297db83cc84a6083d3d82a111ac094b5a6c20c9ec542bab6e6119",
+    "secure/identified-profile/hold_corner2.rpt": "54a333b5971198af2d56a08f208d8729c3f18f31cfe4b7f725325ac40e1890c6",
+    "secure/identified-profile/hold_corner3.rpt": "f636ab8c729a2e45ca93c0894d60cbf365e4d3647ee16fe5e0c2af4aaa7af185",
+    "secure/identified-profile/metastability.rpt": "16616eddc2ab47f53bd46d21a28d4cf5b99020dd6528845ff448e6db5a051f89",
+    "secure/identified-profile/metastability_corner1.rpt": "16616eddc2ab47f53bd46d21a28d4cf5b99020dd6528845ff448e6db5a051f89",
+    "secure/identified-profile/metastability_corner2.rpt": "038d3cb28c3e832e61fb0c170f751f595bdb226a58f7e3fffc0299d2a6f6a7bb",
+    "secure/identified-profile/metastability_corner3.rpt": "b575b667679d02aa199a021ff23bf260a2599128465277915a639f5a77670dc2",
+    "secure/identified-profile/min_pulse_width_corner1.rpt": "477814f6a5bfdc5a7d4c020789300e8af1881b21da7a7ca514acaf5b90f6f619",
+    "secure/identified-profile/min_pulse_width_corner2.rpt": "9a965cfac909f6325e273ad27a9ee6d2057b80b1bb0c6815a77d5279da333bfb",
+    "secure/identified-profile/min_pulse_width_corner3.rpt": "19126bac63698f1346a0a89c9a0f2f6cb9812e1959efb10edfe678c86a7c8e2f",
+    "secure/identified-profile/recovery_corner1.rpt": "e2237bc04122245b2cfdb9c37c64b0563248c3b08c61e3db5ef3a849e4eef67b",
+    "secure/identified-profile/recovery_corner2.rpt": "e0882c52a5b3288d02d05aeb488bd5048c89ad73047cb7973664a269ec1c3f26",
+    "secure/identified-profile/recovery_corner3.rpt": "ae0ea81a0b40147c389e10144a69aa8297a1f1bac4bd53b6ebe2e0a47f85322f",
+    "secure/identified-profile/removal_corner1.rpt": "f06bf81ef8ebe43baa905e79c7f0d62d9225fd25882dd2fa148e5c8fcb01eff8",
+    "secure/identified-profile/removal_corner2.rpt": "aa63f5464ef03f55c260df1c3ac02ee356da4594080774fbe7dedadafc6f8741",
+    "secure/identified-profile/removal_corner3.rpt": "c2737a64dfc1ea7157214b9342ee413e92062d20434317f0dd49f78d02f5e94e",
+    "secure/identified-profile/review.log": "a6353b41d04d0aaf74e118d120d94741f6261d61a714d09b98408f167c83bd39",
+    "secure/identified-profile/setup_corner1.rpt": "2bcb036b4027b4c223f0d345ab19b34568dc86f4256da68d2c237b932d19f6a4",
+    "secure/identified-profile/setup_corner2.rpt": "979f269cb053b353ad49312550ee818569c06fbd04563075fb902e8d9c64459f",
+    "secure/identified-profile/setup_corner3.rpt": "5695181932860fb8185bc66d885de498b411e3b35446d645880b20e80aa8bbb3",
+    "secure/identified-profile/timing-audit.log": "33ee471b85edd9ba9e4bcbe26b43a14238e116ce32fa7d4399cfc6e6709f890f",
+    "secure/identified-profile/uart_secure.asm.rpt": "d380d04722c8e29e4f25816c0985df89bbc14c4b33bc85507a78bc80edf43caf",
+    "secure/identified-profile/uart_secure.fit.rpt": "0828a9469c6ce3f19f6602479977446f7c04de411a6b7b62797f5b674596ea5d",
+    "secure/identified-profile/uart_secure.fit.summary": "99e332f7828e8d8c7cfbd54ebab464119ee604867c012846bb4d4c297a41ffde",
+    "secure/identified-profile/uart_secure.flow.rpt": "7b72deecc688d6839ed1bfa3e67f130eeb5674b5f522c27e260deb52549f0b8c",
+    "secure/identified-profile/uart_secure.map.rpt": "ea222289910eb55a9f1f412d5eca07c8e53f94fff02cab16f9fb6b3e3d425b8c",
+    "secure/identified-profile/uart_secure.map.summary": "14da21ac3c17441d0a1673d7aff442546cbc8f7916f98201d64718441e9864c6",
+    "secure/identified-profile/uart_secure.sof": "a857840daed24f36a41892bbd4908780363f043ad9d4f6bd46a9f9b86da49798",
+    "secure/identified-profile/uart_secure.sta.rpt": "dd293aa5a61b785381de05f1290a69ed235cea2a1e4aec04db228a44e91f9da7",
+    "secure/identified-profile/uart_secure.sta.summary": "80f1265c8cc923f0374fe9298f6e09631d2cfcc381ce22d355a9bd3b6be04995",
+    "secure/identified-profile/unconstrained.rpt": "7015ad71e43b396919a8fb237c0b19f75623726adeca6c634d502dd57d2eb551",
+    "secure/selected-fit/check_timing.rpt": "f05087bc3403ddd30cb0afffb2375fe0fe09f7400fab72448499621dd780aecd",
+    "secure/selected-fit/clocks.rpt": "a35bfd9983f188daac5f4905c1cece267e164adffaf4a33a0212ce880877dcf6",
+    "secure/selected-fit/exceptions.rpt": "46f6a49b5e5a1545974f180485a413f0dcbe00cbb6364a14979a28a160a0bad1",
+    "secure/selected-fit/fmax_corner1.rpt": "d2ae7c761461f0a8f53283e635b48625d17c36cb6cdad5ab4bf1563614fcf6cf",
+    "secure/selected-fit/fmax_corner2.rpt": "70181ca77cceb23c1daed05525f095ac7c93cc8907e985b89fcacf12af68d7a5",
+    "secure/selected-fit/fmax_corner3.rpt": "b69c597c0e1bfe6dd64e260e26f3ff92405d58e1c75cac806378d741ec5cf5e0",
+    "secure/selected-fit/hold_corner1.rpt": "11539f9b07fd3ec269334d8c8a2387e2d2aae91174163b26a01a1ae6097ec8ac",
+    "secure/selected-fit/hold_corner2.rpt": "55533bf62501d6dec1af2550c856ab9854369ee0316183796abf83c6f2588eb1",
+    "secure/selected-fit/hold_corner3.rpt": "5cb8bee906da3af556897584efaa87a02cdfd17cccd2f349620fc310e8ec0f9e",
+    "secure/selected-fit/metastability.rpt": "3d578330bc962ad6ed5e45645754751118293a7fedc88970e2a3ab36147d9e83",
+    "secure/selected-fit/metastability_corner1.rpt": "3d578330bc962ad6ed5e45645754751118293a7fedc88970e2a3ab36147d9e83",
+    "secure/selected-fit/metastability_corner2.rpt": "09fb4bdf0c55faf45a2e5afb6aeeda5cdbab08549b60f68f85ba0ad6a29abcb8",
+    "secure/selected-fit/metastability_corner3.rpt": "159e7633d44865b696638e7e2f72d3933972a84939c9b146b4b08564848f6e6e",
+    "secure/selected-fit/min_pulse_width_corner1.rpt": "3451b009cc53ce5c8d84db7db2fe51d82e4f2c252feaf4203a92846fecaaf8c0",
+    "secure/selected-fit/min_pulse_width_corner2.rpt": "bd19aee7adbff9775c25ae129bee618de124b3ab3addb125e2e92d216b8e62e1",
+    "secure/selected-fit/min_pulse_width_corner3.rpt": "18320690e300fb2ee12a1edeaa5cc4a7ccac829e9793db667be4d7213215d0f6",
+    "secure/selected-fit/recovery_corner1.rpt": "9a77c16c646278199f2040e2c8b7415084abaec8ad187aa673927a90847eaa85",
+    "secure/selected-fit/recovery_corner2.rpt": "0727874f35d7458b931eb82dba23ce515f75a0c15d6af90b8173743786e3b58e",
+    "secure/selected-fit/recovery_corner3.rpt": "42250b966667a6f13e190bc811f7edddd01f62ce710d8ee75afb106b76903448",
+    "secure/selected-fit/removal_corner1.rpt": "c41e948db2084f9f78f503aa8a4405330003835f00dc32717ebcec48e0ecd4d9",
+    "secure/selected-fit/removal_corner2.rpt": "869374ecaf88f1e1198ba9530b905164f241cee9122a921d055177e82ac66889",
+    "secure/selected-fit/removal_corner3.rpt": "718094efee583764e74225b17a3a227c24767387764441508e1dd164076b1f17",
+    "secure/selected-fit/review.log": "c734caac799644b707e659eec2a9848c27904992254e0b9b90cbad02a6982b24",
+    "secure/selected-fit/setup_corner1.rpt": "f21eb97ea89e0db8c70f617bc343ff57c49f1289c5310bc875cb918a83843b04",
+    "secure/selected-fit/setup_corner2.rpt": "b880866d990b9a42dfe4ea6d435f767afbc1c6fde5885b7e65276901b2725af2",
+    "secure/selected-fit/setup_corner3.rpt": "fa2c6045b862e11481680db53e62e8df49b0fb0366001877d2e39b612bef8bea",
+    "secure/selected-fit/timing-audit.log": "9493218ec066c601db9c6831bb88610affe8e5a4eebf21e79162fbd82adf269b",
+    "secure/selected-fit/uart_secure.fit.summary": "43d0b0a01c32c0dacd2862fa416a8412c71adb835a3f4e71091699d16e207880",
+    "secure/selected-fit/unconstrained.rpt": "7015ad71e43b396919a8fb237c0b19f75623726adeca6c634d502dd57d2eb551"
+  },
+  "assumptions": {
+    "key0_note": "Conservative analysis assumption, not measured button activity",
+    "key0_toggle_hz": 6250000,
+    "uart_note": "One transition per bit at 38400 baud; electrical noise is not modeled",
+    "uart_rx_toggle_hz": 38400
+  },
+  "designs": {
+    "baseline": {
+      "identified_profile": {
+        "fit": {
+          "device": "10M50DAF484C7G",
+          "logic_elements": 329,
+          "memory_bits": 8192,
+          "pins": 14,
+          "plls": 0,
+          "quartus_version": "25.1std.0 Build 1129 10/21/2025 SC Lite Edition",
+          "registers": 212
+        },
+        "note": "Analysis-only profile; not the physically tested bitstream",
+        "pulse_width": {
+          "slack_ns_by_corner": [
+            9.504,
+            9.519,
+            9.266
+          ],
+          "slack_ns_min": 9.266
+        },
+        "qsf_sha256": "ef7fa89b2968b517dd6aad8f615a734b7a575b6e8c3fa36b9c062a7b988ec1ef",
+        "sof_sha256": "aaa1dc8af0fbaac067bc2c73f2ab375d9474ac797c98d76611944d7b37028281",
+        "synchronizers": [
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 33.979,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 33.712,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 0.0384,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              }
+            ],
+            "corner": 1
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 34.515,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 34.218,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 0.0384,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              }
+            ],
+            "corner": 2
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 37.425,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 37.302,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 0.0384,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              }
+            ],
+            "corner": 3
+          }
+        ],
+        "timing": {
+          "fmax_mhz_by_corner": [
+            148.17,
+            161.0,
+            355.37
+          ],
+          "fmax_mhz_min": 148.17,
+          "restricted_fmax_mhz_by_corner": [
+            148.17,
+            161.0,
+            250.0
+          ],
+          "restricted_fmax_mhz_min": 148.17,
+          "slack_ns_min": {
+            "hold": 0.099,
+            "recovery": 14.193,
+            "removal": 0.544,
+            "setup": 13.251
+          }
+        }
+      },
+      "selected_fit": {
+        "pulse_width": {
+          "slack_ns_by_corner": [
+            9.504,
+            9.519,
+            9.266
+          ],
+          "slack_ns_min": 9.266
+        },
+        "synchronizers": [
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 31.688,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 34.48,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              }
+            ],
+            "corner": 1
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 32.275,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 34.929,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              }
+            ],
+            "corner": 2
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 36.29,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 37.703,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              }
+            ],
+            "corner": 3
+          }
+        ]
+      },
+      "selected_sof_sha256": "3132e0097eccd4194bf54f5041c992eff1fed41c0efde03e9b60902f1e5caaf7"
+    },
+    "secure": {
+      "identified_profile": {
+        "fit": {
+          "device": "10M50DAF484C7G",
+          "logic_elements": 5587,
+          "memory_bits": 8192,
+          "pins": 14,
+          "plls": 0,
+          "quartus_version": "25.1std.0 Build 1129 10/21/2025 SC Lite Edition",
+          "registers": 913
+        },
+        "note": "Analysis-only profile; not the physically tested bitstream",
+        "pulse_width": {
+          "slack_ns_by_corner": [
+            9.502,
+            9.519,
+            9.268
+          ],
+          "slack_ns_min": 9.268
+        },
+        "qsf_sha256": "a63d2a7ffc5b3c9a9eda540c2ca50c71b14be207402120fcde548d6950fa0e37",
+        "sof_sha256": "a857840daed24f36a41892bbd4908780363f043ad9d4f6bd46a9f9b86da49798",
+        "synchronizers": [
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 29.82,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 36.085,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 0.0384,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              }
+            ],
+            "corner": 1
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 30.683,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 36.421,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 0.0384,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              }
+            ],
+            "corner": 2
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 35.586,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "User Specified",
+                "included_in_design_mtbf": "Yes",
+                "registers": 2,
+                "settling_ns": 38.316,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 0.0384,
+                "typical_mtbf_years": "Greater than 1 Billion",
+                "worst_mtbf_years": "Greater than 1 Billion"
+              }
+            ],
+            "corner": 3
+          }
+        ],
+        "timing": {
+          "fmax_mhz_by_corner": [
+            92.55,
+            100.5,
+            217.39
+          ],
+          "fmax_mhz_min": 92.55,
+          "restricted_fmax_mhz_by_corner": [
+            92.55,
+            100.5,
+            217.39
+          ],
+          "restricted_fmax_mhz_min": 92.55,
+          "slack_ns_min": {
+            "hold": 0.109,
+            "recovery": 11.652,
+            "removal": 2.883,
+            "setup": 9.195
+          }
+        }
+      },
+      "selected_fit": {
+        "pulse_width": {
+          "slack_ns_by_corner": [
+            9.504,
+            9.518,
+            9.266
+          ],
+          "slack_ns_min": 9.266
+        },
+        "synchronizers": [
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 28.389,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 34.181,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              }
+            ],
+            "corner": 1
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 29.332,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 34.668,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              }
+            ],
+            "corner": 2
+          },
+          {
+            "chains": [
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst|release_pipe[0]",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 34.96,
+                "source": "KEY0_N",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              },
+              {
+                "head": "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst|rx_meta",
+                "identification": "Automatic",
+                "included_in_design_mtbf": "No",
+                "registers": 2,
+                "settling_ns": 37.572,
+                "source": "UART_RX",
+                "toggle_millions_per_second": 6.25,
+                "typical_mtbf_years": "Not Calculated",
+                "worst_mtbf_years": "Not Calculated"
+              }
+            ],
+            "corner": 3
+          }
+        ]
+      },
+      "selected_sof_sha256": "81a8e176f531c46756af4e5557d8b30f01bd0918e55f0d3fed93216b866e31c0"
+    }
+  },
+  "finished_utc": "2026-09-30T14:45:39.019090+00:00",
+  "schema": 1,
+  "selected_snapshot_sha256": "58c589a8eff402d6d29644df5dbe4ad970abd1ea962cd3221a67811e271c0183",
+  "started_utc": "2026-09-30T14:40:33.364600+00:00",
+  "status": "PASS"
+}

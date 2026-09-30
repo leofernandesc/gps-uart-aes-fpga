@@ -79,6 +79,13 @@ arquivo novo, atualizar os documentos e conferir todos os hashes. Preservar
 seleções anteriores como histórico. Não publicar pacotes de contexto, chaves
 ou capturas GPS privadas.
 
+`make timing-review` gera uma auditoria complementar e refits isolados em um
+diretório novo de `build/timing-review/`. Os perfis com sincronizadores
+explícitos não são os SOFs testados fisicamente nem atualizam o par do artigo.
+Não programar seus SOFs para aquisição secure: reutilizam as entradas de
+elaboração somente para análise e podem conter contexto já consumido. Uma
+promoção para bancada exige nonce/contexto novo e revalidação correspondente.
+
 Sempre que for necessário fazer `git pull`, revise cautelosamente todas as
 alterações recebidas. Não faça um pull cego.
 

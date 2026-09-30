@@ -140,7 +140,7 @@ bancada/FIFO/ponte, dois testbenches AES, dois de CTR e cinco da integração/wr
 Inclui nove configurações de lint, checagem estrutural, verificação no PC dos
 bytes CTR e do TX integrado, além dos testes Python de captura, contexto,
 replay, validação NMEA e consistência das métricas dos manuscritos. A execução
-`make pc` de 30/09 passou nos 46 testes de software.
+`make pc` de 30/09 passou nos 53 testes de software, incluindo a nova auditoria temporal.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -169,6 +169,7 @@ make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/38400
 make integration-gps # Replay NMEA completo no timing de produção; separado por ser lento
 make metrics # Extrai recursos, Fmax e slacks dos builds Quartus existentes
 make metrics-snapshot METRICS_SNAPSHOT=docs/evidence/nova-selecao.json # Congela um par revisado sem sobrescrever
+make timing-review # STA complementar e refits isolados dos sincronizadores; não programa a placa
 make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
@@ -295,6 +296,7 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação das correções sem hardware](docs/validacao-correcoes-2026-09-20.md)
 - [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
 - [Métricas pós-fit selecionadas da DE10-Lite](docs/metricas-fpga-2026-09-30.md)
+- [Auditoria complementar de pulsos e sincronizadores](docs/auditoria-temporal-2026-09-30.md)
 - [Métricas históricas de 29/09](docs/metricas-fpga-2026-09-29.md)
 - [Métricas históricas da DE10-Lite a 9600](docs/metricas-fpga-2026-09-20.md)
 - [Roteiro integrado da DE10-Lite](docs/bancada-de10-lite-integrada-2026-09-22.md)
@@ -315,9 +317,10 @@ versionada. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
 Próximo passo: fechar referências, template, figuras e PDF do artigo, usando
-o par de métricas selecionado e os limites dos ensaios P01–P13. Melhorias de
-análise de sincronizadores/MTBF e auditoria explícita de minimum pulse width
-estão registradas no [cronograma](docs/cronograma.md) para uma próxima análise.
+o par de métricas selecionado e os limites dos ensaios P01–P13. A auditoria
+complementar de minimum pulse width passou nos fits selecionados; identificação
+explícita e estimativas MTBF foram verificadas em perfis separados, sem
+substituir os SOFs testados. Ver o [cronograma](docs/cronograma.md).
 Procedimentos e evidências físicas estão no [plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.

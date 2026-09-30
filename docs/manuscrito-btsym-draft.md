@@ -257,6 +257,12 @@ Each secure experiment provisions a fresh context; a different static context
 can change synthesis and placement, so this table identifies one selected pair
 rather than assigning its counts to every bitstream used in the campaign.
 
+A supplemental audit reproduced the selected timing results and checked
+minimum pulse width in all three corners, with a worst slack of 9.266 ns in
+both designs. Explicit synchronizer identification and MTBF estimation were
+evaluated in separately fitted analysis profiles; their estimates and resource
+counts are not attributed to the physically tested bitstreams.
+
 ## 5. Discussion and limitations
 
 The results show a clear implementation trade-off: AES-128-CTR increases logic

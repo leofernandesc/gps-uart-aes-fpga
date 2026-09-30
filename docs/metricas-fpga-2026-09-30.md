@@ -82,12 +82,17 @@ resumos e a referência padrão do verificador quando escolher um novo par.
 
 ## Alcance da análise
 
-A potência não foi estimada nem medida. O relatório de metastabilidade
-encontrou sincronizadores, mas não calculou MTBF; não atribuir um número de
-confiabilidade ao circuito. A auditoria automatizada verifica setup, hold,
-recovery e removal. A inclusão de uma checagem explícita de minimum pulse
-width e dos parâmetros para MTBF permanece como próxima melhoria de timing,
-com nova análise do Quartus e novo manifesto.
+A potência não foi estimada nem medida. Nos builds selecionados, o relatório
+de metastabilidade encontrou sincronizadores automáticos, mas não calculou
+MTBF. Uma [auditoria complementar](auditoria-temporal-2026-09-30.md) reaplicou
+setup, hold, recovery e removal aos mesmos fits e verificou explicitamente
+minimum pulse width nos três cantos: pior margem de 9,266 ns em ambos.
+
+A identificação explícita e as hipóteses para MTBF foram verificadas em dois
+perfis separados, com novos fits e sem programação física. As estimativas
+desses perfis não pertencem aos SOFs selecionados nem substituem evidência
+de confiabilidade da bancada. O arquivo de seleção e a tabela acima permanecem
+inalterados; resultados complementares têm registro e hashes próprios.
 
 Essas métricas descrevem implementação; evidências elétricas, replays e
 aquisição GPS ao vivo são registradas no [plano de testes](plano-de-testes.md).

@@ -266,6 +266,12 @@ compartilhadas, seed e restrições conferidos; ver o
 um contexto novo. Constantes de contexto podem alterar síntese e posicionamento;
 portanto, os números identificam esse par de builds, não todos os SOFs da campanha.
 
+Uma auditoria complementar reproduziu os resultados temporais selecionados
+e verificou minimum pulse width nos três cantos, com pior slack de 9,266 ns
+nas duas variantes. Identificação explícita de sincronizadores e estimativas
+MTBF foram avaliadas em perfis de análise com fits separados; seus valores e
+recursos não são atribuídos aos bitstreams testados fisicamente.
+
 ## 5. Discussão e limitações
 
 Os resultados mostram um compromisso claro de implementação: AES-128-CTR
