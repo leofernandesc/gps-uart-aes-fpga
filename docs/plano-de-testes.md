@@ -1076,8 +1076,15 @@ LEDR0 continuou piscando e LEDR9 acendeu, conforme esperado para o contexto
 consumido em bloqueio. Isso confirma o bloqueio após reset, não uma segunda
 captura AES.
 
-**Etapa 5: pendente de execução física.** Falta programar um SOF secure com
-nonce novo e validar uma nova carga conhecida para confirmar a recuperação.
+**Etapa 5 — 30/09/2026: aprovada.** Um contexto CTR com nonce novo foi
+compilado em outro SOF secure e programado após o bloqueio. A nova carga passou:
+5/5 bytes recebidos, sem extras, perdas ou timeout; a decifragem recuperou
+exatamente o estímulo. Tempo de transação: 12,201 ms; tempo total do host:
+64,826 ms — inclui Linux/USB/CP2102, não é latência isolada da FPGA. Relatório
+privado: `p11-secure-recovery-5b-report-01.json`.
+
+**P11 — sequência de reset, bloqueio e recuperação aprovada.** Os indicadores
+LEDR6/LEDR7/LEDR8 após as transferências não foram registrados separadamente.
 
 ## Registro histórico da Cyclone IV — fora do escopo atual
 

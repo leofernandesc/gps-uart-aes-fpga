@@ -42,13 +42,15 @@ Submissão BTSym’26: até 30/09/2026.
   `make check` já foi reexecutado após a atualização.
 - O breakout do GPS é alimentado a 3,3 V. Antes da conexão com a FPGA, manter
   GND comum e confirmar que TX/RX permanecem em níveis compatíveis com a placa.
-- **Integração GPS:** P07 validou sentenças NMEA na captura direta e na saída
-  física do baseline da DE10-Lite. P08 concluiu os 3 replays baseline com
-  comparação byte a byte; P09 secure também passou com recuperação exata de
-  4.096 bytes. Em P10, os replays baseline e secure passaram com 32.768 bytes da
-  referência GPS armazenada; no modo secure o plaintext foi recuperado
-  exatamente. O GPS ficou desconectado durante os replays. Restam registrar os
-  indicadores físicos de erro/overflow e executar reset e recuperação (P11).
+- **Integração GPS:** P07 validou sentenças NMEA na captura direta e no caminho
+  físico GPS→DE10-Lite baseline→PC. P08 concluiu os 3 replays baseline; P09
+  secure passou com recuperação exata de 4.096 bytes. P10 baseline e secure
+  passaram com 32.768 bytes da captura GPS armazenada; o GPS ficou desconectado
+  durante esses replays. P11 confirmou reset antes do uso, bloqueio após consumo
+  do contexto e recuperação após novo nonce/SOF, com captura secure de 5/5 bytes.
+  Os indicadores LEDR6/LEDR7/LEDR8 após as transmissões não foram registrados.
+  Para relatar o método com precisão, os ensaios secure P09/P10 são replay de
+  dados GPS previamente capturados, não criptografia de GPS ao vivo.
 
 | Data | Etapa | Situação / entrega exigida |
 | --- | --- | --- |
@@ -59,7 +61,7 @@ Submissão BTSym’26: até 30/09/2026.
 | 29/09 | P03/P04 baseline a 38400 | **Concluído na DE10-Lite** — P03 eco 20/20; P04 decodifica os cinco bytes em RX e TX, bit time ~26,0 µs, janela AD2 10,239 ms |
 | 29/09 | P05 secure a 38400 | **Concluído** — reteste 4/4 transações, 20/20 bytes cifrados e recuperados; relatório privado `p05-secure-20b-38400-report-02.json` |
 | 29/09 | P06 secure no AD2 | **Concluído** — CP2102 5/5 e decifragem exata; captura AD2 decodifica entrada e ciphertext em V10/W10 |
-| 29–30/09 | P07–P10 GPS e replays | **P07 aprovado** — aquisição e saída baseline com NMEA válido; **P08 3/3** e **P09 secure** aprovados em 4.096 bytes; **P10 baseline e secure aprovados** em 32.768 bytes, sem perda/divergência e com recuperação CTR exata. Referência GPS pré-capturada; GPS desconectado durante os replays. Faltam indicadores físicos de erro/overflow e reset/recuperação (P11) |
+| 29–30/09 | P07–P11 GPS, replays e reset | **P07 aprovado** — aquisição e saída física baseline com NMEA válido; **P08 3/3**, **P09 secure** (4.096 bytes) e **P10 baseline/secure** (32.768 bytes) aprovados com recuperação CTR exata. P09/P10 foram replays da referência GPS armazenada, com GPS desconectado. **P11 reset/bloqueio/recuperação aprovado** com nonce novo e 5/5 bytes; LEDR6/7/8 pós-transmissão não registrados. |
 | 30/09 | Atualizar resultados, revisar manuscritos e submeter | Até a deadline; manter evidências e comprovante |
 
 **P05 — reteste secure, 29/09/2026 às 18:32 (Manaus):** após programar
