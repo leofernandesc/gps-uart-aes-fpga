@@ -1070,9 +1070,14 @@ isolada da FPGA. Relatório privado: `p11-secure-pre-reset-5b-report-01.json`.
 Os indicadores LEDR6/LEDR7/LEDR8 após a transmissão não foram registrados
 separadamente.
 
-**Etapas 4–5: pendentes de execução física.** Falta verificar o bloqueio após
-KEY0 com o contexto consumido e a recuperação após programar um SOF com nonce
-novo.
+**Etapa 4 — 30/09/2026: aprovada.** Após o envio dos 5 bytes, KEY0 foi
+pressionado e o CP2102 enviou o byte de sondagem `0x55`. Não houve resposta;
+LEDR0 continuou piscando e LEDR9 acendeu, conforme esperado para o contexto
+consumido em bloqueio. Isso confirma o bloqueio após reset, não uma segunda
+captura AES.
+
+**Etapa 5: pendente de execução física.** Falta programar um SOF secure com
+nonce novo e validar uma nova carga conhecida para confirmar a recuperação.
 
 ## Registro histórico da Cyclone IV — fora do escopo atual
 
