@@ -1061,7 +1061,18 @@ Não reutilizar o primeiro contexto/nonce para uma nova captura após os 5 bytes
 serem processados. Cada contexto secure deve ser exclusivo; preservar ambos os
 relatórios e não publicar chave, nonce ou dados GPS privados.
 
-**Situação: pendente de execução física.**
+**Etapas 1–3 — 30/09/2026: aprovadas.** A configuração iniciou corretamente;
+KEY0 antes de qualquer dado permitiu rearmar o contexto. A captura secure de
+5 bytes recebeu 5/5 bytes, sem extras, perdas ou timeout; a decifragem
+independente recuperou exatamente o estímulo. Tempo da transação: 12,397 ms;
+tempo total do host: 70,152 ms — inclui Linux/USB/CP2102 e não é latência
+isolada da FPGA. Relatório privado: `p11-secure-pre-reset-5b-report-01.json`.
+Os indicadores LEDR6/LEDR7/LEDR8 após a transmissão não foram registrados
+separadamente.
+
+**Etapas 4–5: pendentes de execução física.** Falta verificar o bloqueio após
+KEY0 com o contexto consumido e a recuperação após programar um SOF com nonce
+novo.
 
 ## Registro histórico da Cyclone IV — fora do escopo atual
 
