@@ -3,7 +3,7 @@
 Projeto do artigo para o BTSym’26: aquisição de dados de um GPS real e avaliação
 do custo de acrescentar confidencialidade em hardware à comunicação serial.
 
-**Estado em 29/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
+**Estado em 30/09/2026:** UART v2, ponte RX → FIFO de 1.024 bytes → TX, núcleo
 AES-128 e adaptador AES-CTR por byte implementados. O AES passou pelos 866
 vetores de comparação independente, incluindo 284 casos oficiais NIST;
 ver [contrato do núcleo](docs/aes128.md).
@@ -32,8 +32,13 @@ CP2102 com 20/20 bytes em quatro transações. P04 também passou: a captura AD2
 decodifica os cinco bytes em RX e TX a 38400 baud, com bit time de ~26,0 µs.
 P05 secure a 38400 passou: quatro transações, 20/20 bytes cifrados e recuperados
 exatamente no PC. P06 também passou: o CP2102 recebeu os cinco bytes cifrados e
-o AD2 decodificou simultaneamente estímulo em RX e ciphertext em TX. A captura
-física do GPS real continua pendente.
+o AD2 decodificou simultaneamente estímulo em RX e ciphertext em TX. P07 validou
+a aquisição NEO-M8N→FPGA→PC e a saída baseline com sentenças NMEA válidas. Em
+P10, os replays baseline e secure da referência GPS armazenada passaram com
+32.768 bytes. No baseline, a saída coincidiu byte a byte com a referência; no
+secure, o ciphertext foi distinto e a decifragem independente recuperou todos
+os bytes originais. O GPS ficou desconectado durante os replays: são testes de
+transferência de uma captura real armazenada, não aquisição GPS ao vivo.
 Os vetores independentes AES/CTR continuam válidos e foram reexecutados na
 regressão. A Cyclone IV foi
 retirada da matriz experimental; seus registros permanecem arquivados. Ver o
@@ -50,19 +55,19 @@ e as [métricas FPGA](docs/metricas-fpga-2026-09-29.md).
 A execução anterior de integração com 2.681 bytes por modo e os relatórios
 9600-baud permanecem como histórico, não como resultados da configuração final.
 O gravador binário, comparador do PC e validador de captura NMEA continuam
-disponíveis para os ensaios físicos. A captura GPS real não é substituída pelo
-replay sintético.
-O validador de captura bruta do GPS já está pronto: ele verifica CRLF, ASCII,
-checksum NMEA, sentenças completas e gera um hash do arquivo antes do ensaio
-físico. Isso prepara a captura real, mas não a substitui.
+disponíveis para os ensaios físicos. Replays determinísticos da captura GPS
+preservam uma entrada repetível, mas não substituem a aquisição direta do sensor.
+O validador de captura bruta verifica CRLF, ASCII, checksum NMEA, sentenças
+completas e hash; foi usado em P07 e segue disponível para novas capturas.
 Os rascunhos em inglês e português também possuem uma checagem automática para
 preservar as métricas atuais e a distinção entre evidência RTL e validação física.
 O gerador de contexto do PC e o registro persistente de nonces foram
 implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e o build DE10-Lite aceita
 `CONTEXT_FILE` para gerar esse pacote privado a partir do JSON. O valor padrão
-continua sendo apenas o contexto de bring-up. A captura física do GPS continua
-pendente.
+continua sendo apenas o contexto de bring-up. A aquisição física e a validação
+NMEA do GPS foram concluídas em P07; permanecem pendentes o registro dos
+indicadores físicos de erro/overflow e o teste de reset e recuperação.
 
 A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
 de área no secure anterior. O AES agora calcula chaves durante as rodadas,
@@ -71,9 +76,10 @@ o replay nominal, os builds DE10-Lite e a extração de métricas passaram; os r
 [validação das correções](docs/validacao-correcoes-2026-09-20.md). Após o
 primeiro provisionamento, um reset não rearma o mesmo contexto CTR: é preciso
 programar novamente o FPGA antes de um novo ensaio.
-O sensor definido para a etapa atual é o u-blox NEO-M9N-00B-00. A aquisição
-física continua pendente; os ensaios anteriores a 9600 baud serão repetidos a
-38400 baud.
+O sensor definido para esta etapa é o u-blox NEO-M8N, operando a 38400/8N1.
+O perfil do receptor foi confirmado após ciclo de energia. Os testes físicos
+P01–P06 da UART e das variantes baseline/secure passaram na DE10-Lite a
+38400/8N1; P07 validou a integração física direta GPS→FPGA→PC no baseline.
 
 Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
@@ -96,7 +102,7 @@ selecionar uma taxa ao repetir ensaios antigos.
 | Item | Decisão |
 | --- | --- |
 | Placa | DE10-Lite / MAX 10, clock de 50 MHz |
-| GPS | u-blox NEO-M9N-00B-00; confirmar pinos e entrada de alimentação do breakout |
+| GPS | u-blox NEO-M8N; breakout alimentado a 3,3 V |
 | Serial | 38400 baud, 8N1, fixo na implementação ativa |
 | Criptografia | AES-128-CTR, núcleo RTL próprio e iterativo |
 | Receptor | PC com decifragem por biblioteca independente |
@@ -293,9 +299,11 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo da bancada DE10-Lite: validar a entrada física do NEO-M9N. O
-procedimento, critérios e evidências estão no
-[plano de testes](docs/plano-de-testes.md).
+Próximo passo de bancada: registrar LEDR6/LEDR7 durante a operação e executar
+P11, verificando reset e recuperação com um contexto novo. P07 já validou a
+entrada direta do NEO-M8N no baseline; P08–P10 usaram uma captura GPS armazenada
+para comparar baseline e secure de forma reproduzível. O procedimento e as
+evidências estão no [plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.
 Simulação, fit e programação não substituem a medição física nem a captura GPS.

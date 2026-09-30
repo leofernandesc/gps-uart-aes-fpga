@@ -5,9 +5,9 @@ com a data, o commit do RTL, a configuração usada, o resultado e a evidência
 correspondente. Simulação, compilação e bancada física são resultados
 diferentes e não devem ser misturados.
 
-Atualização de escopo em 29/09: sensor u-blox NEO-M9N-00B-00; somente
-DE10-Lite/MAX 10 no experimento ativo; Cyclone IV abandonada e M8 fora do
-escopo. A UART mudou de 9600 para 38400/8N1. Os resultados anteriores a 9600
+Atualização de escopo em 29/09: receptor u-blox NEO-M8N; somente DE10-Lite/MAX
+10 no experimento ativo; Cyclone IV fora do escopo. O perfil do receptor e da
+UART do projeto é 38400/8N1. Os resultados anteriores a 9600
 permanecem históricos. Na configuração vigente, P01 e P02 foram concluídos; o
 P03 baseline passou no eco serial do CP2102: 20/20 bytes em quatro quadros. A
 primeira captura AD2 era curta; a recaptura a 800 kS/s e 8.192 amostras contém
@@ -15,24 +15,36 @@ todo o burst e decodifica os cinco bytes nas linhas RX e TX. **P04 também está
 concluído a 38400/8N1.** P05 secure passou com 20/20 bytes cifrados e
 recuperação CTR exata. P06 também passou: 5/5 bytes cifrados foram recuperados
 no PC e a captura AD2 decodifica estímulo e ciphertext nos dois canais. A captura
-física do M9N segue pendente. Os
+física do NEO-M8N foi iniciada: P07 validou a passagem das sentenças NMEA pelo
+baseline; P08 concluiu três repetições de replay exato; P09 secure passou com
+recuperação exata dos 4.096 bytes e ciphertext distinto da referência. Faltam
+registrar os indicadores físicos, executar o replay longo secure e validar
+reset. Em 29/09, o replay baseline P10 de 32.768 bytes também passou sem perdas
+ou divergência; isso valida a transferência longa da captura armazenada, não
+uma nova aquisição GPS ao vivo. Os
 testes funcionais AES independentes do link
-serial permanecem válidos. Em 29/09, `make check` passou com 36 testes Python
+serial permanecem válidos. Em 29/09, `make check` passou com 37 testes Python
 e oráculos AES/CTR; `make integration-gps` passou para baseline e secure em
 50 MHz/38400 nos 309 bytes sintéticos. O P01 físico a 38400 foi concluído:
 dez buffers AD2 decodificam `0x55` e indicam período de quadro médio de
 99,33 ms (93–107 ms). Há uma ressalva de configuração do trigger registrada
 abaixo. P02 foi repetido a 38400 e concluído com confirmação visual de LEDR8
 aceso e LEDR9 apagado; P03/P04 baseline estão concluídos na DE10-Lite a 38400.
-P05 e P06 estão concluídos. A entrada física do M9N
-segue pendente.
-Tempos de host incluem PC/USB e não são latência isolada da FPGA.
+P05 e P06 estão concluídos. P07 validou o caminho físico GPS→FPGA→PC por NMEA;
+P08 concluiu 3/3 replays exatos e P09 secure recuperou exatamente os 4.096
+bytes, com ciphertext diferente da referência. No P10, os replays baseline e
+secure da captura GPS de 32.768 bytes passaram sem perda ou divergência; no modo
+secure, a decifragem independente recuperou a referência byte a byte. Os replays
+usaram uma captura armazenada, sem GPS conectado. Permanecem pendentes o registro
+dos LEDs/diagnósticos de erro e overflow e o teste físico de reset. Tempos de
+host incluem PC/USB e não são latência isolada da FPGA.
 
 ## Configuração fixa
 
 - Placa: DE10-Lite, MAX 10 `10M50DAF484C7G`.
 - Clock: 50 MHz.
-- Sensor: u-blox NEO-M9N-00B-00; configuração UART padrão 38400/8N1.
+- Sensor: u-blox NEO-M8N; perfil UART do experimento 38400/8N1, confirmado
+  após ciclo de energia.
 - UART FPGA/host: 38400 baud, 8N1.
 - Caminho baseline: `UART RX -> FIFO -> UART TX`.
 - Caminho secure: `UART RX -> FIFO -> AES-128-CTR -> UART TX`.
@@ -327,7 +339,7 @@ estão no [registro da bancada DE10-Lite + AD2](bancada-de10-lite-ad2-2026-09-25
 DE10-Lite em 26/09/2026 (capturas de 25/09). Este ensaio valida as UARTs
 autônomas e o loopback físico; não valida ainda FIFO, AES ou GPS.
 
-#### Repetição P02 — DE10-Lite, NEO-M9N, 38400 baud (29/09/2026)
+#### Repetição P02 — DE10-Lite, UART 38400 baud (29/09/2026)
 
 O workspace atual do AD2 contém dez buffers de 8.192 amostras a 11,11111 MS/s
 (janela de 737,28 µs por buffer). Cada buffer foi decodificado como um quadro
@@ -465,7 +477,7 @@ CH1 variou de −0,0919 a 3,4403 V e CH2 de −0,0455 a 3,3876 V; os níveis fic
 próximos de 0/3,3 V, com pequenas excursões medidas pelo AD2. Assim, P03 está
 aprovado na comparação de bytes e P04 está aprovado na captura de quadro/bit
 time em ambos os sentidos, para a DE10-Lite e a configuração atual. Isso não
-substitui os testes secure nem a captura do M9N real.
+substitui os testes secure nem a captura do NEO-M8N real.
 
 Capturas preservadas: [CSV AD2](evidence/de10-lite-m9-p03-baseline-ad2-2026-09-29-1800.csv)
 (SHA-256 `6327bbff8d6feda1c301eaa672d60932cced5e95d69d66173c7d99e7361fb637`)
@@ -765,8 +777,8 @@ programado no dispositivo `10M50DAF484@1`; SOF SHA-256
 O contexto privado (chave/nonce) permanece fora da documentação pública.
 O tempo da transação no host foi 16,728 ms; inclui Linux/USB e não mede a
 latência isolada da FPGA. O relatório também declara que CTR não autentica os
-dados. Essa execução é do perfil antigo de 9600 baud e não encerra o P05 na
-configuração vigente M9/38400.
+dados. Essa execução é do perfil antigo de 9600 baud e não encerra o P05 para
+a configuração então vigente de 38400/8N1.
 
 **Ensaio DE10-Lite, 29/09/2026, 18:16 (Manaus): FAIL.** O build secure atual
 foi compilado para MAX 10 `10M50DAF484C7G`, 50 MHz/38400 baud; auditoria passou
@@ -884,52 +896,40 @@ enumeração do dispositivo e a abertura do aplicativo não encerram P04/P06 sem
 captura dos sinais da placa; a captura histórica P06 a 9600 acima comprova
 somente a DE10-Lite e não conclui a configuração atual a 38400.
 
-### P07 — Entrada física do GPS M9N
+### P07 — Captura e entrada física do NEO-M8N
 
-Executar após compilar e programar a UART/baseline da DE10-Lite a 38400 baud:
+O receptor adotado é o u-blox NEO-M8N, com saída UART a 38400/8N1. O perfil foi
+confirmado após ciclo de energia. P07 valida a ligação física direta com a
+DE10-Lite, sem processamento intermediário por outro microcontrolador.
 
-1. Conferir os rótulos e a pinagem do breakout. O módulo NEO-M9N-00B-00 exige
-   VCC dentro de 2,7–3,6 V e seus I/O são referidos a VCC; isso **não** define
-   a tensão de entrada do pino VCC de uma placa breakout. Seguir a documentação
-   da placa concreta, não conectar alimentação por suposição.
-2. Ligar GND comum e alimentar o breakout com a tensão nele especificada.
-   Antes de conectar ao FPGA, medir em TX repouso alto e níveis compatíveis com
-   a entrada 3,3 V da DE10-Lite.
-3. Conectar GPS TX a `V10` (JP1 pino físico 1). Para salvar referência no PC,
-   conectar também esse TX a CP2102 RXD (ambos são entradas). Manter CP2102 TXD
-   e FPGA W10 desconectados desse nó; não unir saídas.
-4. Gravar 512 bytes a 38400/8N1 e validar as sentenças NMEA completas incluídas
-   na captura. Verificar perdas e overflow; uma captura curta não prova
-   estabilidade sob o volume de mensagens habilitado.
-5. Confirmar LEDR2 alternando, LEDR7 (framing) e LEDR6 (overflow) apagados.
+1. Com a FPGA desconectada, ligar GPS TX ao RXD do CP2102 e GND comum; manter
+   TXD do adaptador sem conexão. Capturar a saída a 38400/8N1.
+2. Validar a captura completa com `scripts/gps_capture.py`: bytes ASCII,
+   terminações CRLF, checksums válidos e sentenças completas. Manter a captura
+   privada se contiver dados de localização.
+3. Programar o baseline a 38400/8N1. Ligar GPS TX→V10 (JP1 posição física 1),
+   GND comum e W10 (TX da FPGA)→RXD do CP2102. Não unir saídas TX.
+4. Confirmar atividade de recepção e ausência de framing/overflow; capturar no
+   PC o fluxo que sai da FPGA e validar os bytes NMEA.
 
-O [datasheet u-blox NEO-M9N-00B](https://content.u-blox.com/sites/default/files/NEO-M9N-00B_DataSheet_UBX-19014285.pdf)
-declara UART padrão 38400/8N1 e VCC 2,7–3,6 V. O [manual de integração](https://content.u-blox.com/sites/default/files/NEO-M9N_Integrationmanual_UBX-19014286.pdf)
-recomenda não operar abaixo da taxa padrão e adverte sobre perda se o volume de
-mensagens exceder a largura de banda configurada.
+**Execução física em 29/09/2026 — DE10-Lite, 50 MHz, 38400/8N1:** a captura
+direta de referência preservou 4.096 bytes; `gps_capture.py` validou 66
+sentenças NMEA, CRLF e checksums, SHA-256
+`d38b8617eab8315ddfd0c1299553159ddec9bf4de3e7b5fd4718e9c2811f9d34` (18 bytes
+de fragmento final). Com o baseline programado, a saída física da FPGA também
+preservou 4.096 bytes e passou a validação NMEA com 67 sentenças, SHA-256
+`0a83593d473a5f8ea56f884935c5c124187c080ed0504b6f8ce4cddc4d60d0b6` (21 bytes
+de fragmento final). Os tempos de aquisição do host foram 5,447 s e 5,750 s;
+não representam latência da FPGA. Como as capturas GPS ocorreram em momentos
+diferentes, não se compara o conteúdo/hash entre elas. **Resultado:** passagem
+física e integridade NMEA aprovadas; falta anotar se LEDR6 (overflow) e LEDR7
+(framing) permaneceram apagados. Arquivos binários e relatórios ficam em
+`data/private/de10-2026-09-29/` e não devem ser publicados, pois contêm dados
+GPS.
 
-Comando de captura de referência, após confirmar alimentação e ligações:
-
-```bash
-python3 scripts/capture.py record \
-  --port /dev/ttyUSB0 \
-  --baud 38400 \
-  --output data/private/de10-2026-09-29/p07-gps-direct-512b-01.bin \
-  --bytes 512 \
-  --timeout 60 \
-  --report data/private/de10-2026-09-29/p07-gps-direct-512b-01-report.json
-
-python3 scripts/gps_capture.py \
-  --input data/private/de10-2026-09-29/p07-gps-direct-512b-01.bin \
-  --allow-partial-edges \
-  --report data/private/de10-2026-09-29/p07-gps-direct-512b-01-nmea-report.json
-```
-
-**Situação em 29/09/2026:** P01 da UART autônoma foi medido a 38400, mas nenhum
-teste físico do GPS foi feito. O baseline programado anteriormente é de 9600
-baud e não deve ser conectado ao TX do M9N antes de ser recompilado e programado
-com a configuração nova. A pinagem/alimentação do breakout deve ser conferida;
-nenhum dado GPS foi capturado nesta etapa.
+O [datasheet da família u-blox NEO-M8](https://content.u-blox.com/sites/default/files/NEO-M8-FW3_DataSheet_UBX-15031086.pdf)
+e o [Receiver Description/Protocol Specification](https://content.u-blox.com/sites/default/files/products/documents/u-blox8-M8_ReceiverDescrProtSpec_UBX-13003221.pdf)
+são referências da família adotada.
 
 ### P08 — GPS no baseline
 
@@ -939,7 +939,34 @@ comparar byte a byte a entrada com a saída. Repetir pelo menos três vezes.
 Registrar número de bytes, perdas, framing errors, overflow, latência e maior
 ocupação da FIFO.
 
-**Situação: pendente.**
+**Repetição 1/3 — 29/09/2026, DE10-Lite, baseline a 38400/8N1:** replay da
+referência GPS privada de 4.096 bytes, com o CP2102 em full-duplex. **PASS**:
+4.096/4.096 bytes recebidos, zero faltantes/extras, sem timeout e sem
+divergência; SHA-256 da entrada e da resposta
+`d38b8617eab8315ddfd0c1299553159ddec9bf4de3e7b5fd4718e9c2811f9d34`. Tempo da
+transação observado pelo host: 1,078 s; tempo total no host: 1,135 s — ambos
+incluem Linux/USB/CP2102 e não medem latência isolada da FPGA. Relatório
+privado: `p08-baseline-4096-report-01.json`.
+
+**Repetição 2/3 — 29/09/2026, DE10-Lite, baseline a 38400/8N1:** **PASS**,
+4.096/4.096 bytes recebidos, zero faltantes/extras, sem timeout e sem
+divergência. Os hashes SHA-256 da entrada e da resposta coincidem com a
+referência (`d38b8617eab8315ddfd0c1299553159ddec9bf4de3e7b5fd4718e9c2811f9d34`).
+Tempo da transação no host: 1,078 s; tempo total: 1,136 s, sem representar
+latência isolada da FPGA. Relatório privado:
+`p08-baseline-4096-report-02.json`.
+
+**Repetição 3/3 — 29/09/2026, DE10-Lite, baseline a 38400/8N1:** **PASS**,
+4.096/4.096 bytes recebidos, zero faltantes/extras, sem timeout e sem
+divergência. Os hashes da entrada e da resposta coincidem:
+`d38b8617eab8315ddfd0c1299553159ddec9bf4de3e7b5fd4718e9c2811f9d34`. Tempo
+observado no host: 1,078 s por transação e 1,136 s total, incluindo Linux/USB/
+CP2102. Relatório privado: `p08-baseline-4096-report-03.json`.
+
+**Situação: replay baseline 3/3 aprovado.** Ainda falta registrar LEDR6/LEDR7
+e, quando disponível, a indicação de ocupação da FIFO. Não colar a saída JSON
+completa do replay em registros compartilhados: os campos hexadecimais contêm
+o payload GPS.
 
 ### P09 — GPS no secure
 
@@ -947,15 +974,60 @@ Repetir o mesmo replay no secure, capturar o ciphertext e decifrá-lo no PC com
 o mesmo contexto registrado no experimento. A saída recuperada deve ser
 idêntica à referência GPS original.
 
-**Situação: pendente.**
+**Preparação de hardware — 29/09/2026:** compilação secure concluída sem erros;
+auditoria temporal aprovada nos três corners, sem paths violados. O arquivo
+`build/de10_lite/secure/uart_secure.sof`, gerado para o contexto privado de
+4.096 bytes, foi programado via JTAG no MAX 10 (`10M50DAF484@1`, checksum
+`0x005973F4`).
 
-### P10 — Estabilidade contínua
+**Execução — 29/09/2026, DE10-Lite secure, replay GPS de 4.096 bytes a
+38400/8N1:** **PASS**, 4.096 bytes cifrados recebidos, zero faltantes/extras,
+sem divergência; decifragem CTR recuperou exatamente a referência e o
+ciphertext diferiu do texto original. Tempo observado pelo host: 1,078 s por
+transação e 1,135 s total; inclui Linux/USB/CP2102, não é latência isolada da
+FPGA. Relatório privado: `p09-secure-4096-report-01.json`.
 
-Manter o GPS transmitindo por uma duração registrada e comparar todos os bytes
-recebidos e recuperados. O ensaio deve registrar perdas, erros, overflow,
-ocupação máxima da FIFO e primeira divergência, se houver.
+**Situação: replay secure P09 aprovado.**
 
-**Situação: pendente.**
+### P10 — Transferência longa da captura GPS
+
+Reproduzir pela serial a captura NMEA previamente adquirida do GPS e comparar
+todos os bytes recebidos e recuperados nos modos baseline e secure. Esse ensaio
+verifica uma transferência contínua de 32 KiB com entrada determinística; como
+o GPS não fica conectado durante o replay, ele não equivale a uma aquisição
+prolongada ao vivo. Idealmente, registrar também erros, overflow e ocupação
+máxima da FIFO.
+
+**Referência longa — 29/09/2026:** captura direta do NEO-M8N a 38400/8N1,
+32.768/32.768 bytes; validador aprovou 537 sentenças NMEA completas, com
+fragmento final de 15 bytes preservado. SHA-256:
+`d80dc4be9f143c9500dd5db3d4a968bb730871bfc49a7b57c509edb6c12985fd`. A
+aquisição levou 41,336 s no host; não é latência da FPGA. Arquivos privados:
+`p10-gps-reference-01.bin` e relatórios `p10-gps-reference-01-*.json`.
+
+O SOF baseline foi programado via JTAG no MAX 10 (`10M50DAF484@1`, checksum
+`0x0029C5BB`). **Replay baseline de 32 KiB — 29/09/2026: aprovado.** O CP2102
+enviou a referência NMEA armazenada à FPGA e recebeu os 32.768 bytes sem perdas,
+extras, timeout ou divergência; o SHA-256 recebido coincide com o da referência
+(`d80dc4be9f143c9500dd5db3d4a968bb730871bfc49a7b57c509edb6c12985fd`). GPS
+desconectado durante este replay. Tempo da transação: 8,545 s; tempo total do
+host: 8,603 s, incluindo Linux/USB/CP2102; não é latência isolada da FPGA.
+
+**Replay secure de 32 KiB — 30/09/2026: aprovado.** O CP2102 transmitiu os
+32.768 bytes da mesma referência armazenada e recebeu 32.768 bytes de ciphertext,
+sem perdas, extras, timeout ou divergência. O ciphertext difere da referência;
+a decifragem CTR independente recuperou exatamente os 32.768 bytes originais.
+Tempo da transação: 8,546 s; tempo total do host: 8,604 s, incluindo
+Linux/USB/CP2102, não uma medida isolada da latência FPGA. O GPS permaneceu
+desconectado. Relatório e capturas privados em
+`data/private/de10-2026-09-29/p10-secure-32768-report-01.json` e arquivos
+adjacentes; não publicar dados de localização/ciphertext. O contexto CTR deste
+ensaio foi consumido e não deve ser reutilizado.
+
+**Estado do P10:** transferência longa baseline e secure aprovadas. Isso valida
+o replay de uma captura GPS previamente armazenada, mas não encerra a campanha de
+estabilidade: o registro dos indicadores físicos de erro/overflow e o teste de
+reset e recuperação ainda estão pendentes (P11).
 
 ### P11 — Reset e recuperação física
 

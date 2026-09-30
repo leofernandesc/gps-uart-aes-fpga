@@ -70,41 +70,54 @@ def _configure(fd, baud):
     return previous
 
 
-def _write_all(fd, payload, timeout):
-    deadline = time.monotonic() + timeout
-    offset = 0
-    while offset < len(payload):
-        remaining = deadline - time.monotonic()
-        if remaining <= 0 or not select.select([], [fd], [], remaining)[1]:
-            raise TimeoutError("timeout while sending serial stimulus")
-        try:
-            offset += os.write(fd, payload[offset:])
-        except BlockingIOError:
-            continue
-    return offset
-
-
-def _read_response(fd, expected, timeout, guard):
-    """Read one response and detect bytes beyond its expected boundary."""
-    received = bytearray()
-    deadline = time.monotonic() + timeout
-    timed_out = False
-    while len(received) < expected:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0 or not select.select([fd], [], [], remaining)[0]:
-            timed_out = True
-            break
-        try:
-            chunk = os.read(fd, expected - len(received))
-        except BlockingIOError:
-            continue
-        if not chunk:
-            timed_out = True
-            break
-        received.extend(chunk)
-
+def _transaction(fd, payload, timeout, guard, output):
+    """Send and receive concurrently so large full-duplex replies do not fill
+    the host TTY/USB receive queue while the stimulus is still being written.
+    """
+    started = time.monotonic()
+    send_deadline = started + timeout
+    response_deadline = None
+    sent = 0
+    response = bytearray()
     extra = bytearray()
-    if not timed_out and guard:
+    timed_out = False
+
+    while sent < len(payload) or len(response) < len(payload):
+        now = time.monotonic()
+        if sent < len(payload):
+            if now >= send_deadline:
+                timed_out = True
+                break
+            deadline = send_deadline
+        else:
+            if response_deadline is None:
+                response_deadline = now + timeout
+            if now >= response_deadline:
+                timed_out = True
+                break
+            deadline = response_deadline
+
+        readable, writable, _ = select.select(
+            [fd] if len(response) < len(payload) else [],
+            [fd] if sent < len(payload) else [],
+            [],
+            max(0.0, deadline - time.monotonic()),
+        )
+        if readable:
+            chunk = os.read(fd, min(4096, len(payload) - len(response)))
+            if not chunk:
+                timed_out = True
+                break
+            response.extend(chunk)
+        if writable and sent < len(payload):
+            try:
+                sent += os.write(fd, payload[sent:sent + 4096])
+            except BlockingIOError:
+                pass
+            if sent == len(payload):
+                response_deadline = time.monotonic() + timeout
+
+    if not timed_out and sent == len(payload) and len(response) == len(payload) and guard:
         guard_deadline = time.monotonic() + guard
         while True:
             remaining = guard_deadline - time.monotonic()
@@ -117,19 +130,16 @@ def _read_response(fd, expected, timeout, guard):
             if not chunk:
                 break
             extra.extend(chunk)
-    return bytes(received), bytes(extra), timed_out
 
-
-def _transaction(fd, payload, timeout, guard, output):
-    started = time.monotonic()
-    _write_all(fd, payload, timeout)
-    response, extra, timed_out = _read_response(fd, len(payload), timeout, guard)
+    response = bytes(response)
+    extra = bytes(extra)
     output.write(response)
     output.write(extra)
     output.flush()
     return {
         "tx_hex": payload.hex(" ").upper(),
         "tx_bytes": len(payload),
+        "tx_bytes_sent": sent,
         "rx_hex": (response + extra).hex(" ").upper(),
         "rx_bytes": len(response) + len(extra),
         "missing_bytes": max(0, len(payload) - len(response)),

@@ -10,7 +10,7 @@ Avaliar o custo de acrescentar AES-128-CTR em hardware à aquisição e transmis
 serial de dados GPS, comparando duas elaborações do mesmo RTL na DE10-Lite:
 
 ```text
-NEO-M9N-00B-00 → UART RX → FIFO → [baseline | AES-128-CTR] → UART TX → PC
+NEO-M8N → UART RX → FIFO → [baseline | AES-128-CTR] → UART TX → PC
 ```
 
 Baseline e secure usam o MAX 10 `10M50DAF484C7G`, clock de 50 MHz, UART
@@ -20,13 +20,11 @@ CP2102 e verifica eco ou decifragem. O teste de sistema pode usar primeiro uma
 captura NMEA real reproduzida pelo CP2102 para tornar a comparação byte a byte
 repetível, e depois uma conexão GPS direta para demonstrar a aquisição real.
 
-O sensor é exclusivamente o **u-blox NEO-M9N-00B-00**. A UART ativa é
-38400/8N1, taxa padrão do M9N; não se fará comparação de baud rates. O módulo
-receptor tem VCC de 2,7–3,6 V e I/O referido a VCC. Isso não define a entrada
-de alimentação do breakout: confirmar carrier, pinagem, VCC e níveis antes de
-conectar. A Cyclone IV e o NEO-M8 foram retirados do escopo e não participam
-da metodologia nem da comparação do artigo; os registros datados permanecem
-preservados como histórico.
+O sensor adotado é o **u-blox NEO-M8N**, com UART a 38400/8N1. Esse é o perfil
+fixo do experimento. Os testes físicos P01–P06 na DE10-Lite foram aprovados
+nessa configuração; a aquisição física direta GPS→FPGA ainda precisa ser
+validada. Manter GND comum e verificar os níveis elétricos antes da conexão.
+A Cyclone IV está fora do escopo atual; seus registros permanecem como histórico.
 
 AES-CTR fornece confidencialidade, mas não autenticação/integridade nem proteção
 contra replay ou spoofing GNSS. Não fazer alegações mais amplas.
@@ -45,7 +43,8 @@ Os ensaios físicos anteriores da UART e dos tops integrados foram realizados a
 | P05/P06 secure | Concluído em 29/09 | P05 20/20 e P06 5/5 cifrados; PC recuperou a referência e AD2 confirmou os dois canais |
 | AES-128/CAVP e CTR oracle | Concluído em `make check` | Independentes da UART; regressão AES/CTR aprovada |
 | Replay NMEA RTL, métricas e Quartus | Concluído em 29/09 | Regressão, replay, recursos e timing atualizados para 50 MHz/38400 |
-| Captura física NEO-M9N | Primeira execução pendente | Validar taxa, níveis, NMEA e aquisição serial real |
+| Perfil UART do NEO-M8N | **38400/8N1 confirmado** | Perfil adotado nos novos ensaios |
+| Captura física NEO-M8N na FPGA | **Concluída em 29/09** | Captura direta e saída baseline pela DE10-Lite validadas em NMEA; faltam registrar LEDR6/LEDR7 |
 
 Os resultados antigos em 9600 permanecem no diário, identificados como
 históricos; não devem ser apresentados como resultados da configuração final.
@@ -66,17 +65,22 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
    captura dos pinos; P05 secure passou com 20/20 bytes cifrados e recuperação
    exata no PC; P06 passou com 5/5 bytes, recuperação exata e decodificação
    simultânea de V10/W10 no AD2. Configuração, hashes, limites e evidências
-   estão em `cronograma.md` e `plano-de-testes.md`. Próxima etapa: validar a
-   entrada física do M9N, registrando configuração, arquivos brutos, níveis e
-   estado dos LEDs.
-5. **Pendente:** conferir o breakout do M9N e capturar sua UART diretamente pelo CP2102. Validar
-   bytes NMEA completos, CRLF, checksums e SHA-256; proteger coordenadas pessoais.
-6. **Pendente:** demonstrar GPS→FPGA→PC diretamente, observando entrada e saída. Para uma
-   comparação determinística baseline/secure, reapresentar a mesma captura real
-   validada como estímulo CP2102→FPGA e conferir eco/decifragem byte a byte.
-7. **Pendente:** fazer teste contínuo com duração e total de bytes registrados; relatar erros,
-   perdas/overflow e limites da medição. Se a etapa GPS física não couber antes
-   da submissão, descrevê-la explicitamente como pendente e não inventar dados.
+   estão em `cronograma.md` e `plano-de-testes.md`. P07 validou fisicamente
+   GPS→FPGA→PC com NMEA; P08/P09 passaram em replay de 4.096 bytes. P10
+   baseline e secure passaram em 32.768 bytes, com decifragem independente exata.
+   A referência foi pré-capturada e o GPS não estava conectado durante os
+   replays.
+5. **Concluído em 29/09:** capturar a saída UART do NEO-M8N a 38400/8N1 e
+   validar sentenças NMEA, CRLF, checksums e SHA-256; manter os dados de
+   localização em armazenamento privado.
+6. **P08–P10 concluídos quanto aos replays:** replay determinístico da captura
+   NMEA pelo CP2102→FPGA; P08/P09 em 4.096 bytes e P10 baseline/secure em
+   32.768 bytes. A decifragem independente do P10 secure recuperou toda a
+   referência. Não confundir replay gravado com aquisição ao vivo nem tempos de
+   host com latência da FPGA.
+7. **Pendente:** registrar indicadores físicos de erro/overflow durante a
+   estabilidade e executar o reset/recuperação P11; relatar duração, contagem
+   de bytes e limites de medição.
 8. **Pendente até 30/09:** atualizar manuscritos PT/EN com apenas resultados reproduzidos, revisar template,
    referências, figuras e limitações e submeter até 30/09. Preservar comprovante.
 
@@ -86,7 +90,7 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
 | --- | --- | --- |
 | 29/09 | RTL/host 38400, regressão, replay GPS simulado, Quartus baseline/secure e métricas | Logs `PASS`, SOFs atuais, timing sem violações e dados novos no relatório |
 | 29/09 | P02–P06 na DE10-Lite | Loopback, eco baseline, CTR secure e capturas correspondentes; P01 já validado no nível de quadro |
-| 29–30/09 | Captura M9N e integração | NMEA validado; conexão direta e/ou replay físico claramente identificados |
+| 29–30/09 | Captura NEO-M8N e integração | NMEA validado; conexão direta e/ou replay físico claramente identificados |
 | 30/09 | Artigo e submissão | Revisão PT/EN, números rastreáveis, limitações explícitas e comprovante BTSym |
 
 O prazo interno de bancada de 25/09 foi ultrapassado e não é mais o marco

@@ -178,6 +178,61 @@ class SerialBenchTests(unittest.TestCase):
             os.close(master)
             worker.join(timeout=1)
 
+    def test_large_full_duplex_replay_drains_tty_while_sending(self):
+        payload = bytes((index * 37 + 13) & 0xff for index in range(32768))
+        master, slave = pty.openpty()
+        port = os.ttyname(slave)
+        echoed = 0
+
+        def responder():
+            nonlocal echoed
+            try:
+                while echoed < len(payload):
+                    chunk = os.read(master, min(4096, len(payload) - echoed))
+                    if not chunk:
+                        break
+                    echoed += len(chunk)
+                    pending = memoryview(chunk)
+                    while pending:
+                        pending = pending[os.write(master, pending):]
+            except OSError:
+                pass
+
+        worker = threading.Thread(target=responder, daemon=True)
+        worker.start()
+        try:
+            with tempfile.TemporaryDirectory(prefix="serial-replay-large-") as directory:
+                directory = Path(directory)
+                input_path = directory / "input.bin"
+                input_path.write_bytes(payload)
+                context_path = directory / "context.json"
+                context_path.write_text(json.dumps({
+                    "schema": 1,
+                    "context_id": "large-baseline-replay-test",
+                    "mode": "baseline",
+                    "bytes": len(payload),
+                }), encoding="utf-8")
+                output = directory / "received.bin"
+                report = directory / "report.json"
+                completed = subprocess.run([
+                    sys.executable, str(SCRIPT), "replay", "--port", port,
+                    "--input", str(input_path), "--context", str(context_path),
+                    "--received", str(output), "--report", str(report),
+                    "--timeout", "5", "--response-guard", "0.002",
+                ], cwd=ROOT, text=True, capture_output=True, timeout=10)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                result = json.loads(report.read_text(encoding="utf-8"))
+                self.assertEqual(result["status"], "PASS")
+                self.assertEqual(result["received_bytes"], len(payload))
+                self.assertEqual(result["transactions"][0]["tx_bytes_sent"],
+                                 len(payload))
+                self.assertEqual(output.read_bytes(), payload)
+                self.assertEqual(echoed, len(payload))
+        finally:
+            os.close(slave)
+            os.close(master)
+            worker.join(timeout=1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,17 +1,18 @@
-# Cronograma revisto — NEO-M9N e DE10-Lite — setembro de 2026
+# Cronograma revisto — NEO-M8N e DE10-Lite — setembro de 2026
 
-Objetivo ativo: adquirir dados do u-blox NEO-M9N-00B-00 por UART e avaliar o
+Objetivo ativo: adquirir dados do u-blox NEO-M8N por UART e avaliar o
 custo do AES-128-CTR na DE10-Lite/MAX 10, comparando baseline e secure.
 Submissão BTSym’26: até 30/09/2026.
 
-## Decisões vigentes em 29/09/2026
+## Decisões e estado em 30/09/2026
 
-- GPS: **u-blox NEO-M9N-00B-00**; NEO-M8 saiu do escopo.
+- GPS: **u-blox NEO-M8N**; o modelo será referido assim no artigo e no projeto.
 - Plataforma do experimento: **somente DE10-Lite**, clock de 50 MHz. Cyclone IV
   foi abandonada; os registros antigos permanecem como histórico, não como
   parte da metodologia ou do artigo.
-- UART do projeto: **38400/8N1** para corresponder à configuração padrão do
-  M9N. RTL, host e testbenches foram atualizados. `make check` passou e
+- UART do projeto e do NEO-M8N: **38400/8N1**. RTL, host e testbenches foram
+  atualizados; o perfil do receptor foi confirmado após ciclo de energia.
+  `make check` passou e
   `make integration-gps` processou os 309 bytes nas duas variantes a 50 MHz:
   FIFO máxima de 1 byte, 80 ns de RX válido até início do TX e 260.480 ns até
   fim do quadro TX. Baseline e secure também passaram no Quartus e nos três
@@ -36,24 +37,29 @@ Submissão BTSym’26: até 30/09/2026.
   aprovado, 20/20 bytes em quatro transações. P04: captura completa de cinco
   bytes em RX/TX, bit time ~26,0 µs, aprovada na DE10-Lite. P05 secure: 20/20
   bytes cifrados, sem perdas, e recuperação CTR exata no PC. P06 secure no AD2
-  também está concluído; GPS físico segue pendente.** Os testes independentes do
+  também está concluído; a aquisição GPS direta foi validada em P07.** Os testes independentes do
   algoritmo AES não dependem do baud e não precisam ser repetidos isoladamente;
   `make check` já foi reexecutado após a atualização.
-- O NEO-M9N usa 38400/8N1 de fábrica. Seu módulo requer VCC de 2,7–3,6 V e tem
-  I/O referido a VCC; a tensão de entrada do breakout ainda deve ser confirmada
-  antes de alimentá-lo. Fontes oficiais: [datasheet](https://content.u-blox.com/sites/default/files/NEO-M9N-00B_DataSheet_UBX-19014285.pdf)
-  e [manual de integração](https://content.u-blox.com/sites/default/files/NEO-M9N_Integrationmanual_UBX-19014286.pdf).
+- O breakout do GPS é alimentado a 3,3 V. Antes da conexão com a FPGA, manter
+  GND comum e confirmar que TX/RX permanecem em níveis compatíveis com a placa.
+- **Integração GPS:** P07 validou sentenças NMEA na captura direta e na saída
+  física do baseline da DE10-Lite. P08 concluiu os 3 replays baseline com
+  comparação byte a byte; P09 secure também passou com recuperação exata de
+  4.096 bytes. Em P10, os replays baseline e secure passaram com 32.768 bytes da
+  referência GPS armazenada; no modo secure o plaintext foi recuperado
+  exatamente. O GPS ficou desconectado durante os replays. Restam registrar os
+  indicadores físicos de erro/overflow e executar reset e recuperação (P11).
 
 | Data | Etapa | Situação / entrega exigida |
 | --- | --- | --- |
-| 29/09 | RTL/host e regressão a 38400 | **Concluído** — `make check`, 36 testes Python; replay NMEA em 50 MHz aprovado nos dois modos |
+| 29/09 | RTL/host e regressão a 38400 | **Concluído** — `make check`, 37 testes Python; replay NMEA em 50 MHz aprovado nos dois modos |
 | 29/09 | Builds e métricas Quartus baseline/secure | **Concluído** — ambos os fits e auditorias temporais PASS; ver `metricas-fpga-2026-09-29.md` |
 | 29/09 | P01, UART autônoma a 38400 | **Concluído** — dez quadros `0x55`; intervalos dos buffers AD2: média 99,33 ms (93–107 ms), trigger a corrigir nos próximos ensaios |
 | 29/09 | P02, loopback UART a 38400 | **Concluído** — 10/10 quadros `0x55` e temporização no AD2; LEDR8 RX válido aceso, LEDR9 erro apagado |
 | 29/09 | P03/P04 baseline a 38400 | **Concluído na DE10-Lite** — P03 eco 20/20; P04 decodifica os cinco bytes em RX e TX, bit time ~26,0 µs, janela AD2 10,239 ms |
 | 29/09 | P05 secure a 38400 | **Concluído** — reteste 4/4 transações, 20/20 bytes cifrados e recuperados; relatório privado `p05-secure-20b-38400-report-02.json` |
 | 29/09 | P06 secure no AD2 | **Concluído** — CP2102 5/5 e decifragem exata; captura AD2 decodifica entrada e ciphertext em V10/W10 |
-| 29/09 | P07–P10 com M9N real | Pendente de validação elétrica, NMEA, baseline/secure e estabilidade |
+| 29–30/09 | P07–P10 GPS e replays | **P07 aprovado** — aquisição e saída baseline com NMEA válido; **P08 3/3** e **P09 secure** aprovados em 4.096 bytes; **P10 baseline e secure aprovados** em 32.768 bytes, sem perda/divergência e com recuperação CTR exata. Referência GPS pré-capturada; GPS desconectado durante os replays. Faltam indicadores físicos de erro/overflow e reset/recuperação (P11) |
 | 30/09 | Atualizar resultados, revisar manuscritos e submeter | Até a deadline; manter evidências e comprovante |
 
 **P05 — reteste secure, 29/09/2026 às 18:32 (Manaus):** após programar
@@ -92,7 +98,8 @@ relatório privado `b9e3da3deacb63f67d181e1380cd034212792e96c84cf2d2b4583af2b9f6
 O início do TX ocorreu cerca de 247,5 µs após o início do primeiro quadro RX;
 isso inclui a recepção serial do byte e não é latência isolada de AES. O tempo
 de 68,98 ms no relatório é do caminho host/Linux/USB e também não mede a
-latência interna da FPGA. Próxima etapa: entrada real do NEO-M9N (P07).
+latência interna da FPGA. Próxima etapa: executar P07, validando a captura e a
+entrada física direta do NEO-M8N na DE10-Lite.
 
 O plano anterior de duas placas/M8 e o freeze de 25/09 foram supersedidos.
 Detalhes datados abaixo são registros históricos, não requisitos atuais.
@@ -294,8 +301,8 @@ baixos médios: −0,052 V (CH1) e 0,014 V (CH2); altos médios: 3,390 V (CH1) e
 CSV SHA-256 `36a01fbab4b7ec70b6300afaaf4a9ec57d104c675a78661b899b5d45d28039ee`;
 workspace SHA-256 `7655dbf33123385b9cdcc6d005eab07bf60fb024af99db171ddcacf92c4aed9a`.
 Resultado histórico: cinco bytes cifrados/decifrados e capturados no perfil
-9600/8N1. Isso não fecha P05/P06 para o perfil vigente M9/38400. A anotação de
-falha P05 neste registro descreve o estado antes do reteste aprovado às 18:32;
+9600/8N1. Isso não fecha P05/P06 para o perfil que então estava vigente,
+NEO-M8N/38400. A anotação de falha P05 neste registro descreve o estado antes do reteste aprovado às 18:32;
 ver o resultado atual acima. AES-CTR não oferece autenticação.
 
 **Preparação P07 na DE10-Lite, 29/09/2026, 14:19 (Manaus):** `make
