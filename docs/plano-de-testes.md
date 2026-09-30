@@ -1006,12 +1006,16 @@ aquisição levou 41,336 s no host; não é latência da FPGA. Arquivos privados
 `p10-gps-reference-01.bin` e relatórios `p10-gps-reference-01-*.json`.
 
 O SOF baseline foi programado via JTAG no MAX 10 (`10M50DAF484@1`, checksum
-`0x0029C5BB`). **Replay baseline de 32 KiB — 29/09/2026: aprovado.** O CP2102
-enviou a referência NMEA armazenada à FPGA e recebeu os 32.768 bytes sem perdas,
-extras, timeout ou divergência; o SHA-256 recebido coincide com o da referência
+`0x0029C5BB`). **Replay baseline de 32 KiB — primeira tentativa, 30/09/2026:
+falhou.** Foram recebidos 5.732 de 32.768 bytes; houve timeout e primeira
+divergência no offset 4.617. **Repetição com a ferramenta lendo RX durante o
+envio — aprovada.** O CP2102 recebeu os 32.768 bytes, sem perdas, extras,
+timeout ou divergência; o SHA-256 coincide com a referência
 (`d80dc4be9f143c9500dd5db3d4a968bb730871bfc49a7b57c509edb6c12985fd`). GPS
-desconectado durante este replay. Tempo da transação: 8,545 s; tempo total do
-host: 8,603 s, incluindo Linux/USB/CP2102; não é latência isolada da FPGA.
+desconectado durante o replay. Tempo da transação: 8,545 s; tempo total do
+host: 8,603 s, incluindo Linux/USB/CP2102; não é latência isolada da FPGA. A
+tentativa inicial permanece registrada como falha; o resultado aprovado é da
+repetição `p10-baseline-32768-report-02.json`.
 
 **Replay secure de 32 KiB — 30/09/2026: aprovado.** O CP2102 transmitiu os
 32.768 bytes da mesma referência armazenada e recebeu 32.768 bytes de ciphertext,
@@ -1031,14 +1035,33 @@ reset e recuperação ainda estão pendentes (P11).
 
 ### P11 — Reset e recuperação física
 
-Repetir um ensaio após pressionar KEY0, confirmando que:
+O teste usa o modo secure e um contexto CTR recém-gerado. Ele verifica os dois
+comportamentos do KEY0 e a proteção contra reutilização do mesmo fluxo
+AES-CTR. O GPS fica desconectado; usar CP2102 em 38400/8N1, TXD→V10, W10→RXD e
+GND comum.
 
-- o TX volta ao nível ocioso;
-- bytes da captura anterior não são transmitidos;
-- a configuração é carregada novamente;
-- uma nova captura funciona com um novo contexto.
+1. Programar um SOF secure compilado com contexto novo. Sem enviar bytes,
+   confirmar LEDR1 e LEDR5 acesos e LEDR9 apagado.
+2. Pressionar e soltar KEY0 antes de qualquer byte. A configuração deve ser
+   carregada novamente: LEDR1/LEDR5 acesos e LEDR9 apagado.
+3. Enviar uma única carga conhecida de 5 bytes pelo ensaio serial. Confirmar
+   cinco bytes de ciphertext, recuperação exata no PC e LEDR6/LEDR7 apagados;
+   após a drenagem, LEDR8 também deve apagar.
+4. Depois que TX retornar ao repouso, pressionar e soltar KEY0. Como o contexto
+   já foi usado, o wrapper mantém esse estado fora do reset: LEDR1/LEDR5 devem
+   apagar, LEDR9 deve acender e TX deve permanecer ocioso. Enviar um byte de
+   sondagem e confirmar que não há resposta; essa sondagem testa o bloqueio e
+   não é uma nova captura AES válida.
+5. Para recuperar o serviço, gerar outro contexto com nonce novo, compilar e
+   programar outro SOF secure. Confirmar LEDR1/LEDR5 acesos, LEDR9 apagado e
+   validar uma nova carga conhecida. KEY0, sozinho, não deve rearmar um
+   contexto já consumido.
 
-**Situação: pendente.**
+Não reutilizar o primeiro contexto/nonce para uma nova captura após os 5 bytes
+serem processados. Cada contexto secure deve ser exclusivo; preservar ambos os
+relatórios e não publicar chave, nonce ou dados GPS privados.
+
+**Situação: pendente de execução física.**
 
 ## Registro histórico da Cyclone IV — fora do escopo atual
 
