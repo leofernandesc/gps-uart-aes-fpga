@@ -44,13 +44,21 @@ regressão. A Cyclone IV foi
 retirada da matriz experimental; seus registros permanecem arquivados. Ver o
 [plano de testes](docs/plano-de-testes.md).
 
+Em 30/09, P11 confirmou bloqueio após reset de um contexto consumido e
+recuperação com contexto/SOF novos. P12 e P13 validaram aquisição GPS ao vivo
+nos modos baseline e secure: 8.192 bytes e 127 sentenças NMEA completas em
+cada ensaio. No P13, a decifragem independente passou e LEDR6/LEDR7 ficaram
+apagados. A entrada ao vivo não foi capturada em paralelo; igualdade byte a
+byte foi estabelecida nos replays determinísticos, e as capturas ao vivo
+curtas não representam um teste de estabilidade prolongada.
+
 Em 29/09, o replay NMEA público de cinco sentenças (309 bytes com CRLF) passou
 em simulação de produção a 50 MHz/38400 nos modos baseline e secure, sem
-divergências ou overflow. A extração pós-fit atual registrou 331 LE/212
-registradores e Fmax mínima de 117,56 MHz no baseline, contra 5.603 LE/913
-registradores e 103,38 MHz no secure. São resultados RTL/Quartus, não medições
+divergências ou overflow. O par pós-fit selecionado em 30/09 registra 331 LE/212
+registradores e Fmax mínima de 117,56 MHz no baseline, contra 5.591 LE/913
+registradores e 92,61 MHz no secure. Os dois atendem a 50 MHz. São resultados RTL/Quartus, não medições
 físicas; veja a [validação do replay](docs/validacao-replay-nmea-2026-09-29.md)
-e as [métricas FPGA](docs/metricas-fpga-2026-09-29.md).
+e as [métricas FPGA](docs/metricas-fpga-2026-09-30.md).
 
 A execução anterior de integração com 2.681 bytes por modo e os relatórios
 9600-baud permanecem como histórico, não como resultados da configuração final.
@@ -59,23 +67,27 @@ disponíveis para os ensaios físicos. Replays determinísticos da captura GPS
 preservam uma entrada repetível, mas não substituem a aquisição direta do sensor.
 O validador de captura bruta verifica CRLF, ASCII, checksum NMEA, sentenças
 completas e hash; foi usado em P07 e segue disponível para novas capturas.
-Os rascunhos em inglês e português também possuem uma checagem automática para
-preservar as métricas atuais e a distinção entre evidência RTL e validação física.
+Os rascunhos em inglês e português possuem uma checagem das tabelas e resumos
+contra uma seleção versionada de métricas, com hashes das fontes e dos
+relatórios. Com builds locais, a checagem confirma também os artefatos; em um
+clone sem esses arquivos, informa que verificou apenas a seleção publicada.
 O gerador de contexto do PC e o registro persistente de nonces foram
 implementados e testados. O wrapper aceita `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` como parâmetros de elaboração, e o build DE10-Lite aceita
 `CONTEXT_FILE` para gerar esse pacote privado a partir do JSON. O valor padrão
-continua sendo apenas o contexto de bring-up. A aquisição física e a validação
-NMEA do GPS foram concluídas em P07; permanecem pendentes o registro dos
-indicadores físicos de erro/overflow e o teste de reset e recuperação.
+continua sendo apenas o contexto de bring-up. A aquisição GPS baseline e secure
+foi validada em P07/P12/P13. O reset e a recuperação foram concluídos em P11;
+os indicadores de framing/overflow permaneceram apagados em P13. A ocupação
+física da FIFO não foi registrada.
 
 A [revisão de 20/09](docs/revisao-completa-2026-09-20.md) identificou excesso
 de área no secure anterior. O AES agora calcula chaves durante as rodadas,
 sem armazenar onze chaves. Após a reconciliação com o remoto, a regressão,
 o replay nominal, os builds DE10-Lite e a extração de métricas passaram; os resultados estão em
 [validação das correções](docs/validacao-correcoes-2026-09-20.md). Após o
-primeiro provisionamento, um reset não rearma o mesmo contexto CTR: é preciso
-programar novamente o FPGA antes de um novo ensaio.
+primeiro consumo de dados, um reset não rearma o mesmo contexto CTR: cada novo
+ensaio exige contexto novo e um SOF correspondente. O bloqueio não persiste
+após desligar ou reprogramar a FPGA; repetir o mesmo SOF pode reutilizar a máscara.
 O sensor definido para esta etapa é o u-blox NEO-M8N, operando a 38400/8N1.
 O perfil do receptor foi confirmado após ciclo de energia. Os testes físicos
 P01–P06 da UART e das variantes baseline/secure passaram na DE10-Lite a
@@ -85,8 +97,8 @@ Em 18/09, a DE10-Lite foi detectada pelo USB-Blaster, o projeto `uart_scope`
 foi recompilado e o SOF foi programado com sucesso no `10M50DAF484C7G`. A
 medição do TX no osciloscópio e o loopback TX→RX foram concluídos; os resultados
 estão em [relatório da bancada](docs/bancada-de10-lite-2026-09-18.md). Os tops
-integrados baseline/secure foram separados em projetos próprios e já foram
-compilados; ainda precisam ser programados e validados fisicamente.
+integrados baseline/secure foram separados em projetos próprios. Naquele
+marco, ainda aguardavam validação física, posteriormente concluída em P03–P13.
 
 Os registros da Cyclone IV feitos em 21/09 são históricos e não pertencem mais
 ao experimento ativo. Em 26/09, o diagnóstico
@@ -110,7 +122,7 @@ selecionar uma taxa ao repetir ensaios antigos.
 | Instrumentação física | Osciloscópio de bancada ou Analog Discovery 2; captura serial pelo CP2102 |
 | Prazo | Submissão BTSym’26 até 30/09/2026 |
 
-AES-CTR fornecerá **confidencialidade**, não autenticação, proteção contra
+AES-CTR fornece **confidencialidade**, não autenticação, proteção contra
 alteração/replay do tráfego ou contra falsificação do sinal GNSS. O protótipo
 não deve ser apresentado como um produto de comunicação segura completo.
 
@@ -126,8 +138,9 @@ Executa simulações para UART a 38400 baud, FIFO, ponte, AES, CTR e integraçã
 o total exato é impresso pelo executor. Inclui testes históricos de compatibilidade,
 bancada/FIFO/ponte, dois testbenches AES, dois de CTR e cinco da integração/wrapper.
 Inclui nove configurações de lint, checagem estrutural, verificação no PC dos
-bytes CTR e do TX integrado, além de 36 testes Python de captura, contexto,
-replay e validação NMEA.
+bytes CTR e do TX integrado, além dos testes Python de captura, contexto,
+replay, validação NMEA e consistência das métricas dos manuscritos. A execução
+`make pc` de 30/09 passou nos 46 testes de software.
 Falhas abortam o comando com código não zero.
 Resultados locais ficam em `build/`, sem entrar no versionamento.
 
@@ -155,12 +168,13 @@ make ctr     # Máscaras, fluxo por byte, lint, estrutura e conferência no PC
 make integration  # Caminho serial completo sem/com AES; teste em 50 MHz/38400
 make integration-gps # Replay NMEA completo no timing de produção; separado por ser lento
 make metrics # Extrai recursos, Fmax e slacks dos builds Quartus existentes
+make metrics-snapshot METRICS_SNAPSHOT=docs/evidence/nova-selecao.json # Congela um par revisado sem sobrescrever
 make pc      # Comparador, gravação binária e testes de contexto no PC
 make context # Testes do gerador, registro e pacote SystemVerilog privado
 make gps-replay # Valida o fixture NMEA público e sua conversão para CRLF
 make gps-capture-check GPS_CAPTURE=arquivo.bin # Valida uma captura NMEA bruta
 make serial-bench CP2102_PORT=/dev/ttyUSB0 CONTEXT_FILE=contexto.json RECEIVED=saida.bin REPORT=relatorio.json BAUD=38400 # vetor conhecido
-make manuscript-check # Confere métricas e limitações declaradas nos manuscritos
+make manuscript-check # Confere tabelas/resumos, fontes e hashes dos builds selecionados
 make baseline-fpga  # SOF DE10-Lite sem AES, com FIFO
 make secure-fpga    # SOF DE10-Lite com AES-128-CTR
 # Exemplo de contexto privado aplicado ao build:
@@ -201,8 +215,8 @@ MAX 10 10M50DAF484C7G, 50 MHz, 38400 baud, 8N1.
 
 Ver [pinagem e uso da ponte](fpga/de10_lite/README.md) e
 [resultados deste marco](docs/validacao-ponte-quartus-2026-09-07.md).
-As métricas atuais incluem FIFO e LEDs de diagnóstico, mas ainda não o AES-CTR
-integrado que será comparado nos dois builds do artigo.
+As métricas dessa ponte histórica incluem FIFO e LEDs de diagnóstico. O
+comparativo do artigo usa os projetos integrados baseline/secure abaixo.
 
 Para os projetos integrados usados no artigo:
 
@@ -280,7 +294,8 @@ e a configuração antiga; não duplica runs ASIC, imagens ou binários.
 - [Validação da captura NMEA](docs/validacao-captura-nmea-2026-09-20.md)
 - [Validação das correções sem hardware](docs/validacao-correcoes-2026-09-20.md)
 - [Validação dos manuscritos](docs/validacao-manuscrito-2026-09-20.md)
-- [Métricas pós-fit atuais da DE10-Lite](docs/metricas-fpga-2026-09-29.md)
+- [Métricas pós-fit selecionadas da DE10-Lite](docs/metricas-fpga-2026-09-30.md)
+- [Métricas históricas de 29/09](docs/metricas-fpga-2026-09-29.md)
 - [Métricas históricas da DE10-Lite a 9600](docs/metricas-fpga-2026-09-20.md)
 - [Roteiro integrado da DE10-Lite](docs/bancada-de10-lite-integrada-2026-09-22.md)
 - [Instrumentação anterior ao P04–P06](docs/validacao-instrumentacao-2026-09-22.md)
@@ -299,11 +314,11 @@ A [apresentação para o orientador](docs/proposta_btsym_gps_fpga.html) está
 versionada. A cópia local em
 `/home/leofernandesc/Documents/proposta_btsym_gps_fpga.html` acompanha essa versão.
 
-Próximo passo de bancada: registrar LEDR6/LEDR7 durante a operação e executar
-P11, verificando reset e recuperação com um contexto novo. P07 já validou a
-entrada direta do NEO-M8N no baseline; P08–P10 usaram uma captura GPS armazenada
-para comparar baseline e secure de forma reproduzível. O procedimento e as
-evidências estão no [plano de testes](docs/plano-de-testes.md).
+Próximo passo: fechar referências, template, figuras e PDF do artigo, usando
+o par de métricas selecionado e os limites dos ensaios P01–P13. Melhorias de
+análise de sincronizadores/MTBF e auditoria explícita de minimum pulse width
+estão registradas no [cronograma](docs/cronograma.md) para uma próxima análise.
+Procedimentos e evidências físicas estão no [plano de testes](docs/plano-de-testes.md).
 Um contexto privado pode ser incorporado ao SOF com `CONTEXT_FILE`; isso é
 provisionamento estático de build, não configuração em tempo de execução.
 Simulação, fit e programação não substituem a medição física nem a captura GPS.

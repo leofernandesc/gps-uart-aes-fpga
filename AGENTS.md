@@ -53,22 +53,31 @@ versionado quando ela existir.
 ## Alvos de FPGA e testes
 
 - O experimento ativo usa somente a DE10-Lite MAX 10 `10M50DAF484C7G`, clock
-  de 50 MHz e u-blox NEO-M9N-00B-00 a 38400/8N1. NEO-M8 e Cyclone IV estão fora
-  do escopo atual; seus registros anteriores são históricos.
+  de 50 MHz e GPS identificado no projeto como u-blox NEO-M8N a 38400/8N1.
+  Cyclone IV está fora do escopo atual; os registros anteriores são históricos.
 - `make uart-fpga` é o teste autônomo de UART; `make fpga` é a ponte com FIFO.
   Nenhum dos dois representa o sistema integrado com AES-CTR.
 - O comparativo tem dois builds: baseline e secure na DE10-Lite, ambos a
   50 MHz/38400/8N1. Mantenha clock, FIFO, interfaces e instrumentação iguais;
-  o AES é a única diferença arquitetural.
-- O módulo NEO-M9N-00B-00 opera com VCC de 2,7–3,6 V e I/O referido a VCC; isso
-  não define a entrada VCC do breakout. Verificar seu rótulo/documentação antes
-  de ligar alimentação ou sinal à FPGA.
+  o AES é a única diferença arquitetural. O teste GPS deve ligar diretamente
+  o NEO-M8N à FPGA, sem etapa intermediária com outro microcontrolador.
+- O breakout do GPS está sendo usado a 3,3 V. Verificar os níveis e o GND comum
+  antes da conexão com a FPGA; manter os pinos de sinal dentro da faixa de I/O.
 - A instalação e o uso do Analog Discovery 2 estão documentados em
   `docs/analog-discovery-2-waveforms.md`. WaveForms/Adept instalados ou uma
   enumeração USB bem-sucedida não equivalem a P04/P06 concluídos: preserve CSV,
   imagens, logs, hash e condições do instrumento antes de atualizar o status.
 
 ## Procedimento obrigatório ao atualizar o repositório
+
+As tabelas e resumos pós-fit do artigo devem corresponder à seleção versionada
+em `docs/evidence/de10-lite-postfit-2026-09-30.json`. `make metrics` confere
+fontes e artefatos dos builds locais; `make manuscript-check` compara essa
+seleção com os manuscritos e, quando presentes, com os builds. Um build novo
+não atualiza automaticamente o artigo: selecionar um par revisado em um
+arquivo novo, atualizar os documentos e conferir todos os hashes. Preservar
+seleções anteriores como histórico. Não publicar pacotes de contexto, chaves
+ou capturas GPS privadas.
 
 Sempre que for necessário fazer `git pull`, revise cautelosamente todas as
 alterações recebidas. Não faça um pull cego.

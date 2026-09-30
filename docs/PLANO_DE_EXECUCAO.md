@@ -1,6 +1,6 @@
 # Plano de execução e colaboração
 
-Atualizado em **29/09/2026**. O andamento e as evidências ficam em
+Atualizado em **30/09/2026**. O andamento e as evidências ficam em
 [`cronograma.md`](cronograma.md); este plano define o experimento vigente e as
 tarefas restantes para a submissão BTSym’26 até 30/09.
 
@@ -22,8 +22,9 @@ repetível, e depois uma conexão GPS direta para demonstrar a aquisição real.
 
 O sensor adotado é o **u-blox NEO-M8N**, com UART a 38400/8N1. Esse é o perfil
 fixo do experimento. Os testes físicos P01–P06 na DE10-Lite foram aprovados
-nessa configuração; a aquisição física direta GPS→FPGA ainda precisa ser
-validada. Manter GND comum e verificar os níveis elétricos antes da conexão.
+nessa configuração; P07/P12 validaram a aquisição direta no baseline, e P13
+validou GPS ao vivo com AES-CTR e recuperação NMEA no PC. Manter GND comum
+e verificar os níveis elétricos antes da conexão.
 A Cyclone IV está fora do escopo atual; seus registros permanecem como histórico.
 
 AES-CTR fornece confidencialidade, mas não autenticação/integridade nem proteção
@@ -44,7 +45,7 @@ Os ensaios físicos anteriores da UART e dos tops integrados foram realizados a
 | AES-128/CAVP e CTR oracle | Concluído em `make check` | Independentes da UART; regressão AES/CTR aprovada |
 | Replay NMEA RTL, métricas e Quartus | Concluído em 29/09 | Regressão, replay, recursos e timing atualizados para 50 MHz/38400 |
 | Perfil UART do NEO-M8N | **38400/8N1 confirmado** | Perfil adotado nos novos ensaios |
-| Captura física NEO-M8N na FPGA | **Concluída em 29/09** | Captura direta e saída baseline pela DE10-Lite validadas em NMEA; faltam registrar LEDR6/LEDR7 |
+| Captura física NEO-M8N na FPGA | **Concluída em 29–30/09** | P07/P12 baseline e P13 secure; 8.192 bytes e 127 sentenças NMEA em P13, LEDR6/LEDR7 apagados |
 
 Os resultados antigos em 9600 permanecem no diário, identificados como
 históricos; não devem ser apresentados como resultados da configuração final.
@@ -78,11 +79,23 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
    32.768 bytes. A decifragem independente do P10 secure recuperou toda a
    referência. Não confundir replay gravado com aquisição ao vivo nem tempos de
    host com latência da FPGA.
-7. **Pendente:** registrar indicadores físicos de erro/overflow durante a
-   estabilidade e executar o reset/recuperação P11; relatar duração, contagem
-   de bytes e limites de medição.
-8. **Pendente até 30/09:** atualizar manuscritos PT/EN com apenas resultados reproduzidos, revisar template,
-   referências, figuras e limitações e submeter até 30/09. Preservar comprovante.
+7. **Concluído em 30/09:** P11 reset, bloqueio e recuperação com contexto novo;
+   P12/P13 aquisição GPS ao vivo baseline/secure com 8.192 bytes cada. No P13,
+   LEDR6/LEDR7 ficaram apagados; a entrada não foi gravada em paralelo e a
+   ocupação física da FIFO não foi registrada. Os ensaios curtos não comprovam
+   estabilidade prolongada nem ausência de perda de sentenças inteiras.
+8. **Concluído em 30/09:** congelar o par pós-fit e vincular tabelas/resumos PT/EN
+   aos hashes das fontes e dos artefatos. `make pc` passou em 46 testes;
+   `make manuscript-check` verifica seleção e builds locais. Os recursos
+   selecionados são 331/5.591 LEs e Fmax mínima 117,56/92,61 MHz.
+9. **Pendente até 30/09:** revisar template, referências externas, figuras,
+   limitações e PDF final e submeter. Preservar comprovante.
+
+A próxima melhoria de análise temporal é reconhecer os sincronizadores para
+MTBF e incluir minimum pulse width na auditoria automatizada. Essa etapa
+requer novos relatórios/manifestos Quartus; não altera os resultados físicos
+já registrados. Toda aquisição secure exige nonce/contexto novo e SOF
+correspondente, inclusive após ciclo de energia.
 
 ## Cronograma final
 

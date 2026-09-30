@@ -29,7 +29,7 @@ simulação, Quartus e bancada.
 Fonte: manual da **Terasic**, edição de 05/06/2020, pp. 5, 24–27 e 30–31
 ([PDF hospedado pela Mouser](https://www.mouser.com/datasheet/2/598/DE10-Lite_User_Manual-1100361.pdf)).
 Confirmar a orientação do pino 1 na placa e a pinagem e tensão de entrada do
-breakout NEO-M9N-00B-00 antes de ligar o GPS. A faixa VCC do módulo receptor não
+breakout NEO-M8N antes de ligar o GPS. A faixa VCC do módulo receptor não
 determina a alimentação da placa adaptadora.
 
 Os sinais usam I/O de 3,3 V; KEY0 usa o padrão Schmitt Trigger da placa. A RX
@@ -89,9 +89,10 @@ bytes no PC.
 4. Observar a retransmissão em W10 e verificar LEDs 6 e 7 apagados.
 5. Medir no osciloscópio o quadro 8N1, o período de aproximadamente 26,04 µs
    por bit e, com dois canais, a latência entre RX e TX.
-6. Não pressionar KEY0 depois do primeiro byte. O contexto é de uso único e um
-   reset nesse ponto exige reprogramar o SOF antes de uma nova captura.
-7. Repetir com o NEO-M9N depois de concluir os bytes conhecidos e validar a
+6. Não pressionar KEY0 depois do primeiro byte. O contexto secure é de uso único;
+   após reset, desligamento ou reprogramação, gerar um contexto com nonce novo,
+   recompilar e programar o SOF correspondente antes de uma nova captura.
+7. Repetir com o NEO-M8N depois de concluir os bytes conhecidos e validar a
    alimentação e os níveis lógicos do breakout.
 
 Comandos, pinagem do CP2102, vetores esperados e campos de evidência estão no

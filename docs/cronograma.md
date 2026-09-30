@@ -16,8 +16,10 @@ Submissão BTSym’26: até 30/09/2026.
   `make integration-gps` processou os 309 bytes nas duas variantes a 50 MHz:
   FIFO máxima de 1 byte, 80 ns de RX válido até início do TX e 260.480 ns até
   fim do quadro TX. Baseline e secure também passaram no Quartus e nos três
-  cantos temporais. Recursos: 331/5.603 LE, 212/913 registradores e Fmax mínima
-  117,56/103,38 MHz. O SOF baseline foi programado às 17:44 e usado no P03;
+  cantos temporais. O par selecionado em 30/09 tem 331/5.591 LE, 212/913
+  registradores e Fmax mínima 117,56/92,61 MHz. Os valores 5.603 LE/103,38 MHz
+  pertencem ao build anterior de 29/09, preservado como histórico.
+  O SOF baseline foi programado às 17:44 de 29/09 e usado no P03;
   o SOF secure foi programado e o P05 repetido com contexto novo: 20/20 bytes
   foram cifrados e recuperados exatamente no PC. O P06 também passou: cinco
   bytes cifrados foram recuperados no PC e decodificados no AD2 em RX/TX. O
@@ -48,9 +50,12 @@ Submissão BTSym’26: até 30/09/2026.
   passaram com 32.768 bytes da captura GPS armazenada; o GPS ficou desconectado
   durante esses replays. P11 confirmou reset antes do uso, bloqueio após consumo
   do contexto e recuperação após novo nonce/SOF, com captura secure de 5/5 bytes.
-  Os indicadores LEDR6/LEDR7/LEDR8 após as transmissões não foram registrados.
-  Para relatar o método com precisão, os ensaios secure P09/P10 são replay de
-  dados GPS previamente capturados, não criptografia de GPS ao vivo.
+  P12 validou 8.192 bytes GPS ao vivo no baseline. **P13 validou GPS ao vivo no
+  bitstream secure:** 8.192 bytes capturados e recuperados independentemente;
+  127 sentenças NMEA completas passaram no validador, e LEDR6/LEDR7 (overflow/
+  framing) ficaram apagados. P09/P10 continuam sendo replays de captura
+  armazenada; P13 é o ensaio GPS→AES ao vivo. O contexto e payloads P13 são
+  privados e consumidos.
 
 | Data | Etapa | Situação / entrega exigida |
 | --- | --- | --- |
@@ -62,7 +67,42 @@ Submissão BTSym’26: até 30/09/2026.
 | 29/09 | P05 secure a 38400 | **Concluído** — reteste 4/4 transações, 20/20 bytes cifrados e recuperados; relatório privado `p05-secure-20b-38400-report-02.json` |
 | 29/09 | P06 secure no AD2 | **Concluído** — CP2102 5/5 e decifragem exata; captura AD2 decodifica entrada e ciphertext em V10/W10 |
 | 29–30/09 | P07–P11 GPS, replays e reset | **P07 aprovado** — aquisição e saída física baseline com NMEA válido; **P08 3/3**, **P09 secure** (4.096 bytes) e **P10 baseline/secure** (32.768 bytes) aprovados com recuperação CTR exata. P09/P10 foram replays da referência GPS armazenada, com GPS desconectado. **P11 reset/bloqueio/recuperação aprovado** com nonce novo e 5/5 bytes; LEDR6/7/8 pós-transmissão não registrados. |
+| 30/09 | P12/P13 GPS ao vivo | **P12 baseline aprovado** — 8.192 bytes, 127 sentenças NMEA. **P13 secure aprovado** — 8.192 bytes cifrados e recuperados; 127 sentenças NMEA válidas; LEDR6/7 apagados. Capturas e contexto permanecem privados. |
+| 30/09 | Seleção das métricas e checagem dos manuscritos | **Concluído** — hashes do par pós-fit congelados; tabelas e resumos PT/EN conferidos contra a seleção; 46 testes de software aprovados. Ver `metricas-fpga-2026-09-30.md`. |
 | 30/09 | Atualizar resultados, revisar manuscritos e submeter | Até a deadline; manter evidências e comprovante |
+
+## Revisão das métricas e continuidade — 30/09/2026
+
+O par pós-fit usado no artigo está congelado em
+`docs/evidence/de10-lite-postfit-2026-09-30.json`, com hashes de fontes e
+artefatos. `make manuscript-check` verifica todas as linhas das tabelas e os
+valores do resumo nos dois idiomas; havendo builds locais, verifica também se
+coincidem com a seleção. Sem esses arquivos, informa que validou somente a
+seleção versionada e as fontes. As seleções recusam sobrescrita.
+
+`make metrics`, `make manuscript-check`, a checagem offline e `make pc`
+validaram esta etapa; os testes incluem rejeição de resumo/tabela desatualizados,
+delta incorreto, fonte alterada, artefato modificado, par incompleto e Fmax
+restrita abaixo do clock. O total de software passou de 37 para 46.
+O RTL e os SOFs não foram alterados nesta etapa; a regressão HDL completa
+continua vinculada aos registros anteriores, pois o acesso ao Docker está
+bloqueado na sessão atual.
+
+README, arquitetura, plano de execução e apresentação foram reconciliados com
+P11–P13. P13 demonstra recuperação e NMEA válido em uma captura curta;
+não comprova ausência de perda de sentenças inteiras nem estabilidade prolongada.
+O bloqueio após KEY0 depende da FPGA permanecer configurada e alimentada;
+novo ensaio secure exige contexto e bitstream novos, inclusive após desligar.
+
+Próximo passo de fechamento: revisar referências externas, template, figuras e
+PDF final e registrar o comprovante da submissão. Próxima melhoria técnica:
+reconhecimento explícito dos sincronizadores/MTBF e auditoria de minimum pulse
+width, seguida de nova análise Quartus, manifesto e seleção de métricas. Essas
+verificações não foram marcadas como implementadas ou medidas.
+
+A consulta ao remoto nesta revisão falhou por resolução de DNS de
+`github.com`. Commit local não equivale a publicação; conferir o remoto após
+restabelecer a conexão.
 
 **P05 — reteste secure, 29/09/2026 às 18:32 (Manaus):** após programar
 `build/de10_lite/secure/uart_secure.sof`, o CP2102 enviou quatro vezes

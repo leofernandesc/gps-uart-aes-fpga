@@ -1,7 +1,8 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics metrics-snapshot fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
+METRICS_SNAPSHOT ?= docs/evidence/de10-lite-postfit-2026-09-30.json
 
 # HDL_RUNNER=auto (default), native, or docker.
 check:
@@ -90,6 +91,10 @@ manuscript-check:
 
 metrics:
 	python3 scripts/fpga_metrics.py --json build/de10_lite/metrics.json --markdown build/de10_lite/metrics.md
+
+# Explicit publication selection; use a new filename for each reviewed pair.
+metrics-snapshot:
+	python3 scripts/fpga_metrics.py --snapshot "$(METRICS_SNAPSHOT)"
 
 # Core-only area/internal timing estimate; virtual ports; no SOF/programming.
 aes-fpga:

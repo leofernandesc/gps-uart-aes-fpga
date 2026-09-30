@@ -1,5 +1,10 @@
 # Métricas FPGA — DE10-Lite — 29/09/2026
 
+Registro histórico do par selecionado em 29/09. Os manuscritos usam agora o
+[par congelado de 30/09](metricas-fpga-2026-09-30.md). Os relatórios locais em
+`build/de10_lite/` foram atualizados; não usar este quadro como descrição do
+SOF secure atual.
+
 Comparação Quartus pós-fit baseline/secure na DE10-Lite/MAX 10
 `10M50DAF484C7G`, com clock de 50 MHz, UART 38400/8N1 e FIFO de 1.024 bytes.
 Builds passam a auditoria de setup/hold/recovery/removal nos três cantos. Isto
@@ -32,6 +37,6 @@ em `build/de10_lite/` (local e ignorado pelo Git). SOFs: baseline
 `3507f4220efb2f5b6324cf7f5151e1da06272f70595598bf6b531e1f4a8d0783`.
 
 Estes dados não provam programação ou operação física da FPGA. A aquisição
-NEO-M9N, comunicação externa a 38400 e medições com osciloscópio/AD2 devem ser
+NEO-M8N, comunicação externa a 38400 e medições com osciloscópio/AD2 devem ser
 registradas separadamente. Potência não foi incluída: o Power Analyzer foi
 desabilitado e não há estimativa baseada em atividade representativa.

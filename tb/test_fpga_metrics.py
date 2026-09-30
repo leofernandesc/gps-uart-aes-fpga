@@ -45,6 +45,19 @@ class MetricsTests(unittest.TestCase):
         result = collect(self.build, self.root)
         self.assertEqual(result["designs"]["secure"]["slack_ns_min"]["setup"], 0.125)
 
+    def test_restricted_fmax_is_retained_and_limits_the_clock(self):
+        report = self.path / "fmax_corner1.rpt"
+        report.write_text("; 80.00 MHz ; 40.00 MHz ; clock ;\n")
+        metrics = _timing_metrics(self.path)
+        self.assertEqual(metrics["fmax_mhz_min"], 80.0)
+        self.assertEqual(metrics["restricted_fmax_mhz_min"], 40.0)
+        manifest_path = self.path / "build-manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["artifacts_sha256"][report.name] = digest(report)
+        manifest_path.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "restricted Fmax"):
+            collect(self.build, self.root)
+
     def test_signed_negative_slack_is_rejected(self):
         audit = self.path / "timing-audit.log"
         audit.write_text(audit.read_text().replace("+0.125", "-0.125", 1))

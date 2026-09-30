@@ -118,7 +118,7 @@ controladas:
    Para o secure, use um contexto novo com bytes igual ao tamanho da captura,
    compile o SOF secure com esse contexto e informe também --registry.
 
-Esse procedimento usa dados realmente adquiridos do NEO-M9N e os reapresenta
+Esse procedimento usa dados realmente adquiridos do NEO-M8N e os reapresenta
 em uma segunda execução, evitando comparar duas sequências GPS diferentes.
 Com um único CP2102 não se capturam referência e saída simultaneamente; para
 isso seriam necessários dois canais independentes ou o Analog Discovery 2

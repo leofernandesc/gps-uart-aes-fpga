@@ -1,7 +1,7 @@
 # DE10-Lite + Analog Discovery 2 — 25/09/2026
 
 Registro histórico: as capturas desta página foram feitas a **9600 baud**.
-Desde 29/09, o ponto de operação é 38400/8N1 para o NEO-M9N; estes dados
+Desde 29/09, o ponto de operação é 38400/8N1 para o NEO-M8N; estes dados
 documentam a bancada anterior e não substituem a repetição P01/P02 nessa taxa.
 
 ## Captura preliminar da UART autônoma

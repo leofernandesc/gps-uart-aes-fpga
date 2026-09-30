@@ -1,6 +1,6 @@
 # Arquitetura e seleção dos experimentos
 
-Atualização: 29/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
+Atualização: 30/09/2026. A [apresentação](proposta_btsym_gps_fpga.html) contém
 o desenho da arquitetura proposta. O [cronograma](cronograma.md) registra o
 estado efetivo de cada etapa.
 
@@ -46,15 +46,13 @@ Esse top não ecoa a entrada. A transmissão periódica é independente de RX.
 LED 8 registra recepção; LED 9 retém framing ou byte diferente de 0x55.
 O roteiro e os limites do ensaio estão no [guia de bancada UART](../fpga/de10_lite/uart_scope/README.md).
 
-## Caminho integrado; aquisição física do M9N pendente
+## Caminho integrado; aquisição física do NEO-M8N validada
 
 ```text
-GPS TX ──┬── UART RX → FIFO → estágio selecionado → UART TX → PC / comparação
-         │                              │
-         │                 baseline: passagem direta
-         │                 secure: AES-128-CTR
-         │
-         └── captura da referência ─────────────────────────────── PC
+GPS TX → UART RX → FIFO → estágio selecionado → UART TX → USB–UART → PC
+                                  │
+                     baseline: passagem direta
+                     secure: AES-128-CTR
 ```
 
 A FIFO entrega dados com um pulso `rd_valid`; o CTR usa `valid/ready`. Na
@@ -62,12 +60,15 @@ integração, `uart_ctr_bridge` usa um registrador de byte com flag válida para
 reter cada resposta até o aceite do próximo estágio. Reserva espaço antes de
 pedir a leitura e só avança a máscara no aceite do TX. Os dois modos passaram
 na simulação serial e na comparação independente; ver [contrato](integracao-uart-ctr.md).
+P07/P12 validaram a aquisição GPS física no baseline; P13 validou o caminho
+secure com recuperação no PC e checksums NMEA. A comparação byte a byte com
+referência foi feita nos replays P08–P10; P13 não gravou a entrada em paralelo.
 
 O tamanho do replay, a chave, o nonce e o contador são parâmetros registrados
 no PC para cada experimento; não formam um bloco adicional no datapath. O PC
 decifra o fluxo, registra erros e compara o resultado com a referência original.
 Usar nonce novo em cada captura e bloquear o wrap do contador. Não há
-autenticação com CTR; as alegações do artigo serão de confidencialidade e
+autenticação com CTR; as alegações do artigo são de confidencialidade e
 comportamento do transporte.
 
 O wrapper inicializa `cfg_*` automaticamente com um contexto de elaboração,
@@ -75,7 +76,10 @@ sem protocolo serial adicional. Os parâmetros `CONTEXT_KEY`, `CONTEXT_NONCE` e
 `CONTEXT_COUNTER` podem ser substituídos em um build privado; `CONTEXT_FILE`
 valida o JSON e gera o pacote usado pelo Quartus. Os valores padrão servem
 apenas ao bring-up. O software PC (ver [captura-pc](captura-pc.md)) grava e
-compara arquivos. Não há configuração em tempo de execução.
+compara arquivos. Não há configuração em tempo de execução. O bloqueio após
+consumo persiste através de KEY0 enquanto a FPGA permanece configurada e
+alimentada; novo ensaio requer contexto e SOF novos, inclusive após ciclo de
+energia. O mesmo SOF reprogramado pode restaurar o contador inicial.
 
 ## Matriz experimental
 
@@ -87,8 +91,8 @@ As duas configurações ativas usam a mesma placa, UART, FIFO, clock e pinagem.
 A única diferença arquitetural é AES-128-CTR elaborado no caminho secure.
 Os resultados antigos da Cyclone IV estão fora da matriz experimental.
 
-Os dois builds terão a mesma FIFO, interfaces, instrumentação, clock e
-restrições. O AES estará ausente por elaboração no baseline, não apenas
+Os dois builds têm a mesma FIFO, interfaces, instrumentação, clock e
+restrições. O AES está ausente por elaboração no baseline, não apenas
 desativado por um switch. A ponte atual e o gerador para osciloscópio são
 testes preparatórios, não esse comparador final.
 
@@ -119,8 +123,9 @@ valores absolutos e percentuais do dispositivo; não somar LEs e registradores
 como se fossem recursos independentes. Potência é opcional: comparar apenas
 estimativas com atividade e condições registradas, separando-as de medição.
 
-A UART ativa opera a 38400/8N1 para corresponder ao padrão do NEO-M9N. Baseline
-e secure devem ser construídos com o mesmo baud rate. Uma FIFO absorve rajadas,
+A UART ativa opera a 38400/8N1 para o NEO-M8N. Baseline e secure devem ser
+construídos com o mesmo baud rate. A integração física direta GPS→FPGA foi
+validada em P07/P12/P13. Uma FIFO absorve rajadas,
 mas não sustenta indefinidamente entrada com taxa média maior que a saída.
 
 ## Evidência necessária

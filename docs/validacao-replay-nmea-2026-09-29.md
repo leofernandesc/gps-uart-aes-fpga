@@ -21,7 +21,7 @@
 
 As métricas são de simulação RTL em clock de produção e usam a saída serial
 decodificada por um verificador independente; não são captura elétrica nem
-aquisição GPS física. A entrada é sintética e não comprova o M9N. Em 38400
+aquisição GPS física. A entrada é sintética e não comprova o NEO-M8N. Em 38400
 baud, um quadro 8N1 de dez bits tem duração nominal aproximada de 260,4 µs.
 
 ## Reproduzir
@@ -30,8 +30,10 @@ baud, um quadro 8N1 de dez bits tem duração nominal aproximada de 260,4 µs.
 make integration-gps
 ```
 
-Os logs completos e dumps ficam em `build/`, ignorados pelo Git. A regressão
-independente completa e os resultados de implementação FPGA estão em
-[`metricas-fpga-2026-09-29.md`](metricas-fpga-2026-09-29.md) e
-[`plano-de-testes.md`](plano-de-testes.md). A captura direta do u-blox
-NEO-M9N-00B-00 ainda precisa ser realizada e validada na bancada.
+Os logs completos e dumps ficam em `build/`, ignorados pelo Git. Este registro
+descreve a simulação de 29/09; o par de builds daquela data está preservado em
+[`metricas-fpga-2026-09-29.md`](metricas-fpga-2026-09-29.md). As métricas
+selecionadas para o artigo estão em
+[`metricas-fpga-2026-09-30.md`](metricas-fpga-2026-09-30.md). A aquisição física
+do NEO-M8N foi validada posteriormente em P07, P12 e P13, com os resultados e
+limites de cada ensaio registrados em [`plano-de-testes.md`](plano-de-testes.md).

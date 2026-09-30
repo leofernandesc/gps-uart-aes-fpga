@@ -2,9 +2,10 @@
 
 ## Configuração ativa (29/09/2026)
 
-Os testes atuais são somente na DE10-Lite, com o u-blox NEO-M9N-00B-00 e UART
-38400/8N1. As capturas de 9600 baud e da Cyclone IV documentadas abaixo são
-evidência histórica; não representam a configuração atual nem precisam ser
+Os testes atuais são somente na DE10-Lite, com o u-blox NEO-M8N e UART
+38400/8N1 como perfil do experimento. O perfil do receptor foi confirmado
+após ciclo de energia. As capturas de 9600 baud e da Cyclone IV
+documentadas abaixo são evidência histórica; não representam a configuração atual nem precisam ser
 apagadas. Para novas capturas, selecione 38400/8N1 no decodificador e use
 26,04 µs como duração nominal do bit. Verifique a faixa elétrica antes de
 conectar o breakout do GPS.
@@ -190,7 +191,7 @@ instrumento.
 | AD2 — Scope | Forma de onda analógica, níveis, bit time, bordas e RX→TX |
 | AD2 — Logic/Protocol UART | Decodificação digital opcional dos bytes UART |
 | CP2102 | Fonte/receptor serial e log de bytes no PC |
-| GPS u-blox NEO-M9N-00B-00 | Fonte física das sentenças NMEA |
+| GPS u-blox NEO-M8N | Fonte física das sentenças NMEA |
 | Quartus/USB-Blaster | Programação e identificação da FPGA |
 
 O AD2 não é um USB–UART. Ele não deve ser usado como fonte única para provar
@@ -320,13 +321,14 @@ Repetir o P04 no SOF secure e comparar com o baseline:
 
 ## GPS e ensaios P07–P11
 
-Para o GPS, primeiro capturar o TX do NEO-M9N diretamente no receptor serial e
-guardar uma referência bruta. Depois observar simultaneamente a entrada e a
-saída da FPGA com o AD2.
+Para P07, validar a saída do NEO-M8N diretamente a 38400/8N1 e depois observar
+a entrada e a saída da FPGA com o AD2. O sensor conecta-se a V10/RX da DE10-Lite,
+com GND comum; W10/TX pode ser observado no segundo canal. Não conectar duas
+saídas TX entre si.
 
 O AD2 pode ser usado para confirmar:
 
-- UART do GPS em 38400/8N1 (NEO-M9N, configuração padrão atual);
+- UART do GPS em 38400/8N1;
 - nível lógico compatível;
 - presença das sentenças NMEA;
 - perda, truncamento ou framing na entrada;

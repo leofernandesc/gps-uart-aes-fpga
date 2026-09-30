@@ -5,39 +5,21 @@ com a data, o commit do RTL, a configuração usada, o resultado e a evidência
 correspondente. Simulação, compilação e bancada física são resultados
 diferentes e não devem ser misturados.
 
-Atualização de escopo em 29/09: receptor u-blox NEO-M8N; somente DE10-Lite/MAX
-10 no experimento ativo; Cyclone IV fora do escopo. O perfil do receptor e da
-UART do projeto é 38400/8N1. Os resultados anteriores a 9600
-permanecem históricos. Na configuração vigente, P01 e P02 foram concluídos; o
-P03 baseline passou no eco serial do CP2102: 20/20 bytes em quatro quadros. A
-primeira captura AD2 era curta; a recaptura a 800 kS/s e 8.192 amostras contém
-todo o burst e decodifica os cinco bytes nas linhas RX e TX. **P04 também está
-concluído a 38400/8N1.** P05 secure passou com 20/20 bytes cifrados e
-recuperação CTR exata. P06 também passou: 5/5 bytes cifrados foram recuperados
-no PC e a captura AD2 decodifica estímulo e ciphertext nos dois canais. A captura
-física do NEO-M8N foi iniciada: P07 validou a passagem das sentenças NMEA pelo
-baseline; P08 concluiu três repetições de replay exato; P09 secure passou com
-recuperação exata dos 4.096 bytes e ciphertext distinto da referência. Faltam
-registrar os indicadores físicos, executar o replay longo secure e validar
-reset. Em 29/09, o replay baseline P10 de 32.768 bytes também passou sem perdas
-ou divergência; isso valida a transferência longa da captura armazenada, não
-uma nova aquisição GPS ao vivo. Os
-testes funcionais AES independentes do link
-serial permanecem válidos. Em 29/09, `make check` passou com 37 testes Python
-e oráculos AES/CTR; `make integration-gps` passou para baseline e secure em
-50 MHz/38400 nos 309 bytes sintéticos. O P01 físico a 38400 foi concluído:
-dez buffers AD2 decodificam `0x55` e indicam período de quadro médio de
-99,33 ms (93–107 ms). Há uma ressalva de configuração do trigger registrada
-abaixo. P02 foi repetido a 38400 e concluído com confirmação visual de LEDR8
-aceso e LEDR9 apagado; P03/P04 baseline estão concluídos na DE10-Lite a 38400.
-P05 e P06 estão concluídos. P07 validou o caminho físico GPS→FPGA→PC por NMEA;
-P08 concluiu 3/3 replays exatos e P09 secure recuperou exatamente os 4.096
-bytes, com ciphertext diferente da referência. No P10, os replays baseline e
-secure da captura GPS de 32.768 bytes passaram sem perda ou divergência; no modo
-secure, a decifragem independente recuperou a referência byte a byte. Os replays
-usaram uma captura armazenada, sem GPS conectado. Permanecem pendentes o registro
-dos LEDs/diagnósticos de erro e overflow e o teste físico de reset. Tempos de
-host incluem PC/USB e não são latência isolada da FPGA.
+Atualização em 30/09: o escopo ativo é NEO-M8N + DE10-Lite/MAX 10, com clock de
+50 MHz e UART a 38400/8N1; Cyclone IV permanece fora do experimento. P01–P06
+foram aprovados na DE10-Lite. P07 confirmou NMEA no caminho físico GPS→FPGA→PC;
+P08–P10 validaram replays baseline/secure, incluindo 32.768 bytes; P11 validou
+reset, bloqueio de contexto consumido e recuperação com nonce novo. P12 validou
+uma captura baseline de GPS ao vivo com 8.192 bytes e 127 sentenças NMEA
+completas. **P13 também passou: com o GPS conectado ao bitstream secure, foram
+capturados 8.192 bytes cifrados, recuperados independentemente no PC e validados
+em 127 sentenças NMEA completas; LEDR6 (overflow) e LEDR7 (framing) ficaram
+apagados.** O arquivo termina com um fragmento NMEA incompleto de 35 bytes,
+preservado porque a captura parou no limite fixo. Os artefatos brutos permanecem
+em `data/private/` e não devem ser publicados. `make check` e
+`make integration-gps` passaram após a atualização para 38400/8N1. Tempos do
+host incluem sistema operacional e ponte USB–UART; não são latência isolada da
+FPGA.
 
 ## Configuração fixa
 
@@ -1085,6 +1067,32 @@ privado: `p11-secure-recovery-5b-report-01.json`.
 
 **P11 — sequência de reset, bloqueio e recuperação aprovada.** Os indicadores
 LEDR6/LEDR7/LEDR8 após as transferências não foram registrados separadamente.
+
+### P12/P13 — GPS ao vivo baseline e secure — 30/09/2026
+
+**P12 baseline:** o GPS permaneceu conectado à UART RX da DE10-Lite durante a
+captura de 8.192 bytes. O validador NMEA aprovou 127 sentenças completas; a
+captura terminou com um fragmento final por ter sido limitada por quantidade de
+bytes.
+
+**P13 secure: aprovado.** Foi programado o bitstream secure com contexto CTR
+privado novo, mantendo o NEO-M8N conectado à FPGA. O CP2102 capturou 8.192 de
+8.192 bytes de ciphertext a 38400/8N1 (`CAPTURED`; SHA-256
+`285ed4ef9769a5d23750d91e640ef2c076879073d183e47a62f3a77d134d5bd1`). A
+decifragem independente no PC recuperou os 8.192 bytes; o validador aprovou 127
+sentenças NMEA completas com checksum e CRLF. Não houve fragmento no início; os
+35 bytes finais pertencem a uma sentença interrompida pelo limite da captura.
+LEDR6 (overflow da FIFO) e LEDR7 (erro de framing) permaneceram apagados durante
+o ensaio. Tempo observado pelo host: 11,237 s; inclui aquisição Linux/USB–UART e
+não representa latência da FPGA ou do AES.
+
+Os relatórios, ciphertext e plaintext ficam em
+`data/private/de10-2026-09-30/`, com nomes-base `p13-secure-live-gps-8192-*`.
+O contexto está em `data/private/p13-secure-live-gps-8192-context-01.json`;
+não compartilhar nem versionar os arquivos de payload ou contexto. O contexto foi consumido
+e não deve ser reutilizado. O P13 demonstra operação GPS ao vivo no caminho
+secure e recuperação NMEA válida. Não houve uma captura paralela independente
+do fio GPS RX para comparação byte a byte, e AES-CTR não autentica o conteúdo.
 
 ## Registro histórico da Cyclone IV — fora do escopo atual
 

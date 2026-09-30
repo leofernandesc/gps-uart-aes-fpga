@@ -2,7 +2,7 @@
 
 Arquivo histórico de ensaios e procedimentos. As medições registradas abaixo
 foram feitas a 9600 baud; a configuração vigente desde 29/09 é 38400/8N1 com
-NEO-M9N-00B-00. Repetir os testes dependentes da UART antes de usar seus valores
+NEO-M8N. Repetir os testes dependentes da UART antes de usar seus valores
 como resultados atuais.
 
 Status: P03 baseline aprovado na DE10-Lite em 26/09/2026; P04–P06 continuam
@@ -323,7 +323,7 @@ o arquivo com scripts/capture.py record. Validar o arquivo com
 scripts/gps_capture.py. Depois desconectar o TX do GPS, conectar CP2102 TXD →
 FPGA RX e FPGA TX → CP2102 RXD, e executar scripts/serial_bench.py replay com
 o mesmo arquivo. Assim baseline e secure processam exatamente os bytes que
-foram adquiridos do NEO-M9N. Um único CP2102 não captura referência e saída
+foram adquiridos do NEO-M8N. Um único CP2102 não captura referência e saída
 simultaneamente; essa é uma decisão do protocolo e deve ser registrada.
 
 ## 10. Registro a preencher

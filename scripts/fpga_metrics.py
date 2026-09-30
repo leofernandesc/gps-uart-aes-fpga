@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Extract comparable baseline/secure metrics from Quartus reports."""
 import argparse
+from datetime import datetime, timezone
 import json
 import math
 import re
@@ -48,6 +49,7 @@ def _fit_metrics(path: Path) -> dict[str, object]:
 
 def _timing_metrics(path: Path) -> dict[str, object]:
     fmax_by_corner = {}
+    restricted_by_corner = {}
     for report in sorted(path.glob("fmax_corner*.rpt")):
         name = re.fullmatch(r"fmax_corner([1-9]\d*)\.rpt", report.name)
         rows = FMAX_RE.findall(report.read_text(encoding="utf-8", errors="replace"))
@@ -57,6 +59,7 @@ def _timing_metrics(path: Path) -> dict[str, object]:
         if any(not math.isfinite(value) or value <= 0 for value in values):
             raise ValueError(f"{report}: invalid Fmax")
         fmax_by_corner[int(name.group(1))] = values[0]
+        restricted_by_corner[int(name.group(1))] = values[1]
     if not fmax_by_corner:
         raise ValueError(f"{path}: no fmax_corner*.rpt reports")
 
@@ -90,6 +93,8 @@ def _timing_metrics(path: Path) -> dict[str, object]:
     return {
         "fmax_mhz_by_corner": fmax_values,
         "fmax_mhz_min": min(fmax_values),
+        "restricted_fmax_mhz_by_corner": [restricted_by_corner[c] for c in sorted(corners)],
+        "restricted_fmax_mhz_min": min(restricted_by_corner.values()),
         "slack_ns_min": {check: min(checks[(corner, check)] for corner in corners) for check in sorted(required)},
     }
 
@@ -121,9 +126,21 @@ def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT,
     for field in ("seed", "clock_hz", "baud", "fifo_depth", "shared_rtl_sha256"):
         if baseline["provenance"][field] != secure["provenance"][field]:
             raise ValueError(f"baseline/secure provenance mismatch: {field}")
+    for name, design in result["designs"].items():
+        clock_hz = design["provenance"]["clock_hz"]
+        if type(clock_hz) is not int or clock_hz <= 0:
+            raise ValueError(f"{name}: invalid operating clock")
+        if design["restricted_fmax_mhz_min"] < clock_hz / 1_000_000:
+            raise ValueError(f"{name}: restricted Fmax does not meet the operating clock")
     if not baseline["logic_elements"] or not baseline["registers"]:
         raise ValueError("baseline resource counts must be nonzero")
-    result["comparison"] = {
+    result["comparison"] = comparison(result["designs"])
+    return result
+
+
+def comparison(designs: dict) -> dict:
+    baseline, secure = designs["baseline"], designs["secure"]
+    return {
         "logic_elements_delta": secure["logic_elements"] - baseline["logic_elements"],
         "logic_elements_delta_pct": (secure["logic_elements"] / baseline["logic_elements"] - 1) * 100,
         "registers_delta": secure["registers"] - baseline["registers"],
@@ -131,7 +148,49 @@ def collect(build_root: Path = DEFAULT_BUILD, source_root: Path = ROOT,
         "fmax_delta_mhz": secure["fmax_mhz_min"] - baseline["fmax_mhz_min"],
         "fmax_delta_pct": (secure["fmax_mhz_min"] / baseline["fmax_mhz_min"] - 1) * 100,
     }
-    return result
+
+
+def number(value: int | float, language: str, decimals: int | None = None) -> str:
+    rendered = f"{value:,}" if decimals is None else f"{value:,.{decimals}f}"
+    return rendered if language == "English" else rendered.translate(str.maketrans(",.", ".,"))
+
+
+def comparison_table(result: dict, language: str = "English") -> str:
+    """Render the publication table from the same verified data as the JSON."""
+    en = language == "English"
+    b, s = (result["designs"][name] for name in ("baseline", "secure"))
+    delta = comparison(result["designs"])
+    n = lambda value, decimals=None: number(value, language, decimals)
+    signed = lambda value, decimals=None: ("+" if value >= 0 else "−") + n(abs(value), decimals)
+    lines = [
+        f"| {'Metric' if en else 'Métrica'} | Baseline | Secure | Secure − baseline |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for field, english, portuguese in (("logic_elements", "Logic elements", "Elementos lógicos"),
+                                       ("registers", "Registers", "Registradores")):
+        lines.append(f"| {english if en else portuguese} | {n(b[field])} | {n(s[field])} | "
+                     f"{signed(delta[field + '_delta'])} ({signed(delta[field + '_delta_pct'], 2)}%) |")
+    for field, english, portuguese in (("memory_bits", "Memory bits", "Bits de memória"),
+                                       ("pins", "Pins", "Pinos")):
+        lines.append(f"| {english if en else portuguese} | {n(b[field])} | {n(s[field])} | {n(s[field] - b[field])} |")
+    lines.append(f"| {'Minimum Fmax' if en else 'Fmax mínima'} | {n(b['fmax_mhz_min'], 2)} MHz | "
+                 f"{n(s['fmax_mhz_min'], 2)} MHz | {signed(delta['fmax_delta_mhz'], 2)} MHz "
+                 f"({signed(delta['fmax_delta_pct'], 2)}%) |")
+    for check in ("setup", "hold", "recovery", "removal"):
+        label = f"Worst {check} slack" if en else f"Pior slack de {check}"
+        lines.append(f"| {label} | {n(b['slack_ns_min'][check], 3)} ns | "
+                     f"{n(s['slack_ns_min'][check], 3)} ns | {'positive' if en else 'positivo'} |")
+    return "\n".join(lines)
+
+
+def freeze(result: dict, path: Path) -> None:
+    """Save a portable, immutable selection; provenance contains hashes, not secrets."""
+    portable = {key: value for key, value in result.items() if key != "build_root"}
+    snapshot = {"schema": 1, "selected_utc": datetime.now(timezone.utc).isoformat(),
+                "results": portable}
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(snapshot, stream, indent=2, sort_keys=True, allow_nan=False)
+        stream.write("\n")
 
 
 def markdown(result: dict[str, object]) -> str:
@@ -142,7 +201,7 @@ def markdown(result: dict[str, object]) -> str:
     lines = [
         f"# Métricas FPGA — {board_label}",
         "",
-        "Relatórios pós-fit aprovados, com cobertura temporal completa e hashes conferidos; não são medições de bancada.",
+        "Relatórios pós-fit com setup/hold/recovery/removal aprovados nos três cantos e hashes conferidos; não são medições de bancada.",
         "",
         "| Métrica | Baseline | Secure |",
         "| --- | ---: | ---: |",
@@ -150,6 +209,7 @@ def markdown(result: dict[str, object]) -> str:
         f"| Registradores | {designs['baseline']['registers']:,} | {designs['secure']['registers']:,} |",
         f"| Memória (bits) | {designs['baseline']['memory_bits']:,} | {designs['secure']['memory_bits']:,} |",
         f"| Fmax mínima (MHz) | {designs['baseline']['fmax_mhz_min']:.2f} | {designs['secure']['fmax_mhz_min']:.2f} |",
+        f"| Restricted Fmax mínima (MHz) | {designs['baseline']['restricted_fmax_mhz_min']:.2f} | {designs['secure']['restricted_fmax_mhz_min']:.2f} |",
         f"| Pior setup (ns) | {designs['baseline']['slack_ns_min']['setup']:.3f} | {designs['secure']['slack_ns_min']['setup']:.3f} |",
         f"| Pior hold (ns) | {designs['baseline']['slack_ns_min']['hold']:.3f} | {designs['secure']['slack_ns_min']['hold']:.3f} |",
         f"| Pior recovery (ns) | {designs['baseline']['slack_ns_min']['recovery']:.3f} | {designs['secure']['slack_ns_min']['recovery']:.3f} |",
@@ -174,14 +234,17 @@ def main() -> None:
     parser.add_argument("--build-root", type=Path, default=DEFAULT_BUILD)
     parser.add_argument("--json", type=Path)
     parser.add_argument("--markdown", type=Path)
+    parser.add_argument("--snapshot", type=Path, help="Freeze a new publication selection; refuses overwrite")
     args = parser.parse_args()
     result = collect(args.build_root.resolve(), board=args.board)
+    if args.snapshot:
+        freeze(result, args.snapshot)
     serialized = json.dumps(result, indent=2) + "\n"
     if args.json:
         args.json.write_text(serialized, encoding="utf-8")
     if args.markdown:
         args.markdown.write_text(markdown(result), encoding="utf-8")
-    if not args.json and not args.markdown:
+    if not args.json and not args.markdown and not args.snapshot:
         print(serialized, end="")
     else:
         print("PASS FPGA metrics: baseline/secure Quartus reports parsed")
