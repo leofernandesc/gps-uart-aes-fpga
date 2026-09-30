@@ -85,11 +85,28 @@ Tempos de host incluem Linux/USB/CP2102 e não medem latência isolada da FPGA.
    ocupação física da FIFO não foi registrada. Os ensaios curtos não comprovam
    estabilidade prolongada nem ausência de perda de sentenças inteiras.
 8. **Concluído em 30/09:** congelar o par pós-fit e vincular tabelas/resumos PT/EN
-   aos hashes das fontes e dos artefatos. `make pc` passou em 46 testes;
-   `make manuscript-check` verifica seleção e builds locais. Os recursos
-   selecionados são 331/5.591 LEs e Fmax mínima 117,56/92,61 MHz.
-9. **Pendente até 30/09:** revisar template, referências externas, figuras,
-   limitações e PDF final e submeter. Preservar comprovante.
+   aos hashes das fontes e dos artefatos. Os recursos selecionados são
+   331/5.591 LEs e Fmax mínima 117,56/92,61 MHz. A fonte LNCS em `paper/` usa
+   macros geradas e verificadas contra esse snapshot.
+9. **Concluído em 30/09:** preparar o gravador simultâneo AD2 DigitalIn + CP2102
+   para comparar GPS-TX/FPGA-RX com FPGA-TX sem realinhamento posterior, e
+   builds isolados baseline/secure para os pilotos P14. A auditoria dos
+   contextos revelou que as capturas secure anteriores usaram a chave pública
+   do vetor FIPS; o manuscrito agora limita a alegação a datapath/recuperação.
+   Um novo contexto de 1 KiB com chave aleatória privada foi criado e seu build
+   dedicado passou compilação e auditoria temporal. SOFs ainda não foram
+   programados: a sessão do agente não tem acesso aos dispositivos USB.
+10. **Fixture P15 de 1 MiB preparada em 30/09:** repetidas as sentenças NMEA
+    completas da referência P07 validada de 4 KiB. O validador aceitou 16.970
+    sentenças completas; a captura P10 bruta de 32 KiB não está disponível no
+    workspace. A fixture é replay armazenado, não GPS ao vivo; P15 ainda exige
+    ensaio físico. Contextos e builds isolados baseline/secure estão prontos;
+    os SOFs ainda não foram programados. Cada aquisição secure exige nonce
+    novo e SOF correspondente.
+11. **Pendente até a submissão:** executar P14/P15, incorporar somente resultados
+    medidos, completar metadados e declarações dos autores, compilar com o pacote
+    oficial Springer, confirmar até 10 páginas e submeter. Roteiro em
+    [`sprints-artigo-2026-09-30.md`](sprints-artigo-2026-09-30.md).
 
 **Auditoria temporal complementar concluída em 30/09:** minimum pulse width
 passou nos três cantos dos fits selecionados, com pior margem de 9,266 ns.
@@ -101,19 +118,21 @@ substituem os resultados físicos ou o par do artigo. Ver
 `make pc` agora passou em 53 testes. Toda aquisição secure exige nonce/contexto
 novo e SOF correspondente, inclusive após ciclo de energia.
 
-## Cronograma final
+## Sprint final para a submissão — 30/09
 
 | Data | Prioridade | Critério de saída |
 | --- | --- | --- |
 | 29/09 | RTL/host 38400, regressão, replay GPS simulado, Quartus baseline/secure e métricas | Logs `PASS`, SOFs atuais, timing sem violações e dados novos no relatório |
 | 29/09 | P02–P06 na DE10-Lite | Loopback, eco baseline, CTR secure e capturas correspondentes; P01 já validado no nível de quadro |
 | 29–30/09 | Captura NEO-M8N e integração | NMEA validado; conexão direta e/ou replay físico claramente identificados |
-| 30/09 | Artigo e submissão | Revisão PT/EN, números rastreáveis, limitações explícitas e comprovante BTSym |
+| 30/09 | P14 piloto e aquisição simultânea | Comparação bruta/decifrada byte a byte; preservar relatório privado |
+| 30/09 | P15 estresse com fixture GPS armazenada de 1 MiB | Baseline e secure recuperados byte a byte; separar replay de aquisição ao vivo |
+| 30/09 | PDF LNCS e submissão | Metadados completos, pacote oficial, até 10 páginas, revisão final e comprovante |
 
-O prazo interno de bancada de 25/09 foi ultrapassado e não é mais o marco
-vigente. Se o tempo restante obrigar priorização, manter como mínimo: regressão
-e builds a 38400, baseline/secure físicos com vetor conhecido, métricas
-reproduzidas e manuscrito sem alegações de GPS físico que não tenham evidência.
+O prazo interno anterior de 25/09 foi ultrapassado. Priorizar P14, pois fecha a
+principal lacuna da evidência GPS ao vivo, e em seguida executar ao menos um par
+P15 de 1 MiB. Não apresentar replay armazenado como GPS ao vivo nem promover
+resultados sem artefato de captura e verificação.
 
 ## Colaboração e controle de mudanças
 

@@ -1,10 +1,14 @@
 """Tests for private experiment-context and nonce-registry handling."""
 import importlib.util
+import io
 import json
 from pathlib import Path
 import stat
+import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts/context.py"
@@ -14,6 +18,37 @@ spec.loader.exec_module(context_tool)
 
 
 class ContextTests(unittest.TestCase):
+    def test_cli_random_key_stays_private_and_only_fingerprint_is_registered(self):
+        with tempfile.TemporaryDirectory(prefix="uart-random-context-") as tmp:
+            root = Path(tmp)
+            output = root / "context.json"
+            registry = root / "nonce-registry.json"
+            stdout = io.StringIO()
+            with patch.object(sys, "argv", [str(SCRIPT), "new", "--mode", "aes-128-ctr",
+                                             "--bytes", "1024", "--registry", str(registry),
+                                             "--output", str(output), "--random-key"]), \
+                    redirect_stdout(stdout):
+                self.assertEqual(context_tool.main(), 0)
+            context = json.loads(output.read_text())
+            entry = json.loads(registry.read_text())["contexts"][0]
+            self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o600)
+            self.assertEqual(len(bytes.fromhex(context["key_hex"])), 16)
+            self.assertNotEqual(context["key_hex"], "000102030405060708090a0b0c0d0e0f")
+            self.assertNotIn("key_hex", entry)
+            self.assertNotIn(context["key_hex"], stdout.getvalue())
+
+    def test_secure_context_requires_explicit_key_generation_or_value(self):
+        with tempfile.TemporaryDirectory(prefix="uart-key-choice-") as tmp:
+            root = Path(tmp)
+            with self.assertRaisesRegex(ValueError, "exactly one"):
+                context_tool.create_context("aes-128-ctr", 1, root / "missing.json",
+                                            root / "registry.json")
+            with self.assertRaisesRegex(ValueError, "exactly one"):
+                context_tool.create_context("aes-128-ctr", 1, root / "both.json",
+                                            root / "registry.json",
+                                            "00112233445566778899aabbccddeeff",
+                                            random_key=True)
+
     def test_secure_context_is_private_and_registered(self):
         with tempfile.TemporaryDirectory(prefix="uart-context-") as tmp:
             root = Path(tmp)

@@ -1,4 +1,4 @@
-.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics metrics-snapshot timing-review fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga
+.PHONY: check test lint synth reference bridge aes ctr integration integration-gps pc context gps-replay gps-capture-check serial-bench manuscript-check metrics metrics-snapshot timing-review fpga baseline-fpga secure-fpga aes-fpga uart uart-waves uart-fpga de10-nano-uart-fpga paper-metrics paper-check paper
 .DEFAULT_GOAL := check
 
 BOARD ?= de10_lite
@@ -94,6 +94,19 @@ serial-bench:
 
 manuscript-check:
 	python3 scripts/manuscript_check.py
+
+# Springer proceedings source; figures are vector TikZ and metrics come from
+# the immutable selected-fit snapshot. A local Springer LLNCS package is needed.
+paper-metrics:
+	python3 paper/build_metrics.py --output paper/generated_metrics.tex
+
+paper-check: paper-metrics
+	python3 paper/check_source.py
+
+paper: paper-check
+	@command -v tectonic >/dev/null 2>&1 || { echo 'Install Tectonic and obtain the official Springer LLNCS class before PDF compilation.' >&2; exit 2; }
+	cd paper && tectonic --outdir=../build/paper main.tex
+	python3 paper/check_source.py --pdf build/paper/main.pdf
 
 metrics:
 	python3 scripts/fpga_metrics.py --json build/de10_lite/metrics.json --markdown build/de10_lite/metrics.md

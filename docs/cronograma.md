@@ -68,9 +68,10 @@ Submissão BTSym’26: até 30/09/2026.
 | 29/09 | P06 secure no AD2 | **Concluído** — CP2102 5/5 e decifragem exata; captura AD2 decodifica entrada e ciphertext em V10/W10 |
 | 29–30/09 | P07–P11 GPS, replays e reset | **P07 aprovado** — aquisição e saída física baseline com NMEA válido; **P08 3/3**, **P09 secure** (4.096 bytes) e **P10 baseline/secure** (32.768 bytes) aprovados com recuperação CTR exata. P09/P10 foram replays da referência GPS armazenada, com GPS desconectado. **P11 reset/bloqueio/recuperação aprovado** com nonce novo e 5/5 bytes; LEDR6/7/8 pós-transmissão não registrados. |
 | 30/09 | P12/P13 GPS ao vivo | **P12 baseline aprovado** — 8.192 bytes, 127 sentenças NMEA. **P13 secure aprovado** — 8.192 bytes cifrados e recuperados; 127 sentenças NMEA válidas; LEDR6/7 apagados. Capturas e contexto permanecem privados. |
-| 30/09 | Seleção das métricas e checagem dos manuscritos | **Concluído** — hashes do par pós-fit congelados; tabelas e resumos PT/EN conferidos contra a seleção; 46 testes de software aprovados. Ver `metricas-fpga-2026-09-30.md`. |
+| 30/09 | Seleção das métricas e checagem dos manuscritos | **Concluído** — hashes do par pós-fit congelados; tabelas e resumos PT/EN conferidos contra a seleção; 60 testes de software aprovados. Ver `metricas-fpga-2026-09-30.md`. |
 | 30/09 | Auditoria complementar de pulsos e sincronizadores | **Concluído** — minimum pulse width positivo nos três cantos dos fits selecionados; dois perfis de análise com sincronizadores explícitos recompilados e auditados; 53 testes de software aprovados. Sem programação física ou troca dos SOFs do artigo. |
-| 30/09 | Atualizar resultados, revisar manuscritos e submeter | Até a deadline; manter evidências e comprovante |
+| 30/09 | Sprints finais do artigo | **Parcialmente concluído** — fonte LNCS e captura simultânea AD2+CP2102 preparados; auditoria identificou que os contextos secure históricos usaram a chave pública KAT e o artigo já limita a alegação. P14 secure com chave aleatória foi compilado/auditado, não programado. Fixture, contextos e builds isolados P15 de 1 MiB estão prontos; P14/P15 físicos e PDF final pendentes. |
+| 30/09 | Submissão BTSym’26 | **Pendente** — concluir os bloqueios registrados em [`sprints-artigo-2026-09-30.md`](sprints-artigo-2026-09-30.md), validar o PDF e guardar o comprovante. |
 
 ## Revisão das métricas e continuidade — 30/09/2026
 
@@ -84,7 +85,8 @@ seleção versionada e as fontes. As seleções recusam sobrescrita.
 `make metrics`, `make manuscript-check`, a checagem offline e `make pc`
 validaram esta etapa; os testes incluem rejeição de resumo/tabela desatualizados,
 delta incorreto, fonte alterada, artefato modificado, par incompleto e Fmax
-restrita abaixo do clock. O total de software passou de 37 para 46.
+restrita abaixo do clock. O total registrado passou de 37 para 46 e, após os
+testes do gravador e da fixture de estresse, chegou a 60.
 O RTL e os SOFs não foram alterados nesta etapa; a regressão HDL completa
 continua vinculada aos registros anteriores, pois o acesso ao Docker está
 bloqueado na sessão atual.
@@ -95,10 +97,21 @@ não comprova ausência de perda de sentenças inteiras nem estabilidade prolong
 O bloqueio após KEY0 depende da FPGA permanecer configurada e alimentada;
 novo ensaio secure exige contexto e bitstream novos, inclusive após desligar.
 
-Próximo passo de fechamento: revisar referências externas, template, figuras e
-PDF final e registrar o comprovante da submissão. A melhoria temporal prevista
-foi concluída na auditoria complementar abaixo. Não houve troca da seleção de
-métricas ou dos SOFs experimentais.
+O sprint corrente acrescentou a fonte Springer LNCS em `paper/`, figuras
+vetoriais TikZ e macros de métricas vinculadas à seleção pós-fit congelada. A
+checagem de fonte e das oito referências passa, mas o PDF ainda depende do
+pacote oficial LLNCS, de um compilador TeX e da confirmação de afiliação, e-mail
+e declarações dos autores. A auditoria dos contextos mostrou que os testes
+secure anteriores usaram a chave pública FIPS; o texto PT/EN e a fonte LNCS
+foram corrigidos para afirmar datapath AES-CTR e recuperação, não sigilo
+operacional. Um contexto novo de P14, com chave aleatória e arquivo privado,
+foi criado; o build isolado correspondente passou compilação e auditoria
+temporal, mas não foi programado. A captura P10 bruta de 32 KiB não existe
+neste workspace; a referência P07 NMEA de 4 KiB gerou uma carga P15 de 1 MiB,
+validada em 16.970 sentenças completas (fragmento final de 19 bytes preservado).
+P14/P15 físicos ainda não foram executados nesta sessão. Contextos e builds
+isolados de replay P15, baseline e secure, passaram e estão prontos para a
+bancada; nenhum SOF foi programado.
 
 A consulta ao remoto nesta revisão falhou por resolução de DNS de
 `github.com`. Commit local não equivale a publicação; conferir o remoto após
@@ -129,10 +142,26 @@ cobertura ausente, dados não finitos, cadeia incorreta e atribuições ignorada
 `make metrics` e `make manuscript-check` continuam aprovados. Não foi rodada
 uma nova regressão HDL, pois não houve alteração do RTL.
 
-Próximo passo: fechar o PDF do artigo com a seleção vigente. Uma eventual
-promoção das atribuições de sincronização para os alvos de bancada exigiria
-contexto novo, nova seleção e revalidação física; os perfis gerados aqui são
-exclusivamente de análise.
+Os builds isolados antigos do piloto P14 foram compilados e auditados, mas não
+programados: `build/experiments/p14-baseline-pilot-01/uart_baseline.sof` e
+`build/experiments/p14-secure-pilot-01/uart_secure.sof`. O segundo corresponde
+à chave pública KAT e não deve ser usado para afirmar sigilo. Um novo contexto
+privado de 1.024 bytes com chave aleatória passou compilação e auditoria em
+`build/experiments/p14-secure-private-pilot-01/uart_secure.sof`; permanece não
+programado. Contextos e capturas permanecem privados. O agente não enxerga
+CP2102/AD2/USB-Blaster nesta sessão; primeiro executar o piloto baseline e
+conferir DIO0/DIO1, depois o
+secure com o novo contexto/bitstream. O roteiro e os comandos estão em
+[`sprints-artigo-2026-09-30.md`](sprints-artigo-2026-09-30.md).
+
+Nesta rodada, `make pc` passou em **62 testes**; `make manuscript-check`,
+`make paper-check`, `make metrics` e `git diff --check` passaram. A regressão
+HDL completa não foi repetida: a execução anterior de `make check` foi impedida
+pelo acesso ao Docker, e este sprint não alterou RTL. A consulta ao GitHub
+continua sujeita à resolução DNS; commit local não comprova publicação remota.
+Os dois testes adicionais cobrem geração aleatória privada de chave AES-128 e
+recusa de configuração ambígua. O piloto seguro P14 com chave aleatória foi
+compilado/auditado; a fixture P15 de 1 MiB passou no validador NMEA.
 
 **P05 — reteste secure, 29/09/2026 às 18:32 (Manaus):** após programar
 `build/de10_lite/secure/uart_secure.sof`, o CP2102 enviou quatro vezes

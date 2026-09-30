@@ -231,7 +231,7 @@ def render_context_sv(context_path, output, expected_mode=None):
 
 
 def create_context(mode, length, output, registry=None, key_hex=None,
-                   nonce_hex=None, initial_counter=0):
+                   nonce_hex=None, initial_counter=0, random_key=False):
     """Create and register one context, returning the public metadata."""
     if mode not in ("baseline", "aes-128-ctr"):
         raise ValueError("mode must be baseline or aes-128-ctr")
@@ -248,14 +248,16 @@ def create_context(mode, length, output, registry=None, key_hex=None,
         "bytes": length,
     }
     if mode == "baseline":
-        if key_hex is not None or nonce_hex is not None:
+        if key_hex is not None or nonce_hex is not None or random_key:
             raise ValueError("baseline context cannot contain key or nonce")
         _private_json(output, context)
         return context
 
     if registry is None:
         raise ValueError("secure context requires --registry")
-    key = _hex_bytes(key_hex, KEY_BYTES, "key_hex")
+    if random_key == (key_hex is not None):
+        raise ValueError("secure context requires exactly one of --key-hex or --random-key")
+    key = secrets.token_bytes(KEY_BYTES) if random_key else _hex_bytes(key_hex, KEY_BYTES, "key_hex")
     nonce = (secrets.token_bytes(NONCE_BYTES) if nonce_hex is None
              else _hex_bytes(nonce_hex, NONCE_BYTES, "nonce_hex"))
     key_id = hashlib.sha256(key).hexdigest()
@@ -298,6 +300,8 @@ def main():
     new.add_argument("--output", type=Path, required=True)
     new.add_argument("--registry", type=Path)
     new.add_argument("--key-hex")
+    new.add_argument("--random-key", action="store_true",
+                     help="generate a private random AES-128 key; do not print it")
     new.add_argument("--nonce-hex")
     new.add_argument("--initial-counter", type=_parse_int, default=0)
     render = commands.add_parser("render-sv", help="render a context as a private SV package")
@@ -308,7 +312,8 @@ def main():
     try:
         if args.command == "new":
             context = create_context(args.mode, args.length, args.output, args.registry,
-                                     args.key_hex, args.nonce_hex, args.initial_counter)
+                                     args.key_hex, args.nonce_hex, args.initial_counter,
+                                     args.random_key)
         else:
             rendered = render_context_sv(args.context, args.output, args.expected_mode)
     except (OSError, ValueError) as exc:

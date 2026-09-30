@@ -1,4 +1,4 @@
-# FPGA-Based Secure GPS Data Acquisition and Transmission Using UART and AES-128-CTR
+# FPGA-Based Hardware-Cost and Live GPS Data-Path Evaluation of AES-128-CTR over UART
 
 **Leonardo Fernandes Cavalcante**, **Edgard Luciano Oliveira Silva**<br>
 Working draft for BTSym'26. Scope: u-blox NEO-M8N, DE10-Lite/MAX 10, 50 MHz
@@ -8,9 +8,9 @@ as well as a live GPS-to-AES-CTR path with independent PC recovery.
 ## Abstract
 
 GPS receivers commonly expose navigation data through an asynchronous serial
-interface, which provides no confidentiality. This work implements and
-evaluates two UART–FIFO datapaths on a DE10-Lite/MAX 10: a baseline forwarder
-and a secure variant with AES-128-CTR. Both use a 50 MHz clock, 38400/8N1 UART
+interface, which provides no confidentiality by itself. This work implements
+and evaluates two UART–FIFO datapaths on a DE10-Lite/MAX 10: a baseline
+forwarder and an AES-CTR variant. Both use a 50 MHz clock, 38400/8N1 UART
 and a 1,024-byte FIFO. Physical tests captured NEO-M8N data and validated NMEA
 sentences on the baseline path. In P13, 8,192 bytes from a live GPS stream were
 encrypted by the FPGA, captured at the UART output and independently recovered
@@ -21,7 +21,9 @@ analysis reports 331 logic elements and 212 registers for the baseline, versus
 117.56 and 92.61 MHz, respectively, both above the 50 MHz operating clock.
 The synthetic replay of the 309-byte public NMEA fixture at RTL had no
 divergence or FIFO overflow and reached one-byte maximum FIFO occupancy. The
-paper distinguishes simulation, implementation and physical results.
+paper distinguishes simulation, implementation and physical results. The
+laboratory datapath uses a publicly known conformance-test key; these results
+demonstrate implementation and recovery, not operational secrecy.
 
 **Keywords:** FPGA, GPS, UART, AES-128-CTR, embedded security, reconfigurable
 hardware.
@@ -35,8 +37,8 @@ against modification. In applications where position information is sensitive,
 adding a cryptographic layer must be evaluated together with the resource and
 timing constraints of the communication path.
 
-This work investigates a hardware architecture for secure serial GPS
-data transmission. The design receives bytes through a UART connected to a
+This work investigates a hardware architecture for GPS serial-data processing
+with an AES-CTR transformation. The design receives bytes through a UART connected to a
 GPS-oriented input, stores them in a synchronous FIFO, optionally applies
 AES-128-CTR, and emits the resulting bytes through a second UART stream. The
 same RTL datapath is elaborated in two configurations so that the cost of the
@@ -52,9 +54,11 @@ The contributions are:
 4. a quantitative comparison of post-fit resources, timing, FIFO occupancy and
    RTL end-to-end latency.
 
-AES-CTR is used here to provide confidentiality. It does not provide message
-authentication, integrity, replay protection or GNSS spoofing protection; these
-limitations are part of the system definition and are discussed explicitly.
+The “secure” label denotes the AES-enabled RTL elaboration. AES-CTR provides
+confidentiality only with a secret key and unique nonce; this experiment uses a
+publicly known conformance-test key and makes no claim of operational secrecy.
+CTR also does not provide message authentication, integrity, replay protection
+or GNSS spoofing protection.
 
 ## 2. Proposed architecture
 
@@ -112,6 +116,26 @@ The key, nonce and initial counter are experiment parameters. The current
 DE10-Lite wrapper applies them statically during elaboration/build; no runtime
 key-provisioning protocol is claimed.
 
+The AES core computes one 128-bit block in 20 cycles (400 ns at 50 MHz), with
+a 21-cycle block issue interval. A current-mask register and a held next-mask
+result reserve work ahead of the UART byte transfer. The RTL replay measured
+80 ns from RX-valid to TX-start in both modes when a mask was ready. This is a
+simulation result for that handshake, not measured physical AES latency or a
+claim that the AES computation takes zero time.
+
+## 2.4 Related work
+
+FPGA GPS processing has combined UART reception, NMEA parsing and extraction
+of navigation fields. FPGA AES has also been integrated with UART for image
+transfer. AES-CTR implementation studies compare iterative or pipelined
+architectures on larger Xilinx SoC/FPGA targets, while recent AES co-design
+uses a MicroBlaze to perform key expansion. These works establish related
+application and implementation patterns; their device resources and throughput
+are not directly comparable to MAX 10 logic elements. This study instead
+measures a matched baseline and AES-CTR path on the same DE10-Lite at the GPS
+UART operating point, including physical live-data evidence. The contribution
+is system-level characterization, not a new AES algorithm or core.
+
 ## 3. Experimental method
 
 ### 3.1 Verification levels
@@ -133,11 +157,18 @@ The evaluation separates four kinds of evidence:
    Discovery 2, serial traffic is checked through a CP2102 USB–UART adapter, and
    NEO-M8N captures are parsed for ASCII, CRLF, sentence length and checksums.
 
-The full `make check` regression passes at the revised UART setting, including
-independent AES/CTR vectors, baseline/secure integration, structural checks and
-37 Python tests. Physical tests confirmed UART framing, the NEO-M8N-to-DE10-Lite
-baseline path, and a live GPS-to-AES-CTR path with PC recovery. Stored-data
-replays P09/P10 remain separate deterministic tests with the GPS disconnected.
+The software oracle includes 866 AES known-answer comparisons: 284 official
+CAVP cases, six published examples and 576 synthetic cases. NIST SP 800-38A
+CTR vectors are also used by the independent software oracle and RTL testbench.
+The public FIPS 197 example in Table~1 uses key
+`000102030405060708090a0b0c0d0e0f` and plaintext
+`00112233445566778899aabbccddeeff`; its expected ciphertext is
+`69c4e0d86a7b0430d8cdb78070b4c55a`. For repeatability, the laboratory datapath
+uses this same publicly specified key; it must not be treated as a deployed
+secret. Physical tests confirmed UART
+framing, the NEO-M8N-to-DE10-Lite baseline path, and a live GPS-to-AES-CTR path
+with PC recovery. Stored-data replays P09/P10 remain separate deterministic
+tests with the GPS disconnected.
 
 ### 3.2 Workloads and test conditions
 
@@ -297,20 +328,23 @@ claim is made. The key and nonce are build-time parameters, not runtime-
 provisioned secrets. The consumed-context lock survives KEY0 reset only while
 the FPGA remains configured and powered. Reprogramming the same SOF or cycling
 power can restore its initial counter; every new secure acquisition therefore
-requires a fresh context and matching bitstream. Finally, AES-CTR offers confidentiality but no
-authentication or integrity protection.
+requires a fresh context and matching bitstream. Because the laboratory key is
+public, the captures do not demonstrate operational secrecy. AES-CTR also
+provides no authentication or integrity, and deployment would require secret-
+key provisioning.
 
 ## 7. Conclusion
 
 This work presents a DE10-Lite architecture for UART-based GPS data forwarding
-with optional AES-128-CTR confidentiality. RTL checks and post-fit analysis
+with an optional AES-128-CTR datapath. RTL checks and post-fit analysis
 quantify functional behavior and implementation cost; physical tests validate
 the NEO-M8N baseline path and demonstrate live secure GPS acquisition with
 independent PC recovery and NMEA checksum validation. Host timings are not
 interpreted as AES latency. Both implementations meet the 50 MHz timing
 constraint, while the secure variant incurs substantially higher logic and
-register use. Future work should add authenticated encryption or a separate
-integrity mechanism for secure telemetry.
+register use. The public laboratory key limits the physical result to
+implementation and recovery, not operational secrecy. Future work should use
+secret-key provisioning and authenticated encryption for secure telemetry.
 
 ## Reproduction references
 

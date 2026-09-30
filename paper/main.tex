@@ -1,0 +1,209 @@
+\documentclass[runningheads]{llncs}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\input{generated_metrics.tex}
+
+\title{Hardware Cost and Live GPS Data-Path Evaluation of AES-128-CTR on an FPGA}
+\titlerunning{AES-CTR for Live GPS Data on an FPGA}
+\author{Leonardo Fernandes Cavalcante\inst{1} \and Edgard Luciano Oliveira Silva\inst{1}}
+\authorrunning{L. F. Cavalcante and E. L. O. Silva}
+% Complete the verified institution, department, and corresponding-author email
+% before submission. Do not infer affiliation or contact details.
+\institute{[Institution and department to be confirmed]\\
+\email{[Corresponding-author email to be confirmed]}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+GPS receivers commonly expose navigation data through UART, which provides no confidentiality by itself. This paper measures the hardware cost and live data-path behavior of adding AES-128 in counter mode (CTR) to a GPS serial path on a DE10-Lite/MAX 10 FPGA. Two elaborations share the UART, FIFO, clock, constraints, and interfaces; only the AES-CTR elaboration adds the cipher. At 50~MHz and 38400/8N1, the selected post-fit baseline uses \BaselineLE{} logic elements (LEs) and \BaselineReg{} registers, while the AES design uses \SecureLE{} LEs and \SecureReg{} registers. Their minimum post-fit Fmax values are \BaselineFmax{} and \SecureFmax{}~MHz; both meet the 50~MHz constraint. Physical tests include UART waveform inspection, stored-NMEA replay, and live GPS operation. In the live AES-CTR test, 8192 output bytes were independently decrypted on the host; 127 complete recovered NMEA sentences passed checksum validation. Because this capture lacked a simultaneous raw GPS reference, it does not prove byte identity or exclude complete-sentence loss. AES correctness is supported by NIST known-answer vectors and an 866-vector regression. The experiment uses a publicly known conformance-test key, so it evaluates the cipher datapath rather than operational secrecy. It makes no claim of authentication, measured power, or FPGA-only host latency.
+\keywords{FPGA \and AES-128-CTR \and GPS \and UART \and NMEA \and Hardware evaluation}
+\end{abstract}
+
+\section{Introduction}
+Navigation receivers frequently deliver position and timing messages over asynchronous serial links. NMEA sentences are easy to integrate into embedded equipment, but a UART link does not conceal their contents. Encrypting the stream in programmable logic introduces an implementation cost that should be measured together with the acquisition and serial-output path.
+
+This study compares two otherwise matched UART-to-UART designs on a DE10-Lite/MAX 10. Both use a 50~MHz clock, 38400-baud 8N1 serial framing, and a 1024-byte FIFO. The baseline forwards bytes; the secure elaboration adds AES-128-CTR. A u-blox NEO-M8N supplies live NMEA data. A CP2102 adapter records serial output, and an Analog Discovery 2 (AD2) observes electrical behavior. An independent host implementation decrypts the secure stream.
+
+The study asks: (1) what post-fit logic, register, and timing changes accompany the AES-CTR stage under matched FPGA constraints? (2) can the live GPS-to-FPGA-to-host path transmit ciphertext that the host can independently recover and validate as NMEA? Contributions are the controlled baseline/secure comparison, a reproducible reference-stream replay, and physical validation of both baseline forwarding and live secure operation. The work does not propose a new AES algorithm or claim a complete authenticated security protocol.
+
+\section{Related work}
+FPGA GPS processing has included UART reception, NMEA parsing, and extraction of navigation fields~\cite{Abidin2020}. FPGA AES has also been integrated with UART for image transfer between boards~\cite{Prasanna2022}. Those systems establish relevant application patterns, but do not report a matched live-GPS baseline versus AES-CTR comparison on the same low-cost FPGA path.
+
+AES-CTR implementation studies commonly emphasize throughput and area on substantially larger Xilinx devices. Paz et al. compare non-pipelined AES-CTR on Zynq and Kintex platforms~\cite{Paz2024}; Visconti et al. report a deeply pipelined AES implementation targeting high throughput~\cite{Visconti2020}. Recent hardware/software AES co-design moves key expansion into a MicroBlaze processor and targets a Virtex-5~\cite{Azzouzi2025}. These resource and throughput figures are not directly comparable with MAX 10 logic elements: FPGA families, tool flows, architecture, interfaces, and objectives differ. They inform the design space rather than serve as normalized baselines.
+
+AES and CTR are standardized by NIST~\cite{FIPS197,SP80038A}. Accordingly, the paper's contribution is the system-level experiment at the selected GPS UART operating point, not cryptographic novelty. The comparison quantifies the incremental cost of adding AES to an otherwise shared design and documents what live-path evidence does and does not establish.
+
+\section{System architecture}
+\subsection{Datapath and acquisition}
+The baseline is UART RX $\rightarrow$ FIFO $\rightarrow$ UART TX. The secure variant inserts a byte-stream AES-CTR transform after the FIFO. Both elaborations use the same MAX 10 device, clock, serial rate, pin assignments, and buffering. The FPGA is configured for the fixed experimental point of 50~MHz and 38400/8N1. The GPS breakout is powered at 3.3~V and shares ground with the FPGA.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[font=\small,>=Latex,node distance=7mm,
+  box/.style={draw,rounded corners,align=center,minimum height=8mm,minimum width=16mm},
+  tap/.style={draw,dashed,rounded corners,align=center,inner sep=3pt}]
+\node[box] (gps) {NEO-M8N\\GPS};
+\node[box,right=3mm of gps] (rx) {UART RX};
+\node[box,right=3mm of rx] (fifo) {FIFO};
+\node[box,right=3mm of fifo] (mode) {Baseline\\or AES-CTR};
+\node[box,right=3mm of mode] (tx) {UART TX};
+\node[box,right=3mm of tx] (pc) {PC\\CP2102};
+\draw[->] (gps)--node[above]{NMEA}(rx);
+\draw[->] (rx)--(fifo); \draw[->] (fifo)--(mode); \draw[->] (mode)--(tx); \draw[->] (tx)--(pc);
+\node[tap,below=10mm of fifo] (ad2) {AD2 DigitalIn\\DIO0 / DIO1};
+\draw[dashed] (gps.south) |- (ad2.west);
+\draw[dashed] (tx.south) |- (ad2.east);
+\end{tikzpicture}
+\caption{Matched baseline and secure data paths. During the simultaneous-capture experiment, the AD2 records GPS TX at FPGA RX and FPGA TX; its digital lines are inputs only.}
+\label{fig:architecture}
+\end{figure}
+
+The FIFO decouples UART reception from the downstream handshake. Framing and overflow indicators are sticky during an acquisition. Physical P13 observed the overflow and framing indicators off. The “secure” name identifies the AES-enabled RTL elaboration; the experiment uses a publicly known conformance-test key and therefore does not demonstrate operational secrecy. CTR also provides no authentication or integrity and is malleable.
+
+\subsection{AES-128 in counter mode}
+For block index $j$, the design encrypts a 96-bit nonce concatenated with a 32-bit counter, then XORs each mask byte with one input byte. The mask advances only when the output byte is accepted. Counter wrap is blocked. Key, nonce, and initial counter are fixed at build time; a fresh registered nonce and corresponding secure bitstream are used for each secure acquisition. No run-time key provisioning, authentication tag, or replay protocol is implemented~\cite{SP80038A}.
+
+The AES core computes a 128-bit block in 20 clock cycles (400~ns at 50~MHz); the documented block issue interval is 21 cycles. A current mask and a held next-mask result provide two reservations. The counter mask is prepared while UART data are arriving, so the byte transfer need not wait for a new AES block when the reserved mask is ready. In the production-clock RTL NMEA replay, RX-valid-to-TX-start was 80~ns for both elaborations. This is a simulated interface interval under the tested handshake; it is not a physical AES latency measurement and depends on a ready mask.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[font=\small,>=Latex,x=1cm,y=1cm]
+\draw[->] (0,0)--(10,0) node[right]{time};
+\draw[->] (0,0)--(0,2.5);
+\node[left] at (0,2.1) {AES mask};
+\draw[fill=blue!15] (0.4,1.75) rectangle (2.2,2.25);
+\node at (1.3,2) {20 cycles};
+\node[below] at (1.3,1.72) {400 ns at 50 MHz};
+\node[left] at (0,0.95) {UART byte};
+\draw[fill=gray!20] (2.8,0.65) rectangle (8.8,1.25);
+\node at (5.8,0.95) {10 bit-times $\approx$ 260.4 $\mu$s at 38400 baud};
+\draw[<->] (2.2,1.45)--(2.8,1.45) node[midway,above]{mask ready};
+\end{tikzpicture}
+\caption{Scale comparison between one AES block computation and one 8N1 UART character. The secure design reserves the mask before the corresponding byte transfer.}
+\label{fig:prefetch}
+\end{figure}
+
+\section{Experimental method}
+\subsection{Verification and cryptographic reference}
+Verification has four levels: (1) RTL testbenches for AES, CTR, UART, FIFO, and integration; (2) independent Python decryption and NMEA parsing; (3) Quartus post-fit resource and timing reports; and (4) physical board tests using AD2 and CP2102. GPS captures are checked for printable ASCII, CRLF framing, sentence length, and NMEA checksum. Stored captures and live acquisition are reported as distinct workloads.
+
+The AES regression contains 866 known-answer comparisons, including 284 official CAVP cases, six published examples, and 576 synthetic cases~\cite{CAVP}. One published AES-128 example is shown in Table~\ref{tab:kat}. For repeatability, the laboratory datapath uses the same publicly specified key as this FIPS example; it is not a secret and must not be treated as a deployed key. CTR vectors from NIST SP 800-38A are also exercised in the independent software reference and RTL regression~\cite{SP80038A}.
+
+\begin{table}
+\caption{AES-128 known-answer example from FIPS 197.}
+\label{tab:kat}
+\centering
+\small
+\begin{tabular}{ll}
+\hline
+Field & Hexadecimal value \\
+\hline
+Key & \texttt{000102030405060708090a0b0c0d0e0f} \\
+Plaintext & \texttt{00112233445566778899aabbccddeeff} \\
+Expected ciphertext & \texttt{69c4e0d86a7b0430d8cdb78070b4c55a} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Physical and implementation procedure}
+The production configuration is a DE10-Lite with MAX 10 `10M50DAF484C7G`, 50~MHz clock, 38400/8N1 UART, and 1024-byte FIFO. Baseline and secure builds were fitted and audited independently. The selected build pair is identified by the versioned metrics snapshot and its source and artifact hashes. Fmax is taken from the Quartus post-fit timing report; the board is operated at 50~MHz.
+
+P07/P12 evaluated physical GPS acquisition and baseline forwarding. P08--P10 used stored GPS data for repeatable byte comparisons. P13 evaluated the live GPS-to-secure-FPGA path; captured ciphertext was recovered on the host and the recovered NMEA sentences were checked. The AD2 scope tests P04/P06 examined UART waveforms. Host elapsed time includes the serial driver and USB adapter and is not attributed to FPGA processing. The physical campaign and its limits are summarized in Table~\ref{tab:physical}.
+
+\section{Results}
+\subsection{Functional and live-path results}
+The public 309-byte NMEA fixture passed the production-clock RTL replay in both modes, with zero byte divergence after secure recovery and zero FIFO overflow. The AES implementation passed the 866-vector regression described above. The deterministic physical stored-stream tests compared each byte: baseline P08 and P10 outputs matched their references; P09 and P10 secure ciphertext was distinct and independent recovery reproduced the original bytes.
+
+\begin{table}
+\caption{Physical GPS and stored-stream evidence on the DE10-Lite at 38400/8N1.}
+\label{tab:physical}
+\centering
+\small
+\begin{tabular}{lll}
+\hline
+Test & Procedure & Observed result \\
+\hline
+P07 & Live GPS; baseline forwarding & 4096-byte captures; valid NMEA in both windows \\
+P08 & Stored GPS replay, baseline & 3/3 repeats exact; no missing/extra bytes \\
+P09 & Stored GPS replay, secure & 4096 bytes independently recovered \\
+P10 & Stored GPS replay, baseline/secure & 32768 bytes; exact recovery in both modes \\
+P12 & Live GPS, baseline & 8192 bytes; 127 complete NMEA sentences \\
+P13 & Live GPS, AES-CTR & 8192 ciphertext bytes; 127 recovered sentences pass checksum \\
+\hline
+\end{tabular}
+\end{table}
+
+In P13, LEDR6 and LEDR7 (sticky FIFO-overflow and UART-framing indicators) were observed off. This is evidence for the observed interval, not a counter-based proof of zero events. The host capture lasted approximately 10--11~s. Because P13 did not record a simultaneous raw GPS input, its recovered NMEA validity cannot establish byte identity with the exact transmitted input or rule out loss of complete sentences.
+
+\subsection{Post-fit implementation comparison}
+Table~\ref{tab:fit} reports the selected matched build pair. Both designs passed setup, hold, recovery, and removal checks in all three audited corners and meet the 50~MHz operating constraint. The resource increase quantifies the cost of this AES integration on this device; the Fmax values are post-fit estimates, not frequencies measured on the physical board.
+
+\begin{table}
+\caption{Selected DE10-Lite post-fit results. LEs denote logic elements.}
+\label{tab:fit}
+\centering
+\small
+\begin{tabular}{lrrr}
+\hline
+Metric & Baseline & Secure & Difference \\
+\hline
+Logic elements & \BaselineLE{} & \SecureLE{} & +5260 (+1589.12\%) \\
+Registers & \BaselineReg{} & \SecureReg{} & +701 (+330.66\%) \\
+Memory bits & 8192 & 8192 & 0 \\
+Minimum Fmax (MHz) & \BaselineFmax{} & \SecureFmax{} & $-24.95$ \\
+Worst setup slack (ns) & 11.494 & 9.202 & positive \\
+Worst hold slack (ns) & 0.103 & 0.105 & positive \\
+Worst recovery slack (ns) & 13.962 & 13.390 & positive \\
+Worst removal slack (ns) & 0.440 & 2.487 & positive \\
+\hline
+\end{tabular}
+\end{table}
+
+The secure fit uses 11.24\% of the device's 49,760 LEs, compared with 0.67\% for baseline. The hierarchy attributes 4,160 LEs to 20 S-box instances; this is included within, not additional to, the secure total. Memory remains 8,192 bits in both builds. Figure~\ref{fig:fit} visualizes the selected resource and timing point.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[font=\small,>=Latex]
+\pgfmathsetmacro{\BaselineBar}{8.1*\BaselineLE/6000}
+\pgfmathsetmacro{\SecureBar}{8.1*\SecureLE/6000}
+\pgfmathsetmacro{\BaselineFmaxBar}{7.6*\BaselineFmax/130}
+\pgfmathsetmacro{\SecureFmaxBar}{7.6*\SecureFmax/130}
+\pgfmathsetmacro{\ClockBar}{7.6*50/130}
+\draw[->] (0,0)--(8.1,0) node[right]{Logic elements (scale 0--6000)};
+\draw[fill=blue!35] (0,0.45) rectangle (\BaselineBar,0.95);
+\draw[fill=orange!55] (0,1.25) rectangle (\SecureBar,1.75);
+\node[left,align=right] at (0,0.7) {Baseline};
+\node[left,align=right] at (0,1.5) {Secure};
+\node[right] at (\BaselineBar,0.7) {\BaselineLE};
+\node[right] at (\SecureBar,1.5) {\SecureLE};
+\draw[->] (0,2.35)--(7.6,2.35) node[right]{Minimum Fmax (MHz, scale 0--130)};
+\draw[fill=blue!35] (0,2.75) rectangle (\BaselineFmaxBar,3.2);
+\draw[fill=orange!55] (0,3.5) rectangle (\SecureFmaxBar,3.95);
+\node[left,align=right] at (0,2.975) {Baseline};
+\node[left,align=right] at (0,3.725) {Secure};
+\node[right] at (\BaselineFmaxBar,2.975) {\BaselineFmax{} MHz};
+\node[right] at (\SecureFmaxBar,3.725) {\SecureFmax{} MHz};
+\draw[dashed] (\ClockBar,2.55)--(\ClockBar,4.05);
+\node[above,rotate=90] at (\ClockBar,4.05) {50 MHz operating clock};
+\end{tikzpicture}
+\caption{Selected post-fit resource counts and minimum Fmax values. The dashed mark is the 50~MHz operating clock; Fmax is reported by static timing analysis.}
+\label{fig:fit}
+\end{figure}
+
+\section{Discussion and limitations}
+The matched implementation shows a substantial logic and register cost when AES-128-CTR is added, while the selected secure fit still meets the 50~MHz constraint. The 38400-baud data path is slower than AES mask generation in the tested architecture; mask precomputation and reservation explain why the production-clock RTL replay did not add a measured RX-valid-to-TX-start interval. This observation is bounded to that RTL stimulus and handshake; no claim of zero physical cryptographic latency is made.
+
+CTR provides confidentiality only when its key is secret and its nonce is unique; it provides no integrity, authenticity, or replay protection. The laboratory key in this work is publicly known, so the captured ciphertext demonstrates AES-CTR processing and recovery, not secrecy against an observer who knows the key. Reuse of a nonce with the same key is unsafe. Contexts are static build parameters; no key negotiation or authenticated framing is implemented. The work also does not address GNSS spoofing or jamming. Only one DE10-Lite and one GPS module were physically evaluated. FPGA power was not measured, and host timing is not FPGA latency. The short live capture, sticky status LEDs, and NMEA checksums do not prove long-duration reliability or absence of dropped complete sentences. Fmax and resource counts are specific to the selected Quartus fit, device, constraints, and build.
+
+\section{Conclusion}
+This paper reports a controlled DE10-Lite comparison of baseline UART/FIFO forwarding and the same path with AES-128-CTR, together with physical GPS tests. Quartus post-fit analysis quantifies resource cost and confirms positive timing margins at 50~MHz. A live GPS stream traversed the AES-CTR datapath; host recovery yielded 127 complete checksum-valid NMEA sentences. A simultaneous raw-input comparison would strengthen the live-path evidence; P13 does not prove byte-for-byte identity. Because the experiment uses a publicly known key, it evaluates implementation cost and data-path correctness rather than operational confidentiality. Secret-key provisioning, authentication, nonce management across power cycles, and measured power remain open deployment requirements.
+
+\subsubsection*{Acknowledgements.} [Confirm funding and acknowledgement text before submission.]
+\subsubsection*{Competing interests.} [Authors must confirm the declaration before submission.]
+
+\bibliographystyle{splncs04}
+\bibliography{references}
+\end{document}
