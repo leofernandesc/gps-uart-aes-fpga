@@ -18,7 +18,10 @@ REQUIREMENTS = {
             "103.38 MHz",
             "synthetic replay",
             "physical",
-            "NEO-M9N-00B-00",
+            "NEO-M8N",
+            "P07",
+            "32,768-byte",
+            "GPS-to-AES operation was not tested",
         ),
     ),
     "Portuguese": (
@@ -32,7 +35,10 @@ REQUIREMENTS = {
             "103,38 MHz",
             "replay NMEA público",
             "físic",
-            "NEO-M9N-00B-00",
+            "NEO-M8N",
+            "P07",
+            "32.768 bytes",
+            "GPS→AES simultânea",
         ),
     ),
 }
