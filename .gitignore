@@ -1,5 +1,8 @@
 /build/
 /artifacts/
+# Local instrument and simulator session logs.
+/DebugErc.log
+transcript
 __pycache__/
 .venv/
 *.pyc
