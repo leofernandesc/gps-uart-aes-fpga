@@ -24,7 +24,7 @@ def checked(dwf, name, *args):
         raise RuntimeError(f"{name}: {error.value.decode(errors='replace')}")
 
 
-def run(port, payload, timeout, baud=38400, capture_scope=False):
+def run(port, payload, timeout, baud=9600, capture_scope=False):
     dwf = CDLL("libdwf.so")
     handle = c_int()
     checked(dwf, "FDwfDeviceOpen", c_int(-1), byref(handle))
@@ -94,8 +94,8 @@ def main():
                         help="bitstream actually programmed on the FPGA")
     parser.add_argument("--hex", default="55 A5 00 FF 3C")
     parser.add_argument("--timeout", type=float, default=1.5)
-    parser.add_argument("--baud", type=int, default=38400,
-                        help="UART baud rate (default: 38400)")
+    parser.add_argument("--baud", type=int, default=9600,
+                        help="UART baud rate (default: 9600)")
     parser.add_argument("--report", type=Path)
     parser.add_argument("--scope-csv", type=Path,
                         help="save CH1=V10 and CH2=W10 analog samples to a new CSV")

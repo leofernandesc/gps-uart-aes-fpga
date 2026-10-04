@@ -12,6 +12,8 @@ import sys
 from build_manifest import ROOT, begin, digest, finish, verify
 from context import render_context_sv, validate_context
 
+BUILD_PASS = "PASS: Quartus compilation and timing audit; SOF generated, not programmed"
+
 
 def project_text(source, output):
     def resolve(match):
@@ -37,6 +39,7 @@ def build(context_file, output, quartus_sh, prepare_only=False):
         raise ValueError("output must be a NEW directory below build/experiments")
     source = ROOT / "fpga/de10_lite" / design / f"uart_{design}.qsf"
     output.mkdir(parents=True, exist_ok=False)
+    (output / "build-status.txt").write_text("RUNNING: isolated Quartus experiment (no board programming)\n")
     render_context_sv(context_file, output / "context_params.sv", mode)
     qsf = output / source.name
     qsf.write_text(project_text(source, output))
@@ -66,6 +69,7 @@ def build(context_file, output, quartus_sh, prepare_only=False):
         raise ValueError("timing audit did not pass")
     finish(output)
     verify(output)
+    (output / "build-status.txt").write_text(BUILD_PASS + "\n")
     return {"status": "PASS", "sof": str(output / f"uart_{design}.sof"),
             "context_id": context["context_id"], "note": "Generated and audited, NOT programmed"}
 
@@ -76,8 +80,10 @@ def main():
     p.add_argument("--context", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--prepare-only", action="store_true")
-    p.add_argument("--quartus-sh", type=Path, default=Path(shutil.which("quartus_sh") or
-        "/home/leofernandesc/intelFPGA_lite/25.1/quartus/bin/quartus_sh"))
+    quartus_sh = shutil.which("quartus_sh")
+    p.add_argument("--quartus-sh", type=Path,
+                   default=Path(quartus_sh) if quartus_sh else None,
+                   required=quartus_sh is None)
     a = p.parse_args()
     try:
         print(json.dumps(build(a.context, a.output, a.quartus_sh, a.prepare_only), indent=2))

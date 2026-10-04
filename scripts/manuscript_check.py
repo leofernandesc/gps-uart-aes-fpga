@@ -1,57 +1,34 @@
 #!/usr/bin/env python3
-"""Check that manuscript drafts retain current results and evidence limits."""
+"""Check the submitted manuscript source against the selected evidence."""
 import argparse
 import json
 import math
 from pathlib import Path
 import re
 import sys
+import subprocess
 
 from build_manifest import digest
-from fpga_metrics import DEFAULT_BUILD, collect, comparison, comparison_table, number
+from fpga_metrics import collect, comparison, number
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SNAPSHOT = ROOT / "docs/evidence/de10-lite-postfit-2026-09-30.json"
+SNAPSHOT = ROOT / "docs/evidence/de10-lite-postfit-9600-2026-09-30.json"
+SELECTED_BUILD = ROOT / "build/experiments/baud9600"
 
-REQUIREMENTS = {
-    "English": (
-        ROOT / "docs/manuscrito-btsym-draft.md",
-        (
-            "50 MHz",
-            "38400 baud",
-            "309 bytes",
-            "synthetic replay",
-            "physical",
-            "NEO-M8N",
-            "P07",
-            "P13",
-            "8,192 bytes",
-            "127 complete NMEA sentences",
-            "32,768-byte",
-            "live GPS-to-AES-CTR path",
-            "parallel raw GPS input",
-        ),
-    ),
-    "Portuguese": (
-        ROOT / "docs/manuscrito-btsym-rascunho-pt.md",
-        (
-            "50 MHz",
-            "38400 baud",
-            "309 bytes",
-            "replay NMEA público",
-            "físic",
-            "NEO-M8N",
-            "P07",
-            "P13",
-            "8.192 bytes",
-            "127 sentenças NMEA",
-            "32.768 bytes",
-            "GPS→AES-CTR ao vivo",
-            "entrada GPS crua",
-        ),
-    ),
-}
+PAPER_SOURCE = ROOT / "paper/main.tex"
+SUBMITTED_PDF = ROOT / "paper/submitted.pdf"
+SUBMITTED_HASH = ROOT / "paper/submitted.sha256"
+PAPER_MARKERS = (
+    r"\title{Hardware Cost and Live GPS Data-Path Evaluation of AES-128-CTR on an FPGA}",
+    "9600/8N1",
+    "1,024-byte FIFO",
+    "65,536-byte AES-CTR trial",
+    "1,112 complete checksum-valid NMEA sentences",
+    "Declaration of AI-assisted technologies.",
+    "OpenAI ChatGPT and Codex",
+    "The authors declare that they have no competing interests.",
+)
 
 
 def load_metrics(path: Path, source_root: Path = ROOT) -> dict:
@@ -99,6 +76,9 @@ def load_metrics(path: Path, source_root: Path = ROOT) -> dict:
             if not current.is_file() or digest(current) != expected:
                 raise ValueError(f"{name}: published build source changed: {source}")
     b, s = (result["designs"][name] for name in ("baseline", "secure"))
+    if (b["provenance"]["baud"] != 9600 or b["provenance"]["clock_hz"] != 50_000_000
+            or b["provenance"]["fifo_depth"] != 1024):
+        raise ValueError("publication snapshot is not the selected 50 MHz/9600/1024-byte profile")
     for field in ("device", "quartus_version", "memory_bits", "pins", "plls"):
         if b[field] != s[field]:
             raise ValueError(f"publication pair mismatch: {field}")
@@ -110,7 +90,7 @@ def load_metrics(path: Path, source_root: Path = ROOT) -> dict:
     return result
 
 
-def check_builds(result: dict, build_root: Path = DEFAULT_BUILD) -> bool:
+def check_builds(result: dict, build_root: Path = SELECTED_BUILD) -> bool:
     present = [(build_root / name).exists() for name in ("baseline", "secure")]
     if not any(present):
         return False
@@ -122,41 +102,102 @@ def check_builds(result: dict, build_root: Path = DEFAULT_BUILD) -> bool:
     return True
 
 
-def check_draft(label: str, path: Path, markers: tuple[str, ...], metrics: dict) -> list[str]:
+def render_metrics(result: dict) -> str:
+    designs = result["designs"]
+    values = (
+        ("BaselineLE", str(designs["baseline"]["logic_elements"])),
+        ("BaselineReg", str(designs["baseline"]["registers"])),
+        ("BaselineFmax", f'{designs["baseline"]["fmax_mhz_min"]:.2f}'),
+        ("SecureLE", str(designs["secure"]["logic_elements"])),
+        ("SecureReg", str(designs["secure"]["registers"])),
+        ("SecureFmax", f'{designs["secure"]["fmax_mhz_min"]:.2f}'),
+    )
+    return "".join(f"\\newcommand{{\\{name}}}{{{value}}}\n" for name, value in values)
+
+
+def check_paper(metrics: dict) -> list[str]:
+    failures = []
     try:
-        raw = path.read_text(encoding="utf-8")
-        text = " ".join(raw.split())
+        source = PAPER_SOURCE.read_text(encoding="utf-8")
     except OSError as exc:
-        return [f"{label}: cannot read {path}: {exc}"]
-    normalized_markers = [" ".join(marker.split()) for marker in markers]
-    missing = [marker for marker in normalized_markers if marker not in text]
-    failures = [f"{label}: missing required disclosure/result: {marker!r}" for marker in missing]
-    # Compare rows, including deltas and every audited slack, rather than finding
-    # unrelated numbers elsewhere in the manuscript.
-    normalize = lambda row: tuple(cell.strip() for cell in row.strip().strip("|").split("|"))
-    actual_rows = [normalize(line) for line in raw.splitlines() if line.lstrip().startswith("|")]
-    for row in comparison_table(metrics, label).splitlines()[2:]:
-        expected = normalize(row)
-        matching = [actual for actual in actual_rows if actual[0] == expected[0]]
-        if matching != [expected]:
-            failures.append(f"{label}: post-fit row differs from selected build: {expected[0]}")
-    heading = "Abstract" if label == "English" else "Resumo"
-    abstract = re.search(rf"^## {heading}\s*\n(.*?)(?=^## |\Z)", raw, re.M | re.S)
+        return [f"cannot read submitted manuscript source: {exc}"]
+
+    normalized = " ".join(source.split())
+    for marker in PAPER_MARKERS:
+        if marker not in normalized:
+            failures.append(f"submitted manuscript is missing required content: {marker!r}")
+
+    rendered_metrics = render_metrics(metrics)
+    expected_macros = dict(re.findall(
+        r"\\newcommand\{\\(\w+)\}\{([^}]*)\}", rendered_metrics))
+    source_macros = dict(re.findall(
+        r"\\newcommand\{\\(\w+)\}\{([^}]*)\}", source))
+    for name, value in expected_macros.items():
+        if source_macros.get(name) != value:
+            failures.append(f"submitted manuscript metric macro differs from selected snapshot: {name}")
+    try:
+        if (ROOT / "paper/generated_metrics.tex").read_text(encoding="utf-8") != rendered_metrics:
+            failures.append("generated manuscript metrics differ from selected snapshot")
+    except OSError as exc:
+        failures.append(f"cannot read generated manuscript metrics: {exc}")
+    for macro in (r"\BaselineLE{}", r"\BaselineReg{}", r"\BaselineFmax{}",
+                  r"\SecureLEPrint{}", r"\SecureReg{}", r"\SecureFmax{}"):
+        if macro not in source:
+            failures.append(f"submitted manuscript does not use selected metric macro {macro}")
+
+    result = metrics
+    comparison_result = result["comparison"]
+    for number_text in (
+        f"+{comparison_result['logic_elements_delta']:,}",
+        f"+{comparison_result['registers_delta']:,}",
+        f"{comparison_result['fmax_delta_mhz']:.2f}",
+        f"{result['designs']['baseline']['fmax_mhz_min']:.2f}",
+        f"{result['designs']['secure']['fmax_mhz_min']:.2f}",
+    ):
+        if number_text not in source:
+            failures.append(f"submitted manuscript does not contain selected result {number_text}")
+
+    abstract = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source, re.S)
     if not abstract:
-        failures.append(f"{label}: missing abstract")
+        failures.append("submitted manuscript has no abstract")
     else:
-        for design in metrics["designs"].values():
-            for token in (number(design["logic_elements"], label), number(design["registers"], label),
-                          number(design["fmax_mhz_min"], label, 2)):
-                if not re.search(rf"(?<![\d.,]){re.escape(token)}(?![\d.,])", abstract[1]):
-                    failures.append(f"{label}: abstract differs from selected build: {token}")
+        words = re.findall(r"\b[\w-]+\b", re.sub(r"\\[a-zA-Z]+", " ", abstract[1]))
+        if not 150 <= len(words) <= 250:
+            failures.append(f"abstract has {len(words)} words; expected 150--250")
+        expanded_abstract = abstract[1]
+        for name, value in source_macros.items():
+            expanded_abstract = expanded_abstract.replace(f"\\{name}{{}}", value)
+        for design in result["designs"].values():
+            for value in (number(design["logic_elements"], "English"),
+                          number(design["registers"], "English"),
+                          number(design["fmax_mhz_min"], "English", 2)):
+                if not re.search(rf"(?<![\d.,]){re.escape(value)}(?![\d.,])", expanded_abstract):
+                    failures.append(f"abstract differs from selected build: {value}")
+
+    try:
+        hashes = {}
+        for line in SUBMITTED_HASH.read_text(encoding="ascii").splitlines():
+            fields = line.split()
+            if len(fields) == 2:
+                hashes[fields[1].lstrip("*")] = fields[0]
+        for name in ("main.tex", "submitted.pdf"):
+            path = ROOT / "paper" / name
+            if hashes.get(name) != digest(path):
+                failures.append(f"archived submitted {name} does not match paper/submitted.sha256")
+        info = subprocess.run(["pdfinfo", str(SUBMITTED_PDF)], check=True,
+                              capture_output=True, text=True).stdout
+        pages = re.search(r"^Pages:\s+(\d+)$", info, re.M)
+        if not pages or int(pages[1]) > 10:
+            failures.append("archived submitted PDF exceeds the 10-page limit or is unreadable")
+    except (OSError, subprocess.CalledProcessError, IndexError) as exc:
+        failures.append(f"cannot verify archived submitted PDF: {exc}")
     return failures
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", type=Path, default=SNAPSHOT)
-    parser.add_argument("--build-root", type=Path, default=DEFAULT_BUILD)
+    parser.add_argument("--build-root", type=Path, default=SELECTED_BUILD)
     parser.add_argument("--offline", action="store_true", help="Check the published snapshot and tracked sources only")
     args = parser.parse_args()
     try:
@@ -165,12 +206,7 @@ def main() -> int:
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f"FAIL manuscript provenance: {exc}", file=sys.stderr)
         return 1
-    failures = []
-    for label, (path, markers) in REQUIREMENTS.items():
-        draft_failures = check_draft(label, path, markers, metrics)
-        failures.extend(draft_failures)
-        if not draft_failures:
-            print(f"PASS manuscript check: {label} draft")
+    failures = check_paper(metrics)
     if failures:
         for failure in failures:
             print(f"FAIL manuscript check: {failure}", file=sys.stderr)
@@ -178,7 +214,7 @@ def main() -> int:
     print("PASS manuscript provenance: selected snapshot and tracked build sources verified")
     print("PASS local build hashes match publication snapshot" if live else
           "INFO: local artifacts not checked; this run verifies the published snapshot only")
-    print("PASS manuscript check: post-fit tables and abstracts match the selected builds; evidence disclosures present")
+    print("PASS manuscript check: submitted source, selected metrics, PDF hash, page limit, and disclosures verified")
     return 0
 
 

@@ -116,10 +116,9 @@ efetivamente gravados pela simulação. Os arquivos ficam em `build/ctr/`.
 
 O conjunto cobre o exemplo público NIST em cifragem e decifragem, comprimentos
 parciais, sequências longas, pausas, carry entre bytes do contador, esgotamento,
-troca de chave e cancelamento/reset durante o processamento. Ver o
-[relatório de validação](validacao-ctr-2026-09-10.md) para resultados medidos.
+troca de chave e cancelamento/reset durante o processamento. Os resultados
+físicos e post-fit do sistema integrado estão em [results.md](results.md).
 
-Com o AES otimizado em 20/09, o ensaio isolado mede **25 ciclos** entre a
-aceitação do contexto e a primeira transferência, com entrada e saída prontas
-(500 ns a 50 MHz). Os 34 ciclos anteriores pertencem ao núcleo com banco de
-onze chaves. Essa inicialização do CTR não é a latência UART ponta a ponta.
+Na configuração verificada, a aceitação do contexto até a primeira transferência
+leva 25 ciclos sob as condições do testbench (500 ns a 50 MHz). Esse valor não
+é latência UART ponta a ponta nem medição física.

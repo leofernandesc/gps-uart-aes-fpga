@@ -96,8 +96,8 @@ class SerialTests(unittest.TestCase):
         finally:
             sender.join(timeout=3)
         self.assertEqual(result["status"], "CAPTURED")
-        self.assertEqual(result["baud"], 38400)
-        self.assertEqual(result["format"], "38400/8N1")
+        self.assertEqual(result["baud"], 9600)
+        self.assertEqual(result["format"], "9600/8N1")
         self.assertEqual(self.path.read_bytes(), payload)
         self.assertEqual(termios.tcgetattr(self.slave), previous)
         self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)

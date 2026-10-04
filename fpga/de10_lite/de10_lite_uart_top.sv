@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-// Fixed production setting: 50 MHz / 38400 baud, 8N1. Press KEY0 after loading.
+// Fixed production setting: 50 MHz / 9600 baud, 8N1. Press KEY0 after loading.
 // GPIO locations and LED meanings are documented in README.md in this folder.
 module de10_lite_uart_top (
     input  wire       MAX10_CLK1_50,
@@ -15,7 +15,7 @@ module de10_lite_uart_top (
     reg rx_toggle, tx_toggle;
 
     reset_sync reset_inst (.clk(MAX10_CLK1_50), .arst(!KEY0_N), .rst(rst));
-    uart_bridge #(.CLK_FREQ(50_000_000), .BAUD_RATE(38400)) bridge_inst (
+    uart_bridge #(.CLK_FREQ(50_000_000), .BAUD_RATE(9600)) bridge_inst (
         .clk(MAX10_CLK1_50), .rst(rst), .rx(GPS_RX), .tx_enable(1'b1),
         .tx(UART_TX), .tx_busy(tx_busy), .rx_event(rx_event), .tx_event(tx_event),
         .overflow_sticky(overflow_sticky), .framing_sticky(framing_sticky),

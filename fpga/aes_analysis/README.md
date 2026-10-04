@@ -33,11 +33,13 @@ não significa que interfaces excluídas foram verificadas.
 As métricas de recursos incluem o sincronizador. Não somar LEs e registradores,
 nem somar esta área isolada à da ponte e apresentar como área do sistema: fit,
 otimizações e lógica de integração alteram o resultado. Fmax é estimativa estática
-interna; medições de placa e energia continuam pendentes.
+interna; este alvo isolado não substitui o par integrado baseline/AES-CTR usado
+no artigo.
 
 ## Resultados locais
 
 `build/quartus_aes/` contém `build-status.txt`, versão do Quartus, logs de
 map/fit, `aes128_analysis.fit.summary`, relatório hierárquico e relatórios de
 timing por modelo. O status só recebe PASS se toda a auditoria terminar.
-O manifesto do marco em `docs/evidence/` identifica as fontes utilizadas.
+Os resultados do par integrado e as referências às métricas estão em
+[`docs/results.md`](../../docs/results.md).

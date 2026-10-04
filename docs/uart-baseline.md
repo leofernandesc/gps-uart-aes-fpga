@@ -1,87 +1,59 @@
-# UART revisado — contrato da baseline v2
+# UART baseline contract
 
-Este documento registra o marco original do UART isolado. A ponte e a FIFO
-foram acrescentadas depois, em módulos separados, conforme
-[o marco Quartus](validacao-ponte-quartus-2026-09-07.md). O contrato abaixo e as
-fontes do UART v2 permanecem válidos.
+This document describes the UART block used by the integrated DE10-Lite
+baseline and AES-CTR designs. The complete datapath is documented in
+[integracao-uart-ctr.md](integracao-uart-ctr.md).
 
-## O que mudou
+## Implementation
 
-| UART anterior | UART revisado | Motivo |
-| --- | --- | --- |
-| Tick de baud global compartilhado | Contador local em RX e TX, reiniciado por quadro | Remover a dependência da fase entre início do quadro e tick |
-| Start do TX termina no próximo tick | Start, oito dados e stop duram um bit completo cada | Garantir temporização independentemente do instante do pedido |
-| RX consulta o pino externo diretamente | Dois registradores em série antes da lógica RX | Reduzir o risco de propagação de metastabilidade |
-| RX amostra nos ticks globais | Confirma start no meio do bit e amostra dados/stop a cada período | Alinhar a recepção ao quadro externo |
-| Stop inválido é descartado silenciosamente | Pulso `rx_framing_error`; quadro não entregue | Tornar corrupção observável durante a captura |
-| Reset externo direto na lógica | Asserção assíncrona e liberação em dois clocks no top | Controlar a saída de reset no domínio de 50 MHz |
-| Contador global de 32 bits | Contadores dimensionados para o divisor | Evitar largura desnecessária |
-| Teste integrado alinhado ao DUT | Fonte e decodificador seriais independentes | Verificar o contrato externo, não reproduzir a mesma hipótese |
+The UART uses the 50 MHz system clock with local RX and TX bit counters. The
+production profile is 9600 baud, 8N1, with 5,208 system-clock cycles per bit.
+The RX synchronizes its asynchronous input, validates the start bit near its
+center, then samples data and stop bits at the configured bit interval. The
+TX sends one start bit, eight data bits LSB-first, and one stop bit.
 
-Não foi acrescentado oversampling 16×. O RX usa o clock de 50 MHz e uma amostra
-por bit, aproximadamente central, relativa ao start já sincronizado. O circuito
-de dois estágios não elimina a metastabilidade nem pode ser validado fisicamente
-por simulação RTL; seu reconhecimento e suas restrições devem ser conferidos no
-Quartus. Os atributos `preserve` não substituem a análise de CDC/timing.
+The receiver reports a byte only after a valid stop bit. A low stop bit raises
+a framing-error pulse and discards that frame. There is no oversampling,
+parity, RTS/CTS, or noise-voting filter.
 
-## Interface de `uart_top`
+## Interface
 
-Todos os sinais internos de controle e dados pertencem ao domínio de `clk`.
-`rx` e `rst` são as entradas assíncronas tratadas pelo módulo.
+All internal control and data signals are synchronous to the 50 MHz clock.
+The serial RX pin and external reset are asynchronous inputs handled by the
+top-level synchronization logic.
 
-| Sinal | Contrato |
+| Signal | Contract |
 | --- | --- |
-| `clk` | 50 MHz na implementação final |
-| `rst` | Ativo em nível alto; descarta quadro RX/TX em andamento |
-| `tx_data[7:0]` | Byte a enviar, estável na borda de aceitação |
-| `tx_start` | Pedido aceito na borda de subida em que `tx_ready=1` |
-| `tx_ready` | Pode aceitar um byte; fica baixo no reset e durante transmissão |
-| `tx_busy` | Alto desde a aceitação até completar o stop bit |
-| `tx_done` | Pulso de um clock após os dez bits completos |
-| `tx` | Repouso em 1, start em 0, dados LSB-first, um stop em 1 |
-| `rx` | Entrada externa 8N1, sem controle de fluxo |
-| `rx_data[7:0]` | Byte recebido; só muda em reset ou junto a `rx_done` |
-| `rx_done` | Pulso de um clock ao validar o centro do stop bit |
-| `rx_framing_error` | Pulso de um clock quando o stop é baixo; sem `rx_done` |
+| clk | 50 MHz system clock |
+| rst | Active high; aborts frames in progress |
+| tx_data[7:0] | Byte sampled when a request is accepted |
+| tx_start | Request accepted when tx_ready is high |
+| tx_ready | High when TX can accept a byte |
+| tx_busy | High during frame transmission |
+| tx_done | One-cycle pulse after the complete stop bit |
+| tx | Idle high; start low; data LSB-first; one stop bit |
+| rx_data[7:0] | Last byte accepted with rx_done |
+| rx_done | One-cycle pulse after a valid frame |
+| rx_framing_error | One-cycle pulse when the stop bit is invalid |
 
-Não há fila de pedidos no TX. Um pulso de `tx_start` durante `tx_busy` é ignorado.
-Se `tx_start` permanecer alto até uma borda com `tx_ready=1`, haverá nova
-aceitação: a interface é um handshake por nível, não um detector de bordas.
-O primeiro pedido seguinte pode ser aceito no clock imediatamente após `tx_done`.
+The TX does not queue requests. A pulse while busy is ignored; a request held
+high until ready may be accepted again. Producers must follow the ready/valid
+handshake.
 
-O RX não tem `ready`: dados de um GPS não podem ser pausados por esta interface.
-A próxima etapa deve escrever cada `rx_done` na FIFO e sinalizar overflow quando
-ela estiver cheia. **FIFO e contador de perdas ainda não existem neste marco.**
+The RX has no ready signal because a GPS receiver cannot be paused through this
+interface. The integrated design writes accepted bytes to a synchronous FIFO
+and records overflow and framing errors. These conditions invalidate the
+affected capture.
 
-## Reset, ruído e recuperação
+## Reset and recovery
 
-- Após reset ou erro de stop, o RX exige nível alto contínuo por um bit antes de
-  voltar a aceitar um start. Não iniciar a captura antes desse repouso inicial.
-- Um pulso baixo que já voltou a alto no centro do start é ignorado.
-- Um break contínuo após um quadro inválido gera um único erro, não uma sequência
-  de bytes zero. O RX aguarda repouso válido para rearmar.
-- Um reset interrompe o TX e força a linha alta sem gerar `tx_done` para o byte
-  incompleto. O quadro parcial no receptor externo deve ser descartado.
-- Isso não é um protocolo de recuperação de pacotes. Na captura com CTR,
-  framing/overflow/reset invalidarão a aquisição e exigirão reinicialização
-  explícita do contexto com nonce novo.
+After reset or a framing error, the receiver waits for an idle-high interval
+before accepting another frame. Reset aborts an incomplete TX frame and does
+not report it as completed. This is a datapath contract, not a packet-recovery
+protocol; the host must reject captures marked with reset, framing, or overflow.
 
-## Constantes e integração futura
+For the AES-CTR path, a new acquisition uses a fresh key/nonce context. Reset
+does not make nonce reuse safe.
 
-`uart_top` mantém os parâmetros de elaboração `CLK_FREQ` e `BAUD_RATE` para
-compatibilidade com o projeto anterior e aceleração dos testes. Defaults:
-50.000.000 e 9.600; divisor inteiro 5.208. A placa usará apenas esses defaults.
-Os módulos RX/TX recebem `CLKS_PER_BIT` como constante de elaboração, sem
-registrador de configuração, switch ou multiplexador de taxas.
-
-O `baud_gen` antigo não é mais necessário no caminho de produção.
-Os dois contadores locais são enables temporais: **não geram novos clocks**.
-O formato é sempre 8N1; não há paridade, RTS/CTS ou filtro de ruído por votação.
-
-Na integração, `uart_top` pode ser usado como porta completa para o adaptador de
-controle/saída. Um segundo `uart_rx` atenderá o GPS, recebendo o mesmo reset
-sincronizado do domínio de 50 MHz. Isso evita criar dois domínios desnecessários.
-
-O comparativo científico utilizará esta versão corrigida em ambos os caminhos,
-com a mesma FIFO e o mesmo protocolo. A versão histórica é referência de
-proveniência, **não** o comparador experimental de custo do AES.
+The baseline/AES-CTR post-fit comparison and physical results are in
+[results.md](results.md).

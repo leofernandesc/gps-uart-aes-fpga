@@ -2,7 +2,7 @@
 """Run the physical UART bench through one PC USB-TTL adapter.
 
 The CP2102 is the only external host in the current bench. It opens one
-full-duplex 38400/8N1 port by default, sends a known stimulus or captured GPS
+full-duplex 9600/8N1 port by default, sends a known stimulus or captured GPS
 stream, records the FPGA response, and compares it independently on the PC.
 This utility does not provision the FPGA: program the selected baseline or
 secure SOF first and use a fresh context for every secure capture.

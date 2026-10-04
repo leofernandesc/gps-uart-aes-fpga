@@ -7,8 +7,8 @@ independente no PC. Nenhum dos scripts programa a FPGA nem transmite chave,
 nonce ou comandos de configuração para ela.
 
 O adaptador deve estar em nível lógico de 3,3 V, com TXD, RXD e GND conectados.
-O perfil ativo do experimento é NEO-M8N a 38400/8N1. `--baud` também permite
-taxas históricas. O módulo USB não alimenta a FPGA.
+O perfil do experimento é NEO-M8N a 9600/8N1. A opção `--baud` pode ser definida
+explicitamente para outros usos. O módulo USB não alimenta a FPGA.
 
 ## Gravar um canal
 
@@ -23,7 +23,7 @@ python3 scripts/capture.py record \
 ```
 
 O diretório deve existir e os arquivos devem ser novos. O programa configura
-38400/8N1 por padrão, sem controle de fluxo, eco, conversão de quebra de linha ou tratamento
+9600/8N1 por padrão, sem controle de fluxo, eco, conversão de quebra de linha ou tratamento
 de caracteres especiais. Limpa a fila anterior e imprime `READY` quando está
 pronto. Somente então iniciar a fonte. Os nomes de porta são exemplos: conferir
 qual interface corresponde à saída da FPGA.
@@ -61,7 +61,7 @@ sobrescrito.
 Esse comando comprova a integridade formal do arquivo, não sua origem física:
 um arquivo sintético bem formado também pode passar. A evidência de que os
 bytes vieram do NEO-M8N deve permanecer no registro de bancada, com módulo,
-alimentação, porta, data e montagem. Para executar apenas a validação sem
+alimentação, porta e montagem. Para executar apenas a validação sem
 gerar relatório:
 
 ```bash
@@ -69,21 +69,21 @@ make gps-capture-check GPS_CAPTURE=data/private/ensaio01/gps-reference.bin
 ```
 
 Uma captura parcial, convertida para LF pelo terminal ou com checksum inválido
-deve ser rejeitada e não pode entrar como referência do baseline/secure.
+deve ser rejeitada e não pode entrar como referência do baseline/AES-CTR.
 
 ## Executar o host full-duplex
 
 Para quatro quadros do vetor conhecido 55 A5 00 FF 3C, crie um contexto de
-20 bytes, programe o SOF correspondente e execute:
+20 bytes, programe o SOF baseline ou AES-CTR correspondente e execute:
 
 ~~~bash
 python3 scripts/serial_bench.py run --port /dev/ttyUSB0 --context data/private/ensaio01/contexto.json --registry data/private/nonce-registry.json --received data/private/ensaio01/saida.bin --report data/private/ensaio01/relatorio.json --trials 4
 ~~~
 
 No baseline, omita --registry. O comando envia cada quadro, lê a resposta
-correspondente e mantém uma guarda para detectar bytes extras. Um secure
-consome o contexto antes de READY; se a tentativa falhar, gere outro nonce e
-reprograme o SOF antes de repetir.
+correspondente e mantém uma guarda para detectar bytes extras. AES-CTR consome
+o contexto antes de READY; se a tentativa falhar, gere outro nonce e reprograme
+o SOF antes de repetir.
 
 Para replay da captura GPS:
 
@@ -92,13 +92,13 @@ python3 scripts/serial_bench.py replay --port /dev/ttyUSB0 --input data/private/
 ~~~
 
 O contexto precisa declarar exatamente o número de bytes do input. No baseline,
-o comparador exige eco exato. No secure, ele decifra todo o ciphertext com
+o comparador exige eco exato. Em AES-CTR, ele decifra todo o ciphertext com
 cryptography/OpenSSL e compara o plaintext recuperado com a captura original.
 
 ## Criar e registrar um contexto
 
 `scripts/context.py` cria o JSON privado usado pela captura e mantém um registro
-de nonces já utilizados. No modo secure, omitir `--nonce-hex` para gerar um
+de nonces já utilizados. No modo AES-CTR, omitir `--nonce-hex` para gerar um
 nonce aleatório novo:
 
 ```bash
@@ -121,7 +121,7 @@ ao SOF. Essa é uma provisão estática no bitstream, não um protocolo de
 configuração em tempo de execução. O testbench `de10_lite_uart_ctr_top_tb`
 verifica o caminho com um ciphertext conhecido.
 
-Exemplo para um ensaio secure:
+Exemplo para um ensaio AES-CTR:
 
 ```bash
 CONTEXT_FILE=data/private/ensaio01/contexto.json make secure-fpga
@@ -177,7 +177,7 @@ python3 scripts/capture.py compare \
   --report data/private/ensaio01/comparacao.json
 ```
 
-O caminho com cifra usa `cryptography`/OpenSSL para decifrar; baseline compara
+O caminho AES-CTR usa `cryptography`/OpenSSL para decifrar; baseline compara
 diretamente. O relatório registra N, contagens, faltas/excessos, primeira
 divergência e hashes dos três fluxos. Não inclui chaves ou coordenadas.
 Código 0 indica comparação aprovada; 1 indica divergência/captura inválida;
@@ -202,6 +202,6 @@ make check
 
 make pc testa comparação, corrupção, truncamento, excesso, limites do contexto,
 códigos de saída, preservação de arquivos, captura binária/timeout em uma porta
-virtual Linux (PTY) e o host full-duplex baseline/secure, incluindo `0x00`,
+virtual Linux (PTY) e o host full-duplex baseline/AES-CTR, incluindo `0x00`,
 `0xff`, CR/LF e XON/XOFF. A PTY valida o protocolo do software, não substitui
 a evidência do CP2102 físico, da forma de onda ou das flags da FPGA.

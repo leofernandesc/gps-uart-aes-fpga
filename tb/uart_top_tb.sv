@@ -5,7 +5,7 @@ module uart_top_tb #(
     parameter integer CLK_FREQ = 307200,
     parameter integer NUM_BYTES = 64
 );
-    parameter integer BAUD_RATE = 38400;
+    parameter integer BAUD_RATE = 9600;
     localparam integer CLKS_PER_BIT = CLK_FREQ / BAUD_RATE;
     localparam realtime SERIAL_BIT_NS = (1.0 * CLK_FREQ / BAUD_RATE) * 20.0;
     reg clk = 0;

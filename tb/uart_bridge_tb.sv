@@ -3,7 +3,7 @@
 
 module uart_bridge_tb #(
     parameter integer CLK_FREQ = 307200,
-    parameter integer BAUD_RATE = 38400,
+    parameter integer BAUD_RATE = 9600,
     parameter integer FIFO_DEPTH = 8,
     parameter integer STRESS = 1
 );

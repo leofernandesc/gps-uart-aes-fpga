@@ -17,7 +17,7 @@ Um arquivo SOF antigo pode permanecer no disco após uma compilação que falhou
 ## O que esse circuito faz
 
 O gerador interno envia **0x55 a cada 100 ms**, independentemente de RX.
-O sinal sai em **38400 baud, 8N1**, LSB primeiro, usando o clock de 50 MHz.
+O sinal sai em **9600 baud, 8N1**, LSB primeiro, usando o clock de 50 MHz.
 Há UART RX/TX, reset sincronizado, temporizador de estímulo, um heartbeat no
 `LEDR[0]` e LEDs de diagnóstico. `LEDR[1]` registra o início de uma transmissão.
 Não há FIFO, AES, GPS ou retransmissão automática nesse projeto.
@@ -66,7 +66,7 @@ Pinagem conferida no [manual Terasic da DE10-Lite, pp. 24–27 e 30–31](https:
 
    O bit dura **26,04 µs**, o quadro **260,4 µs** e o intervalo entre starts
    consecutivos **100 ms**. Para a repetição, usar uma base de tempo maior.
-   No decodificador UART, selecionar 38400 / 8N1 / polaridade normal; esperar
+   No decodificador UART, selecionar 9600 / 8N1 / polaridade normal; esperar
    `0x55` (ASCII `U`). Estes valores são previstos pelo RTL, a medir na bancada.
 
 ## Teste 2: RX por jumper externo
@@ -103,9 +103,9 @@ RX não é ecoado para TX neste projeto.
 
 ## Registro mínimo
 
-Guardar SHA do commit, versão Quartus, hash do SOF, foto das ligações e captura
-do osciloscópio com escalas. Anotar duração do bit/quadro e os LEDs após reset
-e loopback. Somente então marcar a bancada no cronograma como concluída.
+Ao documentar uma nova medição, registrar o commit, a versão do Quartus, o hash
+do SOF, as ligações e as escalas usadas no instrumento. Informar também a
+duração observada do bit/quadro e os LEDs após reset e loopback.
 
 GTKWave exibe ondas de simulação. As saídas `build/uart_top.vcd` e
 `build/uart_scope.vcd` contêm sinais públicos para evitar arquivos enormes com

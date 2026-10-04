@@ -7,7 +7,7 @@ FPGA e compara o resultado no próprio PC.
 
 ## Ligações elétricas
 
-Para os testes baseline/secure com vetor conhecido, use uma conexão
+Para os testes baseline/AES-CTR com vetor conhecido, use uma conexão
 full-duplex:
 
 ~~~text
@@ -21,7 +21,7 @@ pinos de bancada já preparados. O CP2102 não alimenta a FPGA. Não conecte o
 pino de 5 V ao GPIO e não una fontes de alimentação; confirme que TXD/RXD
 estão em 3,3 V antes de ligar.
 
-O ensaio ativo usa apenas a DE10-Lite a 38400/8N1. A porta Linux pode ser
+O ensaio ativo usa apenas a DE10-Lite a 9600/8N1. A porta Linux pode ser
 /dev/ttyUSB0, /dev/ttyUSB1 ou outro nome atribuído pelo sistema; confirmar
 com dmesg e ls -l /dev/ttyUSB*.
 
@@ -57,8 +57,8 @@ com dmesg e ls -l /dev/ttyUSB*.
    divergência ou byte extra. Guardar o relatório, o binário recebido, o SOF,
    a identificação da placa e a forma de onda correspondente.
 
-Para o secure, gere um contexto novo com a mesma quantidade de bytes e registre
-o nonce:
+Para a variante AES-CTR, gere um contexto novo com a mesma quantidade de bytes
+e registre o nonce:
 
 ~~~bash
 mkdir -p data/private/ensaio-secure
@@ -77,11 +77,10 @@ python3 scripts/serial_bench.py run \
   --trials 4
 ~~~
 
-O secure deve retornar ciphertext diferente do vetor enviado, mas o relatório
-precisa indicar PASS: a decifragem independente recupera exatamente os 20
-bytes de referência. Um contexto secure é consumido antes de READY; depois de
-uma tentativa, inclusive uma falha, criar outro contexto e programar o SOF
-correspondente.
+A saída AES-CTR deve diferir do vetor enviado, mas o relatório precisa indicar
+PASS: a decifragem independente recupera exatamente os 20 bytes de referência.
+O contexto é consumido antes de READY; depois de uma tentativa, inclusive uma
+falha, criar outro contexto e programar o SOF correspondente.
 
 ## Captura e replay do GPS
 
@@ -115,14 +114,14 @@ controladas:
      --report data/private/ensaio-baseline/gps-output.json
    ~~~
 
-   Para o secure, use um contexto novo com bytes igual ao tamanho da captura,
-   compile o SOF secure com esse contexto e informe também --registry.
+   Para AES-CTR, use um contexto novo com bytes igual ao tamanho da captura,
+   compile o SOF correspondente com esse contexto e informe também --registry.
 
 Esse procedimento usa dados realmente adquiridos do NEO-M8N e os reapresenta
 em uma segunda execução, evitando comparar duas sequências GPS diferentes.
-Com um único CP2102 não se capturam referência e saída simultaneamente; para
-isso seriam necessários dois canais independentes ou o Analog Discovery 2
-como canal adicional. A limitação deve ser registrada no artigo.
+Para aquisição simultânea, o AD2 observa GPS TX e FPGA TX enquanto o CP2102
+mantém a cópia serial independente do TX da FPGA. A pinagem está em
+[bancada.md](bancada.md).
 
 ## O que o relatório mede
 

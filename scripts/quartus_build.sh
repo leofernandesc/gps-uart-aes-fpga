@@ -38,8 +38,6 @@ quartus_shell="${QUARTUS_SH:-}"
 if [[ -z "$quartus_shell" ]]; then
     if command -v quartus_sh >/dev/null 2>&1; then
         quartus_shell="$(command -v quartus_sh)"
-    else
-        quartus_shell=/home/leofernandesc/intelFPGA_lite/25.1/quartus/bin/quartus_sh
     fi
 fi
 if [[ ! -x "$quartus_shell" ]]; then

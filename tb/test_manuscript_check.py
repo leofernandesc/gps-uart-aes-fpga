@@ -1,4 +1,4 @@
-"""Reject stale manuscript numbers and broken publication provenance."""
+"""Check publication metrics, source disclosures, and build provenance."""
 import json
 import sys
 from pathlib import Path
@@ -8,7 +8,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import test_fpga_metrics
 import manuscript_check
-from fpga_metrics import collect, comparison_table, freeze
+from fpga_metrics import collect, freeze
 
 
 class PublicationTests(unittest.TestCase):
@@ -17,45 +17,45 @@ class PublicationTests(unittest.TestCase):
         self.metrics = collect(self.build, self.root)
         self.snapshot = self.root / "selected.json"
         freeze(self.metrics, self.snapshot)
-        self.draft = self.root / "draft.md"
 
-    def write_draft(self, label="English"):
-        heading = "Abstract" if label == "English" else "Resumo"
-        frequency = "80.00" if label == "English" else "80,00"
-        self.draft.write_text(f"## {heading}\n400 elements, 200 registers, {frequency} MHz.\n"
-                              "## Results\n" + comparison_table(self.metrics, label) + "\n")
+    def test_submitted_paper_matches_selected_snapshot(self):
+        selected = manuscript_check.load_metrics(manuscript_check.SNAPSHOT)
+        self.assertEqual(manuscript_check.check_paper(selected), [])
 
-    def test_selected_snapshot_and_bilingual_tables(self):
-        selected = manuscript_check.load_metrics(self.snapshot, self.root)
-        for label in ("English", "Portuguese"):
-            self.write_draft(label)
-            self.assertEqual(manuscript_check.check_draft(label, self.draft, (), selected), [])
+    def test_stale_paper_metric_macro_is_rejected(self):
+        source = manuscript_check.PAPER_SOURCE.read_text(encoding="utf-8")
+        source = source.replace(
+            r"\newcommand{\BaselineLE}{347}",
+            r"\newcommand{\BaselineLE}{348}",
+            1,
+        )
+        changed = self.root / "stale-main.tex"
+        changed.write_text(source, encoding="utf-8")
+        selected = manuscript_check.load_metrics(manuscript_check.SNAPSHOT)
+        with patch.object(manuscript_check, "PAPER_SOURCE", changed):
+            failures = manuscript_check.check_paper(selected)
+        self.assertTrue(any("metric macro differs" in item for item in failures))
 
-    def test_stale_table_is_rejected_even_with_correct_numbers_elsewhere(self):
-        self.write_draft()
-        raw = self.draft.read_text().replace("| 400 | 400 |", "| 400 | 401 |", 1)
-        self.draft.write_text(raw + "\nCorrect secure count: 400\n")
-        self.assertTrue(manuscript_check.check_draft("English", self.draft, (), self.metrics))
-
-    def test_stale_abstract_is_rejected_even_with_correct_table(self):
-        self.write_draft()
-        self.draft.write_text(self.draft.read_text().replace("80.00 MHz.", "79.00 MHz.", 1))
-        failures = manuscript_check.check_draft("English", self.draft, (), self.metrics)
-        self.assertTrue(any("abstract differs" in failure for failure in failures))
-
-    def test_wrong_delta_and_duplicate_rows_are_rejected(self):
-        self.write_draft()
-        original = self.draft.read_text()
-        self.draft.write_text(original.replace("+0.00%", "+1.00%", 1))
-        self.assertTrue(manuscript_check.check_draft("English", self.draft, (), self.metrics))
-        row = next(line for line in original.splitlines() if line.startswith("| Registers |"))
-        self.draft.write_text(original + row + "\n")
-        self.assertTrue(manuscript_check.check_draft("English", self.draft, (), self.metrics))
+    def test_stale_abstract_metric_is_rejected(self):
+        source = manuscript_check.PAPER_SOURCE.read_text(encoding="utf-8")
+        source = source.replace(
+            r"and \SecureFmax{}~MHz",
+            r"and \BaselineFmax{}~MHz",
+            1,
+        )
+        changed = self.root / "stale-abstract.tex"
+        changed.write_text(source, encoding="utf-8")
+        selected = manuscript_check.load_metrics(manuscript_check.SNAPSHOT)
+        with patch.object(manuscript_check, "PAPER_SOURCE", changed):
+            failures = manuscript_check.check_paper(selected)
+        self.assertTrue(any("abstract differs" in item for item in failures))
 
     def test_changed_tracked_source_is_rejected_offline(self):
+        selected = manuscript_check.load_metrics(self.snapshot, self.root)
         (self.root / "source.sv").write_text("changed RTL\n")
         with self.assertRaisesRegex(ValueError, "source changed"):
             manuscript_check.load_metrics(self.snapshot, self.root)
+        self.assertIsNotNone(selected)
 
     def test_changed_live_artifact_and_incomplete_pair_are_rejected(self):
         with patch.object(manuscript_check, "collect", side_effect=lambda root: collect(root, self.root)):

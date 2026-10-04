@@ -15,16 +15,28 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def check(paper=ROOT / "paper/main.tex", bibliography=ROOT / "paper/references.bib",
           macros=ROOT / "paper/generated_metrics.tex", pdf=None):
-    source, bib = paper.read_text(encoding="utf-8"), bibliography.read_text(encoding="utf-8")
-    if macros.read_text(encoding="utf-8") != render(SNAPSHOT):
-        raise ValueError("paper macros differ from frozen post-fit snapshot")
-    if r"\input{generated_metrics.tex}" not in source:
-        raise ValueError("paper must include the generated post-fit macros")
-    if r"\bibliographystyle{splncs04}" not in source:
-        raise ValueError("paper must use the Springer LNCS bibliography style")
+    source = paper.read_text(encoding="utf-8")
+    expected_macros = dict(re.findall(r"\\newcommand\{\\(\w+)\}\{([^}]*)\}", render(SNAPSHOT)))
+    if r"\input{generated_metrics.tex}" in source:
+        if macros.read_text(encoding="utf-8") != render(SNAPSHOT):
+            raise ValueError("paper macros differ from frozen post-fit snapshot")
+    else:
+        source_macros = dict(re.findall(r"\\newcommand\{\\(\w+)\}\{([^}]*)\}", source))
+        mismatched = [name for name, value in expected_macros.items()
+                      if source_macros.get(name) != value]
+        if mismatched:
+            raise ValueError("paper inline metrics differ from frozen post-fit snapshot: "
+                             + ", ".join(mismatched))
+    if (r"\bibliographystyle{splncs04}" not in source
+            and r"\begin{thebibliography}" not in source):
+        raise ValueError("paper must use an LNCS bibliography")
     cited = {key.strip() for group in re.findall(r"\\cite(?:\[[^]]*\])?\{([^}]+)\}", source)
              for key in group.split(",")}
-    available = set(re.findall(r"@\w+\s*\{\s*([^,\s]+)", bib))
+    if r"\bibliography{" in source:
+        bib = bibliography.read_text(encoding="utf-8")
+        available = set(re.findall(r"@\w+\s*\{\s*([^,\s]+)", bib))
+    else:
+        available = set(re.findall(r"\\bibitem(?:\[[^]]*\])?\s*\{([^}]+)\}", source))
     missing, unused = cited - available, available - cited
     if missing:
         raise ValueError("undefined bibliography keys: " + ", ".join(sorted(missing)))
@@ -38,8 +50,8 @@ def check(paper=ROOT / "paper/main.tex", bibliography=ROOT / "paper/references.b
         raise ValueError(f"abstract has {len(words)} words; Springer template requests 150--250")
     if "5603" in source or "103.38" in source:
         raise ValueError("historical, unselected post-fit numbers occur in paper source")
-    placeholders = [token for token in ("[Institution and department to be confirmed]",
-        "[Corresponding-author email to be confirmed]", "[Confirm funding", "[Authors must confirm")
+    placeholders = [token for token in ("Funding and acknowledgement statement to be confirmed",
+        "Declaration to be confirmed by all authors")
         if token in source]
     result = {"source_check": "PASS", "abstract_words": len(words),
               "citations": sorted(cited), "submission_placeholders": placeholders}
@@ -52,7 +64,7 @@ def check(paper=ROOT / "paper/main.tex", bibliography=ROOT / "paper/references.b
             raise ValueError("Springer option A limit is 10 pages including references")
         result["pdf_pages"] = int(match[1])
     if placeholders:
-        result["submission_status"] = "DRAFT: author affiliation/contact and declarations require confirmation"
+        result["submission_status"] = "DRAFT: author funding and competing-interest declarations require confirmation"
     return result
 
 

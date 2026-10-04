@@ -16,7 +16,7 @@ from gps_fixture import load_replay, parse_window
 from stress_fixture import make_payload
 
 
-def waveform(payload, bit=0, rate=1000000, baud=38400, bad_stop=False):
+def waveform(payload, bit=0, rate=1000000, baud=9600, bad_stop=False):
     bits = [1] * 4
     for index, value in enumerate(payload):
         bits += [0] + [(value >> n) & 1 for n in range(8)] + [0 if bad_stop and index == 0 else 1]
@@ -59,6 +59,19 @@ class LiveCampaignTests(unittest.TestCase):
         d = UARTDecoder(1000000, limit=1)
         d.feed(waveform(b"\x55\xa5"))
         self.assertEqual(d.data, b"\x55")
+
+    def test_lower_rates_and_dio2_across_all_byte_values(self):
+        payload = bytes(range(256))
+        for rate in (100000000 / 156, 100000000 / 143):
+            for bit in (0, 2):
+                with self.subTest(rate=rate, bit=bit):
+                    d = UARTDecoder(rate, bit=bit)
+                    samples = waveform(payload, bit=bit, rate=rate)
+                    for index in range(0, len(samples), 31):
+                        d.feed(samples[index:index + 31])
+                    self.assertEqual(bytes(d.data), payload)
+                    self.assertEqual(d.framing_errors, 0)
+                    self.assertEqual(d.false_starts, 0)
 
     def test_common_window_secure_and_corruption(self):
         reference = load_replay()

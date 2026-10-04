@@ -1,12 +1,12 @@
-# DE10-Lite secure
+# DE10-Lite AES-CTR variant
 
-Este projeto implementa a variante segura do artigo:
+Este projeto implementa a variante AES-CTR avaliada no artigo:
 
 ```text
 UART RX -> FIFO -> AES-128-CTR -> UART TX
 ```
 
-Parâmetros fixos: clock de 50 MHz, UART 38400 baud/8N1, dispositivo
+Parâmetros fixos: clock de 50 MHz, UART 9600 baud/8N1, dispositivo
 `10M50DAF484C7G`, RX no `V10` e TX no `W10`.
 
 O wrapper carrega automaticamente um contexto de teste após o reset. A chave,

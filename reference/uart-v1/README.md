@@ -1,7 +1,7 @@
 # Referência preservada — UART v1
 
-Origem: `/home/leofernandesc/uniccass-icdesign-tools/shared_xserver/projects/uart`.
-Captura: 07/09/2026. Os nove arquivos listados em `SHA256SUMS` são cópias exatas.
+Snapshot legado da implementação UART v1, adquirido em 07/09/2026. Os nove
+arquivos listados em `SHA256SUMS` são cópias verificadas.
 
 Não editar esta referência para corrigir o controlador. O desenvolvimento novo
 fica em `../../rtl/uart/`. O original permanece em seu próprio diretório.

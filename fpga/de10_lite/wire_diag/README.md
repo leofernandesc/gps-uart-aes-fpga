@@ -14,6 +14,7 @@ da decodificação 8N1 pelo FPGA.
 
 Este SOF serve apenas para localizar uma falha da bancada. A restrição SDC
 exclui explicitamente o caminho assíncrono de pino a pino; seus números de
-timing e recursos não participam do comparativo baseline/secure do artigo.
-O resultado de 26/09 está em
-[`docs/diagnostico-p04-de10-2026-09-26.md`](../../../docs/diagnostico-p04-de10-2026-09-26.md).
+timing e recursos não participam do comparativo baseline/AES-CTR do artigo.
+Para a montagem física e os limites dos ensaios, consulte
+[`docs/bancada.md`](../../../docs/bancada.md) e
+[`docs/results.md`](../../../docs/results.md).

@@ -77,7 +77,7 @@ desabilitada. A liberação acontece na borda do clock comum; os caminhos de
 recovery/removal dessa habilitação precisam ser auditados no Quartus integrado.
 Os resultados de timing dos tops antigos não cobrem esse circuito novo.
 
-## Validação sem placa
+## Validação
 
 `make integration` executa os dois modos em simulação acelerada e em
 50 MHz/9600, lint, checagem estrutural e comparação independente no PC. O
@@ -88,10 +88,8 @@ verificador decodifica o fio TX, sem ler payloads ou máscaras internos do RTL.
 Os testes incluem buffers parciais, sequência maior que a FIFO, pausas,
 esgotamento do contador, falhas e recuperação com contexto novo.
 
-O Yosys confirma também a ausência dos módulos AES no baseline. Isso é
-checagem de elaboração, não medição de recursos FPGA. Ver
-[validação de 16/09](validacao-integracao-2026-09-16.md), a
-[validação do build de 20/09](validacao-build-contexto-2026-09-20.md) e
-[captura no PC](captura-pc.md). O registro de nonces no PC já está implementado;
-o provisionamento estático no wrapper/build foi validado; programação dos tops,
-captura física e GPS continuam pendentes.
+O Yosys confirma também a ausência dos módulos AES na elaboração do baseline;
+isso é uma checagem estrutural, não uma medida de recursos FPGA. Quartus
+post-fit e captura física ao vivo estão resumidos em
+[results.md](results.md). O host captura e compara os bytes, mas não configura a
+FPGA em tempo de execução; o contexto é incorporado ao SOF.

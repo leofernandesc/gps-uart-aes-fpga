@@ -38,7 +38,7 @@ class TimingReviewTests(unittest.TestCase):
         text = "Number of Synchronizer Chains Found: 2\n"
         method = "User Specified" if identified else "Automatic"
         for index, source in enumerate(("UART_RX", "KEY0_N"), 1):
-            rate = "0.0384" if identified and source == "UART_RX" else "6.25"
+            rate = "0.0096" if identified and source == "UART_RX" else "6.25"
             text += f"\nSynchronizer Chain #{index}: Worst-Case MTBF is Not Calculated\n"
             text += chain(source, method, rate) + "\n"
         for c in (1, 2, 3):
@@ -69,9 +69,9 @@ class TimingReviewTests(unittest.TestCase):
     def test_explicit_identification_and_toggle_assumptions(self):
         self.write_chains(identified=True)
         results = metastability_results(self.path, identified=True)
-        self.assertEqual(results[0]["chains"][1]["toggle_millions_per_second"], 0.0384)
+        self.assertEqual(results[0]["chains"][1]["toggle_millions_per_second"], 0.0096)
         report = self.path / "metastability_corner2.rpt"
-        report.write_text(report.read_text().replace("0.0384", "6.25"))
+        report.write_text(report.read_text().replace("0.0096", "6.25"))
         with self.assertRaisesRegex(ValueError, "toggle assumption"):
             metastability_results(self.path, identified=True)
 
@@ -103,7 +103,7 @@ class TimingReviewTests(unittest.TestCase):
         self.assertEqual(generated.count("-name SYNCHRONIZER_IDENTIFICATION"), 4)
         self.assertIn(f'-to "{RX_CHAIN}|rx_meta"', generated)
         self.assertNotIn("-to {", generated)
-        self.assertIn("SYNCHRONIZER_TOGGLE_RATE 38400", generated)
+        self.assertIn("SYNCHRONIZER_TOGGLE_RATE 9600", generated)
         self.assertIn("SYNCHRONIZER_TOGGLE_RATE 6250000", generated)
 
     def test_success_exit_does_not_hide_ignored_assignments(self):

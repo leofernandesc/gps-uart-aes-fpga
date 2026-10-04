@@ -84,7 +84,7 @@ module de10_lite_uart_ctr_top #(
     uart_ctr_bridge #(
         .ENABLE_AES (ENABLE_AES),
         .CLK_FREQ  (CLK_FREQ),
-        .BAUD_RATE (38400),
+        .BAUD_RATE (9600),
         .FIFO_DEPTH (1024)
     ) bridge_inst (
         .clk              (MAX10_CLK1_50),

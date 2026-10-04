@@ -13,7 +13,7 @@ module de10_lite_uart_ctr_top_tb;
     localparam [31:0] CONTEXT_COUNTER = 32'h000000ff;
     localparam [7:0] PLAINTEXT = 8'h55;
     localparam [7:0] EXPECTED_CIPHERTEXT = 8'he2;
-    localparam integer CLKS_PER_BIT = 50_000_000 / 38_400;
+    localparam integer CLKS_PER_BIT = 50_000_000 / 9_600;
     localparam integer BIT_NS = CLKS_PER_BIT * 20;
 
     reg clk = 1'b0;

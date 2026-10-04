@@ -3,7 +3,7 @@
 
 module uart_scope_tb #(
     parameter integer CLK_FREQ = 307200,
-    parameter integer BAUD_RATE = 38400,
+    parameter integer BAUD_RATE = 9600,
     parameter integer PERIOD_CYCLES = CLK_FREQ / 10
 );
     localparam integer CPB = CLK_FREQ / BAUD_RATE;

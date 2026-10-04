@@ -6,7 +6,7 @@ Este projeto implementa a referência sem cifra usada no artigo:
 UART RX -> FIFO -> UART TX
 ```
 
-Parâmetros fixos: clock de 50 MHz, UART 38400 baud/8N1, dispositivo
+Parâmetros fixos: clock de 50 MHz, UART 9600 baud/8N1, dispositivo
 `10M50DAF484C7G`, RX no `V10` e TX no `W10`.
 
 O contexto de configuração é aceito automaticamente pelo wrapper após o reset.

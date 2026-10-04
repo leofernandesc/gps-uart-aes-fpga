@@ -4,7 +4,7 @@
 module uart_ctr_bridge_tb;
     parameter integer ENABLE_AES = 1;
     parameter integer CLK_FREQ = 307200;
-    parameter integer BAUD_RATE = 38400;
+    parameter integer BAUD_RATE = 9600;
     parameter integer FIFO_DEPTH = 8;
     parameter integer GPS_ONLY = 0;
     localparam integer CPB = CLK_FREQ / BAUD_RATE;
@@ -204,7 +204,7 @@ module uart_ctr_bridge_tb;
         if (fields != 1) $fatal(1, "Missing fixture count");
         // The final fixture is reserved for byte-exact recovery after faults.
         // GPS_ONLY selects the public NMEA replay (fixture 4) at the real
-        // 50 MHz/38400 baud timing without repeating the preceding short cases.
+        // 50 MHz/9600 baud timing without repeating the preceding short cases.
         if (GPS_ONLY) begin
             if (count <= 4) $fatal(1, "GPS replay fixture is missing");
             first_case = 4;

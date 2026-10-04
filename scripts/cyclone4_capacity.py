@@ -24,7 +24,9 @@ SOURCES = [
 
 
 def main():
-    shell = os.environ.get("QUARTUS_SH") or shutil.which("quartus_sh") or "/home/leofernandesc/intelFPGA_lite/25.1/quartus/bin/quartus_sh"
+    shell = os.environ.get("QUARTUS_SH") or shutil.which("quartus_sh")
+    if not shell:
+        raise ValueError("Quartus not found; set QUARTUS_SH or add quartus_sh to PATH")
     binary = Path(shell).parent
     if not (binary / "quartus_map").is_file() or not (binary / "quartus_fit").is_file():
         raise ValueError("Quartus map/fit not found; set QUARTUS_SH")

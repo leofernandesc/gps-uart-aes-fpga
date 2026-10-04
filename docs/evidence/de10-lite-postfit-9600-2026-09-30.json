@@ -1,0 +1,173 @@
+{
+  "results": {
+    "board": "de10_lite",
+    "comparison": {
+      "fmax_delta_mhz": -27.930000000000007,
+      "fmax_delta_pct": -22.707317073170742,
+      "logic_elements_delta": 5308,
+      "logic_elements_delta_pct": 1529.6829971181555,
+      "registers_delta": 701,
+      "registers_delta_pct": 324.537037037037
+    },
+    "designs": {
+      "baseline": {
+        "device": "10M50DAF484C7G",
+        "fmax_mhz_by_corner": [
+          123.0,
+          133.05,
+          278.32
+        ],
+        "fmax_mhz_min": 123.0,
+        "logic_elements": 347,
+        "memory_bits": 8192,
+        "pins": 14,
+        "plls": 0,
+        "provenance": {
+          "artifacts_sha256": {
+            "check_timing.rpt": "f05087bc3403ddd30cb0afffb2375fe0fe09f7400fab72448499621dd780aecd",
+            "clocks.rpt": "a35bfd9983f188daac5f4905c1cece267e164adffaf4a33a0212ce880877dcf6",
+            "compile.log": "76c0a30bf2e661299c56bfdab7e920cafa202e921de075ab34f2e29ca27c4858",
+            "fmax_corner1.rpt": "99c0e546c14ff746a255343a598f61b4c0161823ddcf00907b55e6d26915325f",
+            "fmax_corner2.rpt": "1350d9d32ae44fe604b8b1477519c94122efefeb4d49776b7660b086d3573057",
+            "fmax_corner3.rpt": "e08f8ee3f893fcdc970bf158b56922808e5e80deb73a9bc2a007348ae97f020a",
+            "timing-audit.log": "8b5bbd21510db990c038ab72c08f27057a6b2cc57d8cd62efc09e45e6188fa22",
+            "tool-version.txt": "e484bb48906a49b263a7ffe72dc3620c46e382307f44bb4cf232d9f7a9046537",
+            "uart_baseline.fit.summary": "2641929cada1f49b8715b22f9a211a22f46a71b68f4703c8e3841a6a870d217a",
+            "uart_baseline.sof": "70e4610c308e979367a131bdddacf5fc6eda59c16e54c8790cb9717b0b8d8298",
+            "unconstrained.rpt": "7015ad71e43b396919a8fb237c0b19f75623726adeca6c634d502dd57d2eb551"
+          },
+          "baud": 9600,
+          "board": "de10_lite",
+          "clock_hz": 50000000,
+          "commit": "3239248b7854fe1f26b6e827588ffd8b8207ca0c",
+          "design": "baseline",
+          "device": "10M50DAF484C7G",
+          "fifo_depth": 1024,
+          "finished_utc": "2026-09-30T21:32:17.454730+00:00",
+          "rtl_config_diff_sha256": "58432d763d7645f3fc75d4872dd4cbf27b934d0651e7842bf8b1a7f18bf9f811",
+          "schema": 1,
+          "seed": 1,
+          "shared_rtl_sha256": "aa0ca2b642652c35d4f10763b2a1fd94ffaf06ef31ec74f1359e0ae1d75288c4",
+          "sources_sha256": {
+            "build/experiments/baud9600/baseline/context_params.sv": "14ba8a2014159d80fc33a96a95ea255d575420fbf463709b0b78a22342f82638",
+            "build/experiments/baud9600/baseline/uart_baseline.qpf": "155213b648364c0c5bba6059d196bb882366cc0562c8dd1c072feae6a56cc365",
+            "build/experiments/baud9600/baseline/uart_baseline.qsf": "d4e9ebbd36b8a50e0e895073724be6f472a496a6fe88da742a0a7657da5f2a48",
+            "fpga/de10_lite/baseline/de10_lite_uart_baseline_top.sv": "d020cd5d313f6597a1f1cb750b8a0c1cad0a07e00999fcddaabb9baf3720ab61",
+            "fpga/de10_lite/baseline/uart_baseline.sdc": "381fa469e8591a80301b43ad0023d518a2514c138177feb0fb2bc1c14b5996b9",
+            "fpga/de10_lite/common/de10_lite_uart_ctr_top.sv": "97f51df4a0675f12ce83b45e9c209c827b395c5324df52beb5760d6a6aecdcd0",
+            "rtl/aes/aes128_core.sv": "74d0d067ebb53a9a4cb358b284af06ed8c5768048994f27c0a9d60f1633ff3ac",
+            "rtl/aes/aes128_next_key.sv": "5bbaa55797299b181db9ded3c0fcbf3a22e47a3109482df260c7db2e2a1c74b8",
+            "rtl/aes/aes_mix_columns.sv": "5872f0daf9b23fe11f42cdc0f9a61c7118d538c7eb510c355bd5383b4e2f447c",
+            "rtl/aes/aes_sbox.sv": "e7bcf12e8f62ce31975e91755df5f05f18a9b75083a4ed0b540ebdb35d9e9a9a",
+            "rtl/aes/aes_sub_shift.sv": "89350db928515dfda4d1c148885a202c0d9b6c70b014e11214a97b2ddfaa55d8",
+            "rtl/bridge/uart_ctr_bridge.sv": "45a841af4ba616d76a4a9ed9155aa977bd7c5906f7ca6efbef72b30a12d05517",
+            "rtl/common/reset_sync.sv": "830860d6596ead1fbcd5e6aa73f7da5873a9fee7a1a6924f56a54cb4be2303e6",
+            "rtl/common/sync_fifo.sv": "a124295551e97ab6020baec5075e3d7c691aac0863413ac339fbdc454aaa389c",
+            "rtl/ctr/aes128_ctr_mask.sv": "76aa1ae099f3b3d461cc784b2630e053c0a1acd4a540848ef747d86383267758",
+            "rtl/ctr/aes128_ctr_stream.sv": "588ca1d8c250ba669f71ef3cf4d14d88221bac26a8c18d91ce69bf5bbdb2cace",
+            "rtl/uart/uart_rx.sv": "08037a4634cac330ba4e05d1e2617d0bb0ba78420d79f060cabd257cdfd2d664",
+            "rtl/uart/uart_tx.sv": "8c2a32a0d0ce280be8b7c1982ba7b5bd116b98a51a6c286f80200ed57fdfdb68",
+            "scripts/quartus_timing.tcl": "b486016e18c6d23f9b1a91d17ecc9b98fa3d76b2831953d3b81f2add688a2a2b"
+          },
+          "started_utc": "2026-09-30T21:31:02.502863+00:00",
+          "status": "PASS",
+          "tracked_rtl_config_dirty": true
+        },
+        "quartus_version": "25.1std.0 Build 1129 10/21/2025 SC Lite Edition",
+        "registers": 216,
+        "restricted_fmax_mhz_by_corner": [
+          123.0,
+          133.05,
+          250.0
+        ],
+        "restricted_fmax_mhz_min": 123.0,
+        "slack_ns_min": {
+          "hold": 0.102,
+          "recovery": 14.454,
+          "removal": 0.439,
+          "setup": 11.87
+        }
+      },
+      "secure": {
+        "device": "10M50DAF484C7G",
+        "fmax_mhz_by_corner": [
+          95.07,
+          103.07,
+          218.15
+        ],
+        "fmax_mhz_min": 95.07,
+        "logic_elements": 5655,
+        "memory_bits": 8192,
+        "pins": 14,
+        "plls": 0,
+        "provenance": {
+          "artifacts_sha256": {
+            "check_timing.rpt": "f05087bc3403ddd30cb0afffb2375fe0fe09f7400fab72448499621dd780aecd",
+            "clocks.rpt": "a35bfd9983f188daac5f4905c1cece267e164adffaf4a33a0212ce880877dcf6",
+            "compile.log": "f510c3e71be247ad844be30d288d224e1ef15e22830847a66b0deebf2448fcec",
+            "fmax_corner1.rpt": "044ae8ab6b64fb9b5df055bcfacd3cd5f5fb9027870affcbee764fdfc85980a9",
+            "fmax_corner2.rpt": "83855cc9a842e9f35bca353d1cc048d2f8ceebacc8fe2142cf74f8a50f17d4a9",
+            "fmax_corner3.rpt": "695580408a1639c62e5e5254983498a2866569a6d585fd288e3fb8b071da58b3",
+            "timing-audit.log": "b421b508914161124c9a56966dbd401d51c963183dcf96331d118abf672f8d22",
+            "tool-version.txt": "e484bb48906a49b263a7ffe72dc3620c46e382307f44bb4cf232d9f7a9046537",
+            "uart_secure.fit.summary": "2fec859dd60f71868385a521bddb831a88a9d02cb2aea392111781b480bb78a0",
+            "uart_secure.sof": "adb16dde3b3af80838008c67d02752e3966fdb3b6cb9d6d9359553ce9bb72a7a",
+            "unconstrained.rpt": "7015ad71e43b396919a8fb237c0b19f75623726adeca6c634d502dd57d2eb551"
+          },
+          "baud": 9600,
+          "board": "de10_lite",
+          "clock_hz": 50000000,
+          "commit": "3239248b7854fe1f26b6e827588ffd8b8207ca0c",
+          "design": "secure",
+          "device": "10M50DAF484C7G",
+          "fifo_depth": 1024,
+          "finished_utc": "2026-09-30T21:36:16.454436+00:00",
+          "rtl_config_diff_sha256": "58432d763d7645f3fc75d4872dd4cbf27b934d0651e7842bf8b1a7f18bf9f811",
+          "schema": 1,
+          "seed": 1,
+          "shared_rtl_sha256": "aa0ca2b642652c35d4f10763b2a1fd94ffaf06ef31ec74f1359e0ae1d75288c4",
+          "sources_sha256": {
+            "build/experiments/baud9600/secure/context_params.sv": "f41162a6042a45789ef80573a6113e78c1f2509581bacc9412f7a8f24e565965",
+            "build/experiments/baud9600/secure/uart_secure.qpf": "6259efa6595704b1c930338371d8821d4b2fbcf05d7726f157b4d6e1a60b2d97",
+            "build/experiments/baud9600/secure/uart_secure.qsf": "0fe7e1c01fdde678c8e9fb6944ed87286ca3a5ef2918a669d21ba36d460c5072",
+            "fpga/de10_lite/common/de10_lite_uart_ctr_top.sv": "97f51df4a0675f12ce83b45e9c209c827b395c5324df52beb5760d6a6aecdcd0",
+            "fpga/de10_lite/secure/de10_lite_uart_secure_top.sv": "da9b3be4c5853ea71e4d2dee59c9179f388fbf0017299ad06e9936b8e38f3d7b",
+            "fpga/de10_lite/secure/uart_secure.sdc": "381fa469e8591a80301b43ad0023d518a2514c138177feb0fb2bc1c14b5996b9",
+            "rtl/aes/aes128_core.sv": "74d0d067ebb53a9a4cb358b284af06ed8c5768048994f27c0a9d60f1633ff3ac",
+            "rtl/aes/aes128_next_key.sv": "5bbaa55797299b181db9ded3c0fcbf3a22e47a3109482df260c7db2e2a1c74b8",
+            "rtl/aes/aes_mix_columns.sv": "5872f0daf9b23fe11f42cdc0f9a61c7118d538c7eb510c355bd5383b4e2f447c",
+            "rtl/aes/aes_sbox.sv": "e7bcf12e8f62ce31975e91755df5f05f18a9b75083a4ed0b540ebdb35d9e9a9a",
+            "rtl/aes/aes_sub_shift.sv": "89350db928515dfda4d1c148885a202c0d9b6c70b014e11214a97b2ddfaa55d8",
+            "rtl/bridge/uart_ctr_bridge.sv": "45a841af4ba616d76a4a9ed9155aa977bd7c5906f7ca6efbef72b30a12d05517",
+            "rtl/common/reset_sync.sv": "830860d6596ead1fbcd5e6aa73f7da5873a9fee7a1a6924f56a54cb4be2303e6",
+            "rtl/common/sync_fifo.sv": "a124295551e97ab6020baec5075e3d7c691aac0863413ac339fbdc454aaa389c",
+            "rtl/ctr/aes128_ctr_mask.sv": "76aa1ae099f3b3d461cc784b2630e053c0a1acd4a540848ef747d86383267758",
+            "rtl/ctr/aes128_ctr_stream.sv": "588ca1d8c250ba669f71ef3cf4d14d88221bac26a8c18d91ce69bf5bbdb2cace",
+            "rtl/uart/uart_rx.sv": "08037a4634cac330ba4e05d1e2617d0bb0ba78420d79f060cabd257cdfd2d664",
+            "rtl/uart/uart_tx.sv": "8c2a32a0d0ce280be8b7c1982ba7b5bd116b98a51a6c286f80200ed57fdfdb68",
+            "scripts/quartus_timing.tcl": "b486016e18c6d23f9b1a91d17ecc9b98fa3d76b2831953d3b81f2add688a2a2b"
+          },
+          "started_utc": "2026-09-30T21:32:28.169136+00:00",
+          "status": "PASS",
+          "tracked_rtl_config_dirty": true
+        },
+        "quartus_version": "25.1std.0 Build 1129 10/21/2025 SC Lite Edition",
+        "registers": 917,
+        "restricted_fmax_mhz_by_corner": [
+          95.07,
+          103.07,
+          218.15
+        ],
+        "restricted_fmax_mhz_min": 95.07,
+        "slack_ns_min": {
+          "hold": 0.089,
+          "recovery": 13.184,
+          "removal": 2.216,
+          "setup": 9.481
+        }
+      }
+    }
+  },
+  "schema": 1,
+  "selected_utc": "2026-10-01T01:32:59.419493+00:00"
+}

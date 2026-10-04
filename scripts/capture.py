@@ -20,7 +20,7 @@ import time
 from ctr_vectors import crypt
 from context import claim_capture, validate_context
 
-DEFAULT_BAUD = 38400
+DEFAULT_BAUD = 9600
 
 
 def baud_constant(baud):

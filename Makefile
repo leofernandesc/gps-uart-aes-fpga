@@ -3,7 +3,7 @@
 
 BOARD ?= de10_lite
 DESIGN ?= bridge
-METRICS_SNAPSHOT ?= docs/evidence/de10-lite-postfit-2026-09-30.json
+METRICS_SNAPSHOT ?= docs/evidence/de10-lite-postfit-9600-2026-09-30.json
 TIMING_REVIEW_OUTPUT ?= build/timing-review/$(shell date -u +%Y%m%dT%H%M%SZ)
 
 # Isolated post-fit audit and explicit-synchronizer refits; no programming.
@@ -63,7 +63,7 @@ ctr:
 integration:
 	bash scripts/hdl.sh integration
 
-# Full public NMEA replay at the production 50 MHz/38400 baud timing; slower
+# Full public NMEA replay at the production 50 MHz/9600 baud timing; slower
 # than the regular regression and intentionally kept as a separate target.
 integration-gps:
 	bash scripts/hdl.sh integration-gps
@@ -87,7 +87,7 @@ serial-bench:
 	python3 scripts/serial_bench.py run \
 		--port "$(CP2102_PORT)" \
 		--context "$(CONTEXT_FILE)" \
-		--baud "$(or $(BAUD),38400)" \
+		--baud "$(or $(BAUD),9600)" \
 		--received "$(RECEIVED)" \
 		--report "$(REPORT)" $(if $(REGISTRY),--registry "$(REGISTRY)") \
 		--trials "$(or $(TRIALS),4)"

@@ -2,10 +2,10 @@
 `default_nettype none
 
 // Original byte API retained; adds tx_ready and rx_framing_error.
-// Production configuration: DE10-Lite, 50 MHz, 38400 baud, 8N1.
+// Production configuration: DE10-Lite, 50 MHz, 9600 baud, 8N1.
 module uart_top #(
     parameter integer CLK_FREQ  = 50_000_000,
-    parameter integer BAUD_RATE = 38400
+    parameter integer BAUD_RATE = 9600
 ) (
     input  wire       clk,
     input  wire       rst,

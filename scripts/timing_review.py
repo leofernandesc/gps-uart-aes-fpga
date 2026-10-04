@@ -22,7 +22,7 @@ from manuscript_check import SNAPSHOT, check_builds, load_metrics
 
 RX_CHAIN = "de10_lite_uart_ctr_top:implementation|uart_ctr_bridge:bridge_inst|uart_rx:rx_inst"
 RESET_CHAIN = "de10_lite_uart_ctr_top:implementation|reset_sync:reset_inst"
-RX_TOGGLE_HZ = 38_400
+RX_TOGGLE_HZ = 9_600
 # Conservative analysis assumption, not a measurement of KEY0 bounce/activity.
 RESET_TOGGLE_HZ = 6_250_000
 RECORD = re.compile(r"REVIEW corner=([1-3]) check=min_pulse_width slack_ns=([-+0-9.eE]+)")
@@ -145,7 +145,7 @@ def review(output, quartus_sh, snapshot=SNAPSHOT, build_root=DEFAULT_BUILD, iden
                 "selected_snapshot_sha256": digest(snapshot), "analysis_sources_sha256": {str(p.relative_to(ROOT)): digest(p) for p in scripts},
                 "assumptions": {"uart_rx_toggle_hz": RX_TOGGLE_HZ, "key0_toggle_hz": RESET_TOGGLE_HZ,
                                 "key0_note": "Conservative analysis assumption, not measured button activity",
-                                "uart_note": "One transition per bit at 38400 baud; electrical noise is not modeled"},
+                                "uart_note": "One transition per bit at 9600 baud; electrical noise is not modeled"},
                 "designs": {}}
     for design in ("baseline", "secure"):
         project_dir = ROOT / "fpga/de10_lite" / design
@@ -198,7 +198,10 @@ def main():
     os.umask(0o077)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="New directory; never overwrites a review")
-    parser.add_argument("--quartus-sh", type=Path, default=Path(shutil.which("quartus_sh") or "/home/leofernandesc/intelFPGA_lite/25.1/quartus/bin/quartus_sh"))
+    quartus_sh = shutil.which("quartus_sh")
+    parser.add_argument("--quartus-sh", type=Path,
+                        default=Path(quartus_sh) if quartus_sh else None,
+                        required=quartus_sh is None)
     parser.add_argument("--snapshot", type=Path, default=SNAPSHOT)
     parser.add_argument("--build-root", type=Path, default=DEFAULT_BUILD)
     parser.add_argument("--selected-only", action="store_true", help="No refit; inspect only the selected builds")

@@ -6,15 +6,16 @@ Há três alvos Quartus para a placa:
 | --- | --- | --- | --- |
 | `uart_scope` | UART autônoma que gera `0x55`, usada no osciloscópio e loopback | `make uart-fpga` | `build/de10_lite/uart_scope/uart_scope.sof` |
 | `baseline` | UART RX → FIFO → UART TX, sem AES | `make baseline-fpga` | `build/de10_lite/baseline/uart_baseline.sof` |
-| `secure` | UART RX → FIFO → AES-128-CTR → UART TX | `make secure-fpga` | `build/de10_lite/secure/uart_secure.sof` |
+| `AES-CTR` (Quartus target `secure`) | UART RX → FIFO → AES-128-CTR → UART TX | `make secure-fpga` | `build/de10_lite/secure/uart_secure.sof` |
 
 O projeto `uart_bridge` antigo continua disponível com `make fpga` como
 referência. Ele não é um dos dois tops usados na comparação final do artigo.
 
-Todos os alvos usam 50 MHz, 38400 baud, 8N1 e FIFO de 1.024 bytes. Compilar não
+Todos os alvos usam 50 MHz, 9600 baud, 8N1 e FIFO de 1.024 bytes. Compilar não
 exige a placa; programar e validar os sinais externos exigem a montagem real.
-O [plano de testes](../../docs/plano-de-testes.md) registra resultados de
-simulação, Quartus e bancada.
+Os resultados selecionados e os limites de cada evidência estão em
+[`docs/results.md`](../../docs/results.md); a reprodução está em
+[`docs/reproduction.md`](../../docs/reproduction.md).
 
 ## Pinagem comum
 
@@ -50,7 +51,7 @@ counter  = 00000001
 ```
 
 Isso não é um protocolo de configuração pela UART nem gerenciamento de chaves.
-Para aplicar um JSON privado ao build secure, use `CONTEXT_FILE`:
+Para aplicar um JSON privado ao build AES-CTR, use `CONTEXT_FILE`:
 
 ```bash
 CONTEXT_FILE=data/private/ensaio01/contexto.json make secure-fpga
@@ -60,7 +61,7 @@ Para o baseline, use um contexto criado com `--mode baseline` e
 `make baseline-fpga`. O script gera `context_params.sv` em `build/` com
 permissão `0600`; não há transferência pela UART nem provisão em tempo de
 execução. Sem `CONTEXT_FILE`, o build copia o contexto público de bring-up.
-O baseline fixa `ENABLE_AES=0` na elaboração; o secure fixa `ENABLE_AES=1`.
+O baseline fixa `ENABLE_AES=0` na elaboração; o target `secure` fixa `ENABLE_AES=1`.
 
 ## Indicadores dos tops integrados
 
@@ -85,24 +86,23 @@ bytes no PC.
 1. Compilar o alvo escolhido e confirmar a cadeia MAX 10 antes de programar o
    `.sof` por JTAG.
 2. Manter a fonte UART inativa até a configuração e o carregamento do contexto.
-3. Para `baseline` ou `secure`, apresentar uma sequência UART de teste em V10.
+3. Para baseline ou AES-CTR, apresentar uma sequência UART de teste em V10.
 4. Observar a retransmissão em W10 e verificar LEDs 6 e 7 apagados.
 5. Medir no osciloscópio o quadro 8N1, o período de aproximadamente 26,04 µs
    por bit e, com dois canais, a latência entre RX e TX.
-6. Não pressionar KEY0 depois do primeiro byte. O contexto secure é de uso único;
+6. Não pressionar KEY0 depois do primeiro byte. O contexto AES-CTR é de uso único;
    após reset, desligamento ou reprogramação, gerar um contexto com nonce novo,
    recompilar e programar o SOF correspondente antes de uma nova captura.
 7. Repetir com o NEO-M8N depois de concluir os bytes conhecidos e validar a
    alimentação e os níveis lógicos do breakout.
 
 Comandos, pinagem do CP2102, vetores esperados e campos de evidência estão no
-[roteiro integrado de 22/09](../../docs/bancada-de10-lite-integrada-2026-09-22.md)
-e no [guia da bancada serial](../../docs/cp2102-serial-bench.md).
+[guia da bancada](../../docs/bancada.md) e no
+[guia da bancada serial](../../docs/cp2102-serial-bench.md).
 
 O `uart_scope` é o único alvo que transmite sem uma fonte externa: ele envia
-`0x55` a cada 100 ms. O roteiro e os resultados desse ensaio estão em
-[`uart_scope/README.md`](uart_scope/README.md) e em
-[`docs/bancada-de10-lite-2026-09-18.md`](../../docs/bancada-de10-lite-2026-09-18.md).
+`0x55` a cada 100 ms. O procedimento está em
+[`uart_scope/README.md`](uart_scope/README.md).
 
 ## Interface da FIFO e da ponte
 

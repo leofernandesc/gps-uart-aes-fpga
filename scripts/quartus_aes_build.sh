@@ -4,9 +4,6 @@ project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 quartus_shell="${QUARTUS_SH:-}"
 if [[ -z "$quartus_shell" ]]; then
     quartus_shell="$(command -v quartus_sh || true)"
-    if [[ -z "$quartus_shell" ]]; then
-        quartus_shell=/home/leofernandesc/intelFPGA_lite/25.1/quartus/bin/quartus_sh
-    fi
 fi
 if [[ ! -x "$quartus_shell" ]]; then
     echo 'Set QUARTUS_SH to the installed quartus_sh executable.' >&2

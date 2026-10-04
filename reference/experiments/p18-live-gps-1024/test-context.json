@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "context_id": "43aec16abf074435adad703a7f90afa9",
+  "mode": "aes-128-ctr",
+  "bytes": 1024,
+  "key_hex": "e4bd5d31dc8d9adb7f23e46dafceadd8",
+  "nonce_hex": "b6b59afd333bb89f0301c70b",
+  "initial_counter": 0,
+  "key_sha256": "564b648ec591544fedc1d95a6485993ce9c5de8880ca4eebe17cf238cb83511e",
+  "counter_byte_order": "big-endian",
+  "purpose": "PUBLIC CONSUMED TEST KEY ONLY"
+}

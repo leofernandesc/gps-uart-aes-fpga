@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "mode": "aes-128-ctr",
+  "expected_bytes": 1024,
+  "reference_bytes": 1024,
+  "received_bytes": 1024,
+  "missing_received_bytes": 0,
+  "extra_received_bytes": 0,
+  "first_divergence_offset": null,
+  "invalid_reasons": [],
+  "reference_sha256": "ef983ddb4dd1adfe8449e17bbc79e1ebb2be7fd8458f7d1dfa91bb6e488c156f",
+  "received_sha256": "4c0ebcf452095886f4cd495721ed2edba63bbefb31b84bb912e3cbc1fcbe6546",
+  "recovered_sha256": "ef983ddb4dd1adfe8449e17bbc79e1ebb2be7fd8458f7d1dfa91bb6e488c156f",
+  "note": "Byte comparison only; CTR does not authenticate data. No FPGA latency is measured here.",
+  "reference_nmea": {
+    "sentences": 24,
+    "types": {
+      "GNTXT": 12,
+      "GNRMC": 2,
+      "GNVTG": 2,
+      "GNGGA": 1,
+      "GNGSA": 2,
+      "GPGSV": 2,
+      "GLGSV": 2,
+      "GNGLL": 1
+    },
+    "prefix_bytes": 0,
+    "suffix_bytes": 5
+  },
+  "recovered_nmea": {
+    "sentences": 24,
+    "types": {
+      "GNTXT": 12,
+      "GNRMC": 2,
+      "GNVTG": 2,
+      "GNGGA": 1,
+      "GNGSA": 2,
+      "GPGSV": 2,
+      "GLGSV": 2,
+      "GNGLL": 1
+    },
+    "prefix_bytes": 0,
+    "suffix_bytes": 5
+  },
+  "cp2102_sha256": "4c0ebcf452095886f4cd495721ed2edba63bbefb31b84bb912e3cbc1fcbe6546",
+  "operator_observations": {
+    "overflow_off": true,
+    "framing_off": true,
+    "no_reset": true
+  },
+  "physical_uart_metrics": {
+    "measurement": "GPS start-bit edge to paired FPGA start-bit edge",
+    "sample_rate_hz": 200000.0,
+    "sample_period_us": 5.0,
+    "edge_difference_quantization_bound_us": 5.0,
+    "percentile_method": "nearest-rank",
+    "paired_bytes": 1024,
+    "delay_p50_us": 1275.0,
+    "delay_p95_us": 1530.0,
+    "delay_max_us": 1565.0,
+    "reference_span_seconds": 1.0660366666666665,
+    "output_span_seconds": 1.0666116666666665,
+    "reference_bytes_per_second": 960.5673350822831,
+    "output_bytes_per_second": 960.0495025524755,
+    "note": "Includes UART reception and forwarding; not AES computation latency. Spans end with one nominal 8N1 character, not a measured stop-bit edge."
+  },
+  "source_comparison_sha256": "f6cd91b1d0fc425d072a10095e901febc758dbb5854d0a0717d43df97c446b17"
+}

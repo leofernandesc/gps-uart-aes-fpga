@@ -13,7 +13,12 @@ NAME = "build-manifest.json"
 
 
 def digest(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    # Long AD2 captures/VCDs can exceed RAM; preserve identical SHA-256 bytes.
+    value = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            value.update(block)
+    return value.hexdigest()
 
 
 def _inside(root, name):
@@ -44,7 +49,7 @@ def begin(qsf, output, board, design):
         "schema": 1, "status": "RUNNING", "board": board, "design": design,
         "device": device, "seed": seed,
         "clock_hz": 50_000_000,
-        "baud": 38400, "fifo_depth": 1024,
+        "baud": 9600, "fifo_depth": 1024,
         "started_utc": datetime.now(timezone.utc).isoformat(),
         "commit": revision, "tracked_rtl_config_dirty": bool(diff),
         "rtl_config_diff_sha256": hashlib.sha256(diff).hexdigest(),

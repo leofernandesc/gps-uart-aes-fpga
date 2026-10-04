@@ -18,7 +18,7 @@ SCRIPT = ROOT / "scripts/serial_bench.py"
 class SerialBenchTests(unittest.TestCase):
     stimulus = bytes.fromhex("55 A5 00 FF 3C")
 
-    def _run_fake_fpga(self, mode, context, registry=None, trials=4, baud=38400):
+    def _run_fake_fpga(self, mode, context, registry=None, trials=4, baud=9600):
         master, slave = pty.openpty()
         port = os.ttyname(slave)
         received = bytearray()
@@ -91,7 +91,7 @@ class SerialBenchTests(unittest.TestCase):
         self.assertEqual(result["comparison"]["recovered_sha256"],
                          result["comparison"]["reference_sha256"])
 
-    def test_legacy_9600_setting_remains_selectable(self):
+    def test_9600_setting_remains_selectable(self):
         context = {
             "schema": 1,
             "context_id": "baseline-legacy-baud-test",
